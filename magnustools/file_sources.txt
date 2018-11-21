@@ -1,0 +1,6 @@
+Various php files obtained from wmflabs:
+
+scp login.tools.wmflabs.org:/data/project/magnustools/public_html/php/common.php .
+scp login.tools.wmflabs.org:/data/project/magnustools/public_html/php/oauth.php .
+scp login.tools.wmflabs.org:/data/project/magnustools/public_html/php/wikidata.php .
+scp login.tools.wmflabs.org:/data/project/magnustools/public_html/php/ToolforgeCommon.php .

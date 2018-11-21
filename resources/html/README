@@ -1,0 +1,4 @@
+source of html header files:
+
+scp login.tools.wmflabs.org:/data/project/quickstatements/public_html/resources/html/index_bs4.html .
+scp login.tools.wmflabs.org:/data/project/quickstatements/public_html/resources/html/menubar_bs4.html .
