@@ -279,8 +279,10 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		}
 		else {
 			$x = $i->getStrings ( 'P698' ) ;
-			$pmid = $x[0] ;
-			if ( count($x) > 0 ) $orcid_url = getORCIDurl ( $pmid ) ;
+			if ( count($x) > 0 ) {
+				$pmid = $x[0] ;
+				$orcid_url = getORCIDurl ( $pmid ) ;
+			}
 		}
 
 		print "<tr>" ;
