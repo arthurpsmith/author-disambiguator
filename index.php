@@ -170,11 +170,12 @@ $clusters = array() ;
 $is_in_cluster = array() ;
 foreach ( $items_papers AS $q1 ) {
 	if ( isset($is_in_cluster[$q1]) ) continue ;
+	$base_score = compareAuthorLists ( $q1 , $q1 ) ;
+        if ( $base_score == 0 ) continue ;
 	$cluster = array() ;
 	foreach ( $items_papers AS $q2 ) {
 		if ( $q1 == $q2 ) continue ;
 		if ( isset($is_in_cluster[$q2]) ) continue ;
-		$base_score = compareAuthorLists ( $q1 , $q1 ) ;
 		$score = compareAuthorLists ( $q1 , $q2 ) ;
 		$score = 100 * $score / $base_score ;
 		
