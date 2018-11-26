@@ -67,21 +67,26 @@ $wil->loadItems ( $to_load ) ;
 
 $delete_statements = array() ;
 if ( $action == 'add' ) {
+	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<input type='hidden' name='action' value='import' />" ;
+	print "<input type='hidden' name='temporary' value='1' />" ;
+	print "<input type='hidden' name='openpage' value='1' />" ;
 	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
 	if ( $author_q == '' ) $author_q = $author_match ;
-//print "<pre>" ; print_r ( $_REQUEST ) ; print "</pre>" ;
 
 	if ( $author_match == 'new' ) {
-		print "Quickstatements V1 commands for creating new author item:" ;
+		print "<br/>Quickstatements V1 commands for creating new author item:" ;
 		$commands = array() ;
 		$commands[] = "CREATE" ;
 		$commands[] = "LAST\tLen\t\"$name\""  ;
 		$commands[] = "LAST\tP31\tQ5"  ;
 		if ( $orcid_author != '' ) $commands[] = "LAST\tP496\t\"$orcid_author\"" ;
-		print "<pre>" . implode("\n",$commands) . "</pre>" ;
+		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
+		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
 		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
+		print "</form>" ;
 		exit ( 0 ) ;
 	}
 	if ( $author_q == '' ) {
@@ -115,7 +120,9 @@ if ( $action == 'add' ) {
 	}
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
-	print "<pre>" . implode("\n",$commands) . "</pre>" ;
+	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
+	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
+	print "</form>" ;
 	
 	exit ( 0 ) ;
 }
