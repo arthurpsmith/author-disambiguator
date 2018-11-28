@@ -31,9 +31,16 @@ function replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) {
 			if ( $num != "" ) $add .= "\tP1545\t\"$num\"" ;
 			
 			$add .= "\tP1932\t\"$author_name\"" ;
+			$refs = $i->statementReferencesToQS( $a ) ;
+			if ( count($refs) > 0 ) {
+				foreach ( $refs AS $ref ) {
+					$commands[] = $add . "\t" . implode("\t", $ref) ;
+				}
+			} else {
+				$commands[] = $add ;
+			}
 			
 #			$commands[] = "-STATEMENT\t" . $a->id ; # Deactivated as per https://www.wikidata.org/wiki/Wikidata_talk:WikiProject_Source_MetaData#Author_names
-			$commands[] = $add ;
 		}
 	}
 	return $commands ;
