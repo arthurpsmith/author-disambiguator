@@ -366,7 +366,7 @@ print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for
 
 // https://orcid.org/orcid-search/quick-search?searchQuery=%2210.1371/journal.ppat.1002567%22
 
-print "<div style='margin:20px'><input type='submit' name='doit' value='Do it!' class='btn btn-primary' /></div>" ;
+print "<div style='margin:20px'><input type='submit' name='doit' value='Generate Quickstatements Commands' class='btn btn-primary' /></div>" ;
 print "</form>" ;
 
 
