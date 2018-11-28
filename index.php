@@ -8,6 +8,8 @@ set_time_limit ( 60 * 10 ) ; // Seconds
 
 require_once ( __DIR__ . '/magnustools/common.php' ) ;
 require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
+require_once ( __DIR__ . '/lib/clustering.php' ) ;
+require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
 
 function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
@@ -78,11 +80,7 @@ if ( $action == 'add' ) {
 
 	if ( $author_match == 'new' ) {
 		print "<br/>Quickstatements V1 commands for creating new author item:" ;
-		$commands = array() ;
-		$commands[] = "CREATE" ;
-		$commands[] = "LAST\tLen\t\"$name\""  ;
-		$commands[] = "LAST\tP31\tQ5"  ;
-		if ( $orcid_author != '' ) $commands[] = "LAST\tP496\t\"$orcid_author\"" ;
+		$commands = new_author_qs_commands ( $name, $orcid_author ) ;
 		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
 		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
 		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
@@ -94,30 +92,8 @@ if ( $action == 'add' ) {
 		exit ( 0 ) ;
 	}
 
-	$commands = array() ;
 	$papers = get_request ( 'papers' , array() ) ;
-	foreach ( $papers AS $paperq ) {
-		$i = $wil->getItem ( $paperq ) ;
-		if ( !isset($i) ) continue ;
-		$authors = $i->getClaims ( 'P2093' ) ;
-		foreach ( $authors AS $a ) {
-			if ( !isset($a->mainsnak) or !isset($a->mainsnak->datavalue) ) continue ;
-			$author_name = $a->mainsnak->datavalue->value ;
-			if ( !in_array ( $author_name , $names ) ) continue ;
-			$num = '' ;
-			if ( isset($a->qualifiers) and isset($a->qualifiers->P1545) ) {
-				$tmp = $a->qualifiers->P1545 ;
-				$num = $tmp[0]->datavalue->value ;
-			}
-			$add = "$paperq\tP50\t$author_q" ;
-			if ( $num != "" ) $add .= "\tP1545\t\"$num\"" ;
-			
-			$add .= "\tP1932\t\"$author_name\"" ;
-			
-#			$commands[] = "-STATEMENT\t" . $a->id ; # Deactivated as per https://www.wikidata.org/wiki/Wikidata_talk:WikiProject_Source_MetaData#Author_names
-			$commands[] = $add ;
-		}
-	}
+	$commands = replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) ;
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
 	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
@@ -133,78 +109,8 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='fuzzy' value='$fuzzy' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
-// Clustering
-$min_score = 30 ;
-$min_authors_for_cluster = 4 ;
-$score_cache = array() ;
-function compareAuthorLists ( $q1 , $q2 ) {
-	global $wil , $score_cache , $min_authors_for_cluster ;
-
-	if ( $q1 > $q2 ) return compareAuthorLists ( $q2 , $q1 ) ; // Enforce $q1 <= $q2
-	$key = "$q1|$q2" ;
-	if ( isset($score_cache[$key]) ) return $score_cache[$key] ;
-
-	$i1 = $wil->getItem ( $q1 ) ;
-	$i2 = $wil->getItem ( $q2 ) ;
-	if ( !isset($i1) or !isset($i2) ) return 0 ;
-	$authors1 = $i1->getStrings ( 'P2093' ) ;
-	$authors2 = $i2->getStrings ( 'P2093' ) ;
-	
-	foreach ( $i1->getClaims('P50') AS $claim ) $authors1[] = $i1->getTarget ( $claim ) ;
-	foreach ( $i2->getClaims('P50') AS $claim ) $authors2[] = $i2->getTarget ( $claim ) ;
-	
-	$score = 0 ;
-	if ( count($authors1) < $min_authors_for_cluster or count($authors2) < $min_authors_for_cluster ) {
-		// Return 0
-	} else {
-	
-		foreach ( $authors1 AS $a ) {
-			if ( in_array ( $a , $authors2 ) ) {
-				if ( preg_match ( '/^Q\d+$/' , $a ) ) {
-					$score += 5 ;
-				} else {
-					$score += 2 ;
-				}
-			}
-		}
-	}
-	
-	$score_cache[$key] = $score ;
-	return $score ;
-}
-
-$clusters = array() ;
-$is_in_cluster = array() ;
-foreach ( $items_papers AS $q1 ) {
-	if ( isset($is_in_cluster[$q1]) ) continue ;
-	$base_score = compareAuthorLists ( $q1 , $q1 ) ;
-        if ( $base_score == 0 ) continue ;
-	$cluster = array() ;
-	foreach ( $items_papers AS $q2 ) {
-		if ( $q1 == $q2 ) continue ;
-		if ( isset($is_in_cluster[$q2]) ) continue ;
-		$score = compareAuthorLists ( $q1 , $q2 ) ;
-		$score = 100 * $score / $base_score ;
-		
-		if ( $score >= $min_score ) {
-			if ( count($cluster) == 0 ) $cluster[] = $q1 ;
-			$cluster[] = $q2 ;
-		}
-//		print "<pre>$q1 / $q2 : $score</pre>" ;
-	}
-	
-	if ( count($cluster) == 0 ) continue ;
-	foreach ( $cluster AS $q ) $is_in_cluster[$q] = $q ;
-	$clusters['Group #'.(count($clusters)+1)] = $cluster ;
-}
-$cluster = array() ;
-foreach ( $items_papers AS $q1 ) {
-	if ( isset($is_in_cluster[$q1]) ) continue ;
-	$cluster[] = $q1 ;
-}
-if ( count($cluster) > 0 ) $clusters['Misc'] = $cluster ;
+$clusters = cluster_articles ( $wil, $items_papers ) ;
 #print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
-
 
 // P50 authors
 $to_load = array() ;
