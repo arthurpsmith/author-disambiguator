@@ -71,7 +71,9 @@ class WikidataArticleEntry {
 	}
 
 	public function formattedPublicationDate () {
-		return DateTime::createFromFormat( '\+Y-m-d\TH:i:s\Z', $this->publication_date )->format( "Y-m-d" );
+		$formatted_date = '' ;
+		if ( $this->publication_date != '' ) $formatted_date = DateTime::createFromFormat( '\+Y-m-d\TH:i:s\Z', $this->publication_date )->format( "Y-m-d" );
+		return $formatted_date ;
 	}
 }
 ?>
