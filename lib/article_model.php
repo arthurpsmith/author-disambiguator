@@ -69,5 +69,9 @@ class WikidataArticleEntry {
 			if ( count($claims) > 0 ) $this->publication_date = $claims[0]->mainsnak->datavalue->value->time ;
 		}
 	}
+
+	public function formattedPublicationDate () {
+		return DateTime::createFromFormat( '\+Y-m-d\TH:i:s\Z', $this->publication_date )->format( "Y-m-d" );
+	}
 }
 ?>

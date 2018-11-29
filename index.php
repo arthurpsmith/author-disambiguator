@@ -207,7 +207,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		}
 		print "</td>" ;
                 print "<td style='font-size:9pt'>" ;
-		print $article->publication_date ;
+		print $article->formattedPublicationDate () ;
 		print "</td>" ;
 		print "</tr>" ;
 	}
