@@ -40,7 +40,7 @@ function replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) {
 				$commands[] = $add ;
 			}
 			
-#			$commands[] = "-STATEMENT\t" . $a->id ; # Deactivated as per https://www.wikidata.org/wiki/Wikidata_talk:WikiProject_Source_MetaData#Author_names
+			$commands[] = "-STATEMENT\t" . $a->id ;
 		}
 	}
 	return $commands ;
