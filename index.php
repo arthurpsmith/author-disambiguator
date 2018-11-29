@@ -43,18 +43,19 @@ if ( $fuzzy ) {
 	$names[] = preg_replace ( '/^([A-Z][a-z]+).*\s(\S+)$/' , '$1 $2' , $name ) ;
 }
 $names_strings = '"' . implode ( '" "' , $names ) . '"' ;
+#print "$names_strings" ;
 $sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name }" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 
 // Potential authors
 $no_middle = preg_replace('/\s*[A-Z]\. /',' ',$name) ;
-//print "<pre>$no_middle</pre>" ;
-$url = "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=50&type=item&search=" . urlencode($no_middle) ;
+#print "<pre>$no_middle</pre>" ;
+$url = "https://www.wikidata.org/w/api.php?action=query&list=search&format=json&srsearch=" . urlencode($no_middle) ;
 #print "<pre>$url</pre>" ;
 $j = json_decode ( file_get_contents ( $url ) ) ;
 #print "<pre>" ; print_r ( $j ) ; print "</pre>" ;
 $items_authors = array() ;
-foreach ( $j->search AS $a ) $items_authors[] = "wd:" . $a->id ;
+foreach ( $j->query->search AS $a ) $items_authors[] = "wd:" . $a->title ;
 $sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31 wd:Q5 }" ;
 $items_authors = getSPARQLitems ( $sparql ) ;
 
