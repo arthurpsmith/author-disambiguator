@@ -75,5 +75,14 @@ class WikidataArticleEntry {
 		if ( $this->publication_date != '' ) $formatted_date = DateTime::createFromFormat( '\+Y-m-d\TH:i:s\Z', $this->publication_date )->format( "Y-m-d" );
 		return $formatted_date ;
 	}
+
+	public static function dateCompare ($a, $b) {
+		$adate = $a->publication_date ;
+		$bdate = $b->publication_date ;
+		if ($adate == $bdate) {
+			return 0;
+		}
+		return ($adate > $bdate) ? -1 : 1 ;
+	}
 }
 ?>

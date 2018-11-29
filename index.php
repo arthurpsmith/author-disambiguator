@@ -68,7 +68,6 @@ foreach ( $items_papers AS $q ) $to_load[] = $q ;
 foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
-
 $delete_statements = array() ;
 if ( $action == 'add' ) {
 	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
@@ -111,26 +110,28 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='fuzzy' value='$fuzzy' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
-$clusters = cluster_articles ( $wil, $items_papers ) ;
-#print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
-
-// P50 authors
 $to_load = array() ;
+$article_items = array();
 foreach ( $items_papers AS $q ) {
 	$i = $wil->getItem ( $q ) ;
 	if ( !isset($i) ) continue ;
-	$claims = $i->getClaims ( 'P50' ) ;
-	foreach ( $claims AS $c ) $to_load[] = $i->getTarget ( $c ) ;
-	$claims = $i->getClaims ( 'P1433' ) ;
-	foreach ( $claims AS $c ) $to_load[] = $i->getTarget ( $c ) ;
+
+	$article = new WikidataArticleEntry( $i ) ;
+	$article_items[] = $article ;
+
+	foreach ( $article->authors AS $auth ) $to_load[] = $auth ;
+	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
+	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
 }
 $wil->loadItems ( $to_load ) ;
 
+$clusters = cluster_articles ( $article_items ) ;
+
+#print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
 // Publications
 $name_counter = array() ;
 print "<h2>Potential publications</h2>" ;
-print "<p>" . count($items_papers) . " publications found</p>" ;
-
+print "<p>" . count($article_items) . " publications found</p>" ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
@@ -148,11 +149,8 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<th>Author Name Strings</th><th>Identified Authors</th>" ;
 	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th></tr>" ;
-	foreach ( $cluster AS $q ) {
-		$q = "Q$q" ;
-		$i = $wil->getItem ( $q ) ;
-		if ( !isset($i) ) continue ;
-		$article = new WikidataArticleEntry( $i ) ;
+	foreach ( $cluster AS $article ) {
+		$q = $article->q ;
 
 		$out = array() ;
 		foreach ( $article->author_names AS $a ) {
@@ -198,7 +196,6 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		if ( count($article->topics) > 0 ) {
 			$topics = [] ;
 			foreach ( $article->topics AS $qt ) {
-				$wil->loadItem ( $qt ) ;
 				$i2 = $wil->getItem($qt) ;
 				if ( !isset($i2) ) continue ;
 				$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
