@@ -10,6 +10,7 @@ require_once ( __DIR__ . '/magnustools/common.php' ) ;
 require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
 require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
+require_once ( __DIR__ . '/lib/article_model.php' ) ;
 
 function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
@@ -144,20 +145,16 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<tbody>" ;
 	print "<tr><th></th><th>Title</th>" ;
 	print "<th>Author Name Strings</th><th>Identified Authors</th>" ;
-	print "<th>Published In</th><th>DOI/PubMed ID</th>" ;
+	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th></tr>" ;
 	foreach ( $cluster AS $q ) {
 		$q = "Q$q" ;
 		$i = $wil->getItem ( $q ) ;
 		if ( !isset($i) ) continue ;
+		$article = new WikidataArticleEntry( $i ) ;
 
-		$title = $i->getStrings ( 'P1476' ) ;
-		if ( count($title) == 0 ) $title = $i->getLabel() ;
-		else $title = $title[0] ;
-
-		$authors = $i->getStrings ( 'P2093' ) ;
 		$out = array() ;
-		foreach ( $authors AS $a ) {
+		foreach ( $article->author_names AS $a ) {
 			if ( in_array ( $a , $names ) ) $out[] = "<b>$a</b>" ;
 			else {
 				$out[] = "<a href='?fuzzy=$fuzzy&name=" . urlencode($a) . "'>$a</a>" ;
@@ -167,72 +164,49 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$author_string_list = implode ( ', ' , $out ) ;
 		
 		$q_authors = array() ;
-		$claims = $i->getClaims ( 'P50' ) ;
-		foreach ( $claims AS $c ) {
-			$i2 = $wil->getItem ( $i->getTarget($c) ) ;
+		foreach ( $article->authors AS $qt ) {
+			$i2 = $wil->getItem ( $qt ) ;
 			$q_authors[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
 		}
 		$author_entity_list = implode ( ', ' , $q_authors ) ;
 
 		$published_in = array() ;
-		$claims = $i->getClaims ( 'P1433' ) ;
-		foreach ($claims AS $c ) {
-			$i2 = $wil->getItem ( $i->getTarget($c) ) ;
+		foreach ( $article->published_in AS $qt ) {
+			$i2 = $wil->getItem ( $qt ) ;
 			if ( isset($i2) ) $published_in[] = $i2->getLabel() ;
 		}
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
-		$orcid_url = '' ;
-		$doi = '' ;
-		$pmid = '' ;
-		$x = $i->getStrings ( 'P356' ) ;
-		if ( count($x) > 0 ) {
-                        $doi = $x[0] ;
-			$orcid_url = getORCIDurl ( $doi ) ;
-		}
-		else {
-			$x = $i->getStrings ( 'P698' ) ;
-			if ( count($x) > 0 ) {
-				$pmid = $x[0] ;
-				$orcid_url = getORCIDurl ( $pmid ) ;
-			}
-		}
-
 		print "<tr>" ;
 		print "<td><input type='checkbox' name='papers[$q]' value='$q' " . ($is_first_group?'checked':'') . " /></td>" ;
-		print "<td style='width:20%;font-size:10pt'><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $title . "</a></td>" ;
+		print "<td style='width:20%;font-size:10pt'><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $article->title . "</a></td>" ;
 		print "<td style='width:30%;font-size:9pt'>$author_string_list</td>" ;
 		print "<td style='width:30%;font-size:9pt'>$author_entity_list</td>" ;
 		print "<td style='font-size:9pt'>$published_in_list</td>" ;
                 print "<td style='font-size:9pt'>" ;
-		if ( $doi != '' ) print "DOI: $doi" ;
-		if ( $pmid != '' ) print "PubMed: $pmid" ;
-		if ( $orcid_url != '' ) print "&nbsp;[<a href='$orcid_url' target='_blank'>ORCID</a>]" ;
+		if ( $article->doi != '' ) {
+			print "DOI: $article->doi" ;
+			print "&nbsp;[<a href='" . getORCIDurl ( $article->doi ) . "'>ORCID</a>]<br/>" ;
+		}
+		if ( $article->pmid != '' ) {
+			print "PubMed: $article->pmid" ;
+			print "&nbsp;[<a href='" . getORCIDurl ( $article->pmid ) . "'>ORCID</a>]<br/>" ;
+		}
 		print "</td>" ;
                 print "<td style='font-size:9pt'>" ;
-		if ( $i->hasClaims('P921') ) {
-			$claims = $i->getClaims('P921') ;
-			$p921 = array() ;
-			foreach ( $claims AS $c ) {
-				$qt = $i->getTarget ( $c ) ;
+		if ( count($article->topics) > 0 ) {
+			$topics = [] ;
+			foreach ( $article->topics AS $qt ) {
 				$wil->loadItem ( $qt ) ;
 				$i2 = $wil->getItem($qt) ;
 				if ( !isset($i2) ) continue ;
-				$p921[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+				$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
 			}
-			print implode ( '; ' , $p921 ) ;
+			print implode ( '; ' , $topics ) ;
 		}
 		print "</td>" ;
                 print "<td style='font-size:9pt'>" ;
-
-		if ( $i->hasClaims('P577') ) { // publication date
-			$claims = $i->getClaims('P577') ;
-			$p577 = array() ;
-			foreach ( $claims AS $c ) {
-				$p577[] = $c->mainsnak->datavalue->value->time ;
-			}
-			print implode( '; ', $p577 ) ;
-		}
+		print $article->publication_date ;
 		print "</td>" ;
 		print "</tr>" ;
 	}
