@@ -153,19 +153,19 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$q = $article->q ;
 
 		$out = array() ;
-		foreach ( $article->author_names AS $a ) {
-			if ( in_array ( $a , $names ) ) $out[] = "<b>$a</b>" ;
+		foreach ( $article->author_names AS $num => $a ) {
+			if ( in_array ( $a , $names ) ) $out[] = "[$num]<b>$a</b>" ;
 			else {
-				$out[] = "<a href='?fuzzy=$fuzzy&name=" . urlencode($a) . "'>$a</a>" ;
+				$out[] = "[$num]<a href='?fuzzy=$fuzzy&name=" . urlencode($a) . "'>$a</a>" ;
 				$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 			}
 		}
 		$author_string_list = implode ( ', ' , $out ) ;
 		
 		$q_authors = array() ;
-		foreach ( $article->authors AS $qt ) {
+		foreach ( $article->authors AS $num => $qt ) {
 			$i2 = $wil->getItem ( $qt ) ;
-			$q_authors[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+			$q_authors[] = "[$num]<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
 		}
 		$author_entity_list = implode ( ', ' , $q_authors ) ;
 
