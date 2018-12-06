@@ -125,7 +125,7 @@ foreach ( $items_papers AS $q ) {
 }
 $wil->loadItems ( $to_load ) ;
 
-$clusters = cluster_articles ( $article_items ) ;
+$clusters = cluster_articles ( $article_items, $names ) ;
 
 #print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
 // Publications
