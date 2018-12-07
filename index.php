@@ -8,9 +8,10 @@ set_time_limit ( 60 * 10 ) ; // Seconds
 
 require_once ( __DIR__ . '/magnustools/common.php' ) ;
 require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
+require_once ( __DIR__ . '/lib/article_model.php' ) ;
+require_once ( __DIR__ . '/lib/cluster.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
 require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
-require_once ( __DIR__ . '/lib/article_model.php' ) ;
 
 function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
