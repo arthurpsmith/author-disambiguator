@@ -17,6 +17,11 @@ function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
 }
 
+function print_footer () {
+	print "<hr/><a href='https://github.com/arthurpsmith/author-disambiguator/issues' target='_blank'>Feedback</a><br/><a href='https://github.com/arthurpsmith/author-disambiguator/'>Source and documentation (at github)</a><br/>" ;
+	print get_common_footer() ;
+}
+
 $action = get_request ( 'action' , '' ) ;
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
@@ -32,7 +37,7 @@ Author name:
 </form>" ;
 
 if ( $name == '' ) {
-	print get_common_footer() ;
+	print_footer() ;
 	exit ( 0 ) ;
 }
 
@@ -259,7 +264,6 @@ foreach ( $name_counter AS $a => $cnt ) {
 }
 print "</ul>" ;
 
-
-print get_common_footer() ;
+print_footer() ;
 
 ?>
