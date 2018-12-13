@@ -48,6 +48,12 @@ class Cluster {
 		foreach ( $article->author_names AS $name ) {
 			$this->author_names[$name] = 1 ;
 		}
+		foreach ( $article->authors AS $author_q ) {
+			if (isset($article->authors_stated_as[$author_q])) {
+				$stated_name = $article->authors_stated_as[$author_q] ;
+				if (! empty($stated_name) ) $this->author_names[$stated_name] = 1 ;
+			}
+		}
 		foreach ( $article->published_in AS $journal_qid ) {
 			$this->journal_qids[$journal_qid] = 1 ;
 		}

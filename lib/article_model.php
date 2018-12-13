@@ -5,6 +5,7 @@ class WikidataArticleEntry {
 	public $title = '' ;
 	public $author_names = array() ;
 	public $authors = array() ;
+	public $authors_stated_as = array() ;
 	public $published_in = array() ;
 	public $doi = '' ;
 	public $pmid = '' ;
@@ -41,6 +42,11 @@ class WikidataArticleEntry {
 				$this->authors[$num] = $author_q ;
 			} else {
 				$this->authors[] = $author_q ;
+			}
+			if ( isset($c->qualifiers) and isset($c->qualifiers->P1932) ) {
+				$tmp = $c->qualifiers->P1932 ;
+				$name = $tmp[0]->datavalue->value ;
+				$this->authors_stated_as[$author_q] = $name ;
 			}
 		}
 		ksort($this->authors) ;

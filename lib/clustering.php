@@ -61,7 +61,7 @@ function map_qids_to_articles( $clusters, $article_items ) {
 	return $full_clusters ;
 }
 
-function article_matches_cluster( $cluster, $article_item ) {
+function article_matches_cluster( $cluster, $article_item, $names_to_ignore ) {
 	// First double-check on author qids:
 	foreach ( $article_item->authors as $author ) {
 		if (isset($cluster->authors[$author])) return true;
@@ -70,6 +70,7 @@ function article_matches_cluster( $cluster, $article_item ) {
 	$journal_matches = 0 ;
 	$topic_matches = 0 ;
 	foreach ( $article_item->author_names as $name) {
+		if (in_array($name, $names_to_ignore)) continue ;
 		if (isset($cluster->author_names[$name])) $name_matches ++ ;
 	}
 	foreach ( $article_item->published_in as $journal) {
@@ -114,7 +115,7 @@ function cluster_articles ( $article_items, $names_to_ignore ) {
 		$q1 = $article->q ;
 		if ( isset($is_in_cluster[$q1]) ) continue ;
 		foreach ( $clusters AS $cluster ) {
-			if (article_matches_cluster( $cluster, $article )) {
+			if (article_matches_cluster( $cluster, $article, $names_to_ignore )) {
 				$is_in_cluster[$q1] = 1 ;
 				$cluster->addArticleItem($article) ;
 				break(1);
@@ -132,7 +133,7 @@ function cluster_articles ( $article_items, $names_to_ignore ) {
 			$q2 = $article2->q ;
 			if ( $q1 == $q2 ) continue ;
 			if ( isset($is_in_cluster[$q2]) ) continue ;
-			if (article_matches_cluster( $cluster, $article2 )) {
+			if (article_matches_cluster( $cluster, $article2, $names_to_ignore )) {
 				$cluster->addArticleItem($article2) ;
 			}
 		}
