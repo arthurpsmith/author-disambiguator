@@ -50,7 +50,7 @@ if ( $fuzzy ) {
 }
 $names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 #print "$names_strings" ;
-$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name }" ;
+$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name } LIMIT 900" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 
 // Potential authors
@@ -63,8 +63,11 @@ $j = json_decode ( file_get_contents ( $url ) ) ;
 $items_authors = array() ;
 foreach ( $j->query->search AS $a ) $items_authors[] = "wd:" . $a->title ;
 $sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31 wd:Q5 }" ;
-$items_authors = getSPARQLitems ( $sparql ) ;
+$items_individual_authors = getSPARQLitems ( $sparql ) ;
+$sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31/wdt:P279* wd:Q16334295 }" ;
+$items_collective_authors = getSPARQLitems ( $sparql ) ;
 
+$items_authors = array_merge( $items_individual_authors, $items_collective_authors ) ;
 
 
 // Load items
@@ -84,6 +87,7 @@ if ( $action == 'add' ) {
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
 	if ( $author_q == '' ) $author_q = $author_match ;
+	$papers = get_request ( 'papers' , array() ) ;
 
 	if ( $author_match == 'new' ) {
 		print "<br/>Quickstatements V1 commands for creating new author item:" ;
@@ -99,7 +103,6 @@ if ( $action == 'add' ) {
 		exit ( 0 ) ;
 	}
 
-	$papers = get_request ( 'papers' , array() ) ;
 	$commands = replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) ;
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
@@ -138,6 +141,9 @@ $clusters = cluster_articles ( $article_items, $names ) ;
 $name_counter = array() ;
 print "<h2>Potential publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
+if (count($article_items) == 900) {
+	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author</div>" ;
+}
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {

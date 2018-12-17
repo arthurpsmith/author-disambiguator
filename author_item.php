@@ -26,7 +26,7 @@ print get_common_header ( '' , 'Author Disambiguator' ) ;
 print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
-<input type='submit' class='btn btn-primary' name='doit' value='Get item' />
+<input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
 </form>" ;
 
 if ( $author_qid == '' ) {
@@ -42,8 +42,8 @@ $items_papers = getSPARQLitems ( $sparql ) ;
 // Load items
 $wil = new WikidataItemList ;
 $to_load = array() ;
-foreach ( $items_papers AS $q ) $to_load[] = $q ;
 $toload[] = $author_qid ;
+foreach ( $items_papers AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
 print "<form method='post' class='form' target='_blank'>
@@ -66,6 +66,21 @@ foreach ( $items_papers AS $q ) {
 $wil->loadItems ( $to_load ) ;
 
 usort( $article_items, 'WikidataArticleEntry::dateCompare' ) ;
+
+$author_item = $wil->getItem ( $author_qid ) ;
+if ( !isset($author_item) )  {
+	print "<h2>Warning: $author_qid not found!</h2>" ;
+	print_footer() ;
+	exit ( 0 ) ;
+}
+print "<h2>" . $author_item->getLabel() . "</h2>" ;
+print "<div>" ;
+print "<a target='_blank' href='https://www.wikidata.org/wiki/$author_qid'>Wikidata Item</a>" ;
+print ' | ' ;
+print "<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid'>Scholia Profile</a>" ;
+print ' | ' ;
+print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
+print '</div>' ;
 
 // Publications
 $name_counter = array() ;
