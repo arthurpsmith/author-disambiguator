@@ -171,7 +171,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$q_authors = array() ;
 		foreach ( $article->authors AS $num => $qt ) {
 			$i2 = $wil->getItem ( $qt ) ;
-			$q_authors[] = "[$num]<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+			$q_authors[] = "[$num]<a href='author_item.php?id=" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
 		}
 		$author_entity_list = implode ( ', ' , $q_authors ) ;
 
@@ -204,7 +204,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			foreach ( $article->topics AS $qt ) {
 				$i2 = $wil->getItem($qt) ;
 				if ( !isset($i2) ) continue ;
-				$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+				$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:red'>" . $i2->getLabel() . "</a>" ;
 			}
 			print implode ( '; ' , $topics ) ;
 		}

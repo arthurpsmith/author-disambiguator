@@ -90,7 +90,7 @@ foreach ( $article_items AS $article ) {
 
 	$out = array() ;
 	foreach ( $article->author_names AS $num => $a ) {
-		$out[] = "[$num]<a href='/index.php?name=" . urlencode($a) . "'>$a</a>" ;
+		$out[] = "[$num]<a href='index.php?name=" . urlencode($a) . "'>$a</a>" ;
 			$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 	}
 	$author_string_list = implode ( ', ' , $out ) ;
@@ -98,7 +98,12 @@ foreach ( $article_items AS $article ) {
 	$q_authors = array() ;
 	foreach ( $article->authors AS $num => $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
-		$q_authors[] = "[$num]<a href='?id=" . $i2->getQ() . "' style='color:green'>" . $i2->getLabel() . "</a>" ;
+		$label = $i2->getLabel() ;
+		if ( $qt == $author_qid ) {
+			$q_authors[] = "[$num]<b>$label</b>" ;
+		} else {
+			$q_authors[] = "[$num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		}
 	}
 	$author_entity_list = implode ( ', ' , $q_authors ) ;
 
@@ -129,7 +134,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$i2 = $wil->getItem($qt) ;
 			if ( !isset($i2) ) continue ;
-			$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+			$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:red'>" . $i2->getLabel() . "</a>" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
@@ -149,7 +154,7 @@ print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='/index.php?name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
+	print "<li><a href='index.php?name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
 }
 print "</ul>" ;
 
