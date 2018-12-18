@@ -196,11 +196,11 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		print "<td style='font-size:9pt'>$published_in_list</td>" ;
                 print "<td style='font-size:9pt'>" ;
 		if ( $article->doi != '' ) {
-			print "DOI: $article->doi" ;
+			print "DOI: <a target='_blank' href='https://doi.org//$article->doi'>$article->doi</a>" ;
 			print "&nbsp;[<a href='" . getORCIDurl ( $article->doi ) . "'>ORCID</a>]<br/>" ;
 		}
 		if ( $article->pmid != '' ) {
-			print "PubMed: $article->pmid" ;
+			print "PubMed: <a target='_blank' href='https://www.ncbi.nlm.nih.gov/pubmed/?term=$article->pmid'>$article->pmid</a>" ;
 			print "&nbsp;[<a href='" . getORCIDurl ( $article->pmid ) . "'>ORCID</a>]<br/>" ;
 		}
 		print "</td>" ;
