@@ -56,12 +56,15 @@ $items_papers = getSPARQLitems ( $sparql ) ;
 // Potential authors
 $no_middle = preg_replace('/\s*[A-Z]\. /',' ',$name) ;
 #print "<pre>$no_middle</pre>" ;
-$url = "https://www.wikidata.org/w/api.php?action=query&list=search&format=json&srsearch=" . urlencode($no_middle) ;
+$url = "https://www.wikidata.org/w/api.php?action=query&list=search&srlimit=500&format=json&srsearch=" . urlencode($no_middle) ;
 #print "<pre>$url</pre>" ;
 $j = json_decode ( file_get_contents ( $url ) ) ;
 #print "<pre>" ; print_r ( $j ) ; print "</pre>" ;
 $items_authors = array() ;
 foreach ( $j->query->search AS $a ) $items_authors[] = "wd:" . $a->title ;
+if (count($items_authors) == 500) {
+	print "<div><b>Warning:</b> common name - some Wikidata items may be missing from the potential authors list below</div>";
+} ;
 $sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31 wd:Q5 }" ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
 $sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31/wdt:P279* wd:Q16334295 }" ;
