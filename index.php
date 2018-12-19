@@ -234,32 +234,29 @@ foreach ( $items_authors AS $q ) {
 	$q = "Q$q" ;
 	$i = $wil->getItem ( $q ) ;
 	if ( !isset($i) ) continue ;
-//		$url = "http://tools.wmflabs.org/autodesc?q=$qlang=en&mode=long&links=text&format=json" ;
-//		$j = json_decode ( file_get_contents ( $url ) ) ;
 	print "<tr>" ;
 	print "<td><input type='radio' name='author_match' value='$q' /></td>" ;
 	print "<td><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $i->getLabel() . "</a></td>" ;
 	print "<td>" . $i->getDesc() . "</td>" ;
-//		print "<td>" . $j->result . "</td>" ;
 	print "</tr>" ;
 }
-print "<tr><td><input type='radio' name='author_match' value='manual' /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td>Other Q number of this author</td></tr>" ;
-print "<tr><td><input type='radio' name='author_match' value='new' checked /></td><td>Create new item</td><td></td></tr>" ;
+print "<tr><td><input type='radio' name='author_match' value='manual' checked /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td>Other Q number of this author</td></tr>" ;
 print "</tbody></table>" ;
-print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for $name</a> | Author has ORCID ID: <input type='text' name='orcid_author' placeholder='xxxx-xxxx-xxxx-xxxx' /></div>" ;
 
-//$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P31 wd:Q5 ; rdfs:label ?label. filter(str(?label) = ?name ) }" ;
-//print "<pre>$sparql</pre>" ;
-#$items = getSPARQLitems ( $sparql ) ;
-#$wil->loadItems ( $items ) ;
-
-
-// https://orcid.org/orcid-search/quick-search?searchQuery=%2210.1371/journal.ppat.1002567%22
-
-print "<div style='margin:20px'><input type='submit' name='doit' value='Generate Quickstatements Commands' class='btn btn-primary' /></div>" ;
+print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to link works to author' class='btn btn-primary' /></div>" ;
 print "</form>" ;
 
+print "<h2>New Author Item</h2>" ;
+print '(if the author you are looking for is not listed above and otherwise not yet in Wikidata)';
 
+print "<form method='post' class='form form-inline' target='_blank' action='?'>
+<input type='hidden' name='action' value='add' />
+<input type='hidden' name='author_match' value='new'/>
+<div>Author name: <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' /></div>";
+print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for $name</a> | Author has ORCID ID: <input type='text' name='orcid_author' placeholder='xxxx-xxxx-xxxx-xxxx' /></div>" ;
+print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to create author item' class='btn btn-primary' /></div>" ;
+print "</form>" ;
+print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
 
 arsort ( $name_counter , SORT_NUMERIC ) ;
 print "<h2>Common names in these papers</h2>" ;
