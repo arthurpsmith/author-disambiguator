@@ -7,10 +7,32 @@ class AuthorData {
 	public $coauthor_names = array() ;
 	public $journal_qids = array() ;
 	public $topic_qids = array() ;
+	public $employer_qids = array() ;
+	public $orcid = '' ;
+	public $isni = '' ;
+	public $rsrchrid = '' ;
 
 	public function __construct ( $author_item ) {
 		$this->qid = $author_item->getQ() ;
-# Add ORCID, ISNI, employer, etc.
+		$x = $author_item->getStrings ( 'P496' ) ;
+		if ( count($x) > 0 ) {
+			$this->orcid = $x[0] ;
+		}
+		$x = $author_item->getStrings ( 'P213' ) ;
+		if ( count($x) > 0 ) {
+			$this->isni = $x[0] ;
+		}
+		$x = $author_item->getStrings ( 'P1053' ) ;
+		if ( count($x) > 0 ) {
+			$this->rsrchrid = $x[0] ;
+		}
+		if ( $author_item->hasClaims('P108') ) { // employer
+			$claims = $author_item->getClaims('P108') ;
+			foreach ( $claims AS $c ) {
+				$q = $author_item->getTarget ( $c ) ;
+				$this->employer_qids[] = $q ;
+			}
+		}
 	}
 
 	public function add_coauthors ( $coauthors ) {

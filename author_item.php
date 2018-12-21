@@ -46,10 +46,6 @@ $to_load[] = $author_qid ;
 foreach ( $items_papers AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
-print "<form method='post' class='form' target='_blank'>
-<input type='hidden' name='action' value='add' />
-<input type='hidden' name='id' value='$author_qid' />" ;
-
 $to_load = array() ;
 $article_items = array();
 foreach ( $items_papers AS $q ) {
@@ -89,14 +85,10 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 
 print "<div class='group'>" ;
 ?>
-<div>
-<a href='#' onclick='$($(this).parents("div.group")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
-<a href='#' onclick='$($(this).parents("div.group")).find("input[type=checkbox]").prop("checked",false);return false'>Uncheck all</a>
-</div>
 <?PHP
 print "<table class='table table-striped table-condensed'>" ;
 print "<tbody>" ;
-print "<tr><th></th><th>Title</th>" ;
+print "<tr><th>Title</th>" ;
 print "<th>Author Name Strings</th><th>Identified Authors</th>" ;
 print "<th>Published In</th><th>Identifier(s)</th>" ;
 print "<th>Topic</th><th>Published Date</th></tr>" ;
@@ -130,7 +122,6 @@ foreach ( $article_items AS $article ) {
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
 	print "<tr>" ;
-	print "<td><input type='checkbox' name='papers[$q]' value='$q' /></td>" ;
 	print "<td style='width:20%;font-size:10pt'><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $article->title . "</a></td>" ;
 	print "<td style='width:30%;font-size:9pt'>$author_string_list</td>" ;
 	print "<td style='width:30%;font-size:9pt'>$author_entity_list</td>" ;
@@ -161,8 +152,6 @@ foreach ( $article_items AS $article ) {
 }
 print "</tbody></table></div>" ;
 
-print "<div style='margin:20px'><input type='submit' name='doit' value='Generate Quickstatements Commands' class='btn btn-primary' /></div>" ;
-print "</form>" ;
 
 arsort ( $name_counter , SORT_NUMERIC ) ;
 print "<h2>Common names in these papers</h2>" ;

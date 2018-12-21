@@ -81,6 +81,11 @@ foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
 $potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil ) ;
+$to_load = array() ;
+foreach ($potential_author_data AS $author_data) {
+	foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
+}
+$wil->loadItems ( $to_load ) ;
 
 $delete_statements = array() ;
 if ( $action == 'add' ) {
@@ -254,7 +259,8 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 print "<h2>Potential author items</h2>" ;
 print "<table class='table table-striped table-condensed'>" ;
 print "<tbody>" ;
-print "<tr><th></th><th>Name</th><th>Description</th><th>Authored items</th></tr>" ;
+print "<tr><th></th><th>Name</th><th>Description</th><th>Authored items</th>" ;
+print "<th>Identifiers</th><th>Employer(s)</th></tr>" ;
 foreach ( $potential_author_data AS $q => $author_data ) {
 	$i = $wil->getItem ( $q ) ;
 	if ( !isset($i) ) continue ;
@@ -263,9 +269,26 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	print "<td><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a></td>" ;
 	print "<td>" . $i->getDesc() . "</td>" ;
 	print "<td>$author_data->article_count</td>" ;
-	print "</tr>" ;
+	print "<td>" ;
+	if ( $author_data->orcid != '' ) {
+		print "ORCID: <a target='_blank' href='https://orcid.org/$author_data->orcid'>$author_data->orcid</a><br/>" ;
+	}
+	if ( $author_data->isni != '' ) {
+		$isni = preg_replace('/\s+/', '', $author_data->isni) ;
+		print "ISNI: <a target='_blank' href='http://isni.org/$isni'>$author_data->isni</a><br/>" ;
+	}
+	if ( $author_data->rsrchrid != '' ) {
+		print "Researcher ID: <a target='_blank' href='https://www.researcherid.com/rid/$author_data->rsrchrid'>$author_data->rsrchrid</a><br/>" ;
+	}
+	print "</td><td>" ;
+	foreach ( $author_data->employer_qids AS $emp_qid ) {
+		$emp_item = $wil->getItem ( $emp_qid ) ;
+		if ( !isset($emp_item) ) continue ;
+		print "<a target='_blank' href='https://wikidata.org/wiki/$emp_qid'>" . $emp_item->getLabel() . "</a><br/>" ;
+	}
+	print "</td></tr>" ;
 }
-print "<tr><td><input type='radio' name='author_match' value='manual' checked /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td>Other Q number of this author</td><td></td></tr>" ;
+print "<tr><td><input type='radio' name='author_match' value='manual' checked /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td colspan='4'>Other Q number of this author</td></tr>" ;
 print "</tbody></table>" ;
 
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to link works to author' class='btn btn-primary' /></div>" ;
