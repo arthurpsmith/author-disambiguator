@@ -12,6 +12,7 @@ require_once ( __DIR__ . '/lib/article_model.php' ) ;
 require_once ( __DIR__ . '/lib/cluster.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
 require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
+require_once ( __DIR__ . '/lib/author_data.php' ) ;
 
 function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
@@ -72,13 +73,14 @@ $items_collective_authors = getSPARQLitems ( $sparql ) ;
 
 $items_authors = array_merge( $items_individual_authors, $items_collective_authors ) ;
 
-
 // Load items
 $wil = new WikidataItemList ;
 $to_load = array() ;
 foreach ( $items_papers AS $q ) $to_load[] = $q ;
 foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
+
+$potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil ) ;
 
 $delete_statements = array() ;
 if ( $action == 'add' ) {
@@ -139,6 +141,16 @@ $wil->loadItems ( $to_load ) ;
 
 $clusters = cluster_articles ( $article_items, $names ) ;
 
+$potential_authors_by_cluster_label = array();
+foreach ($clusters AS $label => $cluster ) {
+	$potential_authors_by_cluster_label[$label]  = array();
+	foreach ( $potential_author_data AS $author_data ) {
+		if (author_matches_cluster( $cluster, $author_data, $names )) {
+			$potential_authors_by_cluster_label[$label][$author_data->qid] = 1 ;
+		}
+	}
+}
+
 #print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
 // Publications
 $name_counter = array() ;
@@ -152,6 +164,16 @@ $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<div class='group'>" ;
 	print "<h3>$cluster_name</h3>" ;
+	$potential_authors = array_keys($potential_authors_by_cluster_label[$cluster_name]);
+	foreach ( $potential_authors AS $potential_qid ) {
+		$author_data = $potential_author_data[$potential_qid] ;
+		$potential_item = $wil->getItem ( $potential_qid ) ;
+		print "Matched potential author: <a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
+		print " - author of $author_data->article_count items" ;
+	}
+	if (count($potential_authors) > 1) {
+		print "<div><b>Warning:</b> Multiple potential authors match this cluster!</div>" ;
+	}
 ?>
 <div>
 <a href='#' onclick='$($(this).parents("div.group")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
@@ -164,7 +186,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<th>Author Name Strings</th><th>Identified Authors</th>" ;
 	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th></tr>" ;
-	foreach ( $cluster AS $article ) {
+	foreach ( $cluster->article_list AS $article ) {
 		$q = $article->q ;
 
 		$out = array() ;
@@ -227,23 +249,23 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	$is_first_group = false ;
 }
 
-
 // Potential authors
 #print "<pre>" ; print_r ( $items_authors ) ; print "</pre>" ;
 print "<h2>Potential author items</h2>" ;
 print "<table class='table table-striped table-condensed'>" ;
 print "<tbody>" ;
-foreach ( $items_authors AS $q ) {
-	$q = "Q$q" ;
+print "<tr><th></th><th>Name</th><th>Description</th><th>Authored items</th></tr>" ;
+foreach ( $potential_author_data AS $q => $author_data ) {
 	$i = $wil->getItem ( $q ) ;
 	if ( !isset($i) ) continue ;
 	print "<tr>" ;
 	print "<td><input type='radio' name='author_match' value='$q' /></td>" ;
-	print "<td><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $i->getLabel() . "</a></td>" ;
+	print "<td><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a></td>" ;
 	print "<td>" . $i->getDesc() . "</td>" ;
+	print "<td>$author_data->article_count</td>" ;
 	print "</tr>" ;
 }
-print "<tr><td><input type='radio' name='author_match' value='manual' checked /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td>Other Q number of this author</td></tr>" ;
+print "<tr><td><input type='radio' name='author_match' value='manual' checked /></td><td><input type='text' name='q_author' placeholder='Qxxx' /></td><td>Other Q number of this author</td><td></td></tr>" ;
 print "</tbody></table>" ;
 
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to link works to author' class='btn btn-primary' /></div>" ;

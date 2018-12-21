@@ -42,7 +42,7 @@ $items_papers = getSPARQLitems ( $sparql ) ;
 // Load items
 $wil = new WikidataItemList ;
 $to_load = array() ;
-$toload[] = $author_qid ;
+$to_load[] = $author_qid ;
 foreach ( $items_papers AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 

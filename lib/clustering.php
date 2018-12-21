@@ -49,16 +49,37 @@ function map_qids_to_articles( $clusters, $article_items ) {
 	foreach ( $article_items AS $article ) {
 		$articles_by_qid[$article->q] = $article ;
 	}
-	$full_clusters = array() ;
 	foreach ( $clusters AS $label => $cluster ) {
-		$full_cluster = array() ;
+		$article_list = array() ;
 		foreach ( array_keys($cluster->articles) AS $article_qid ) {
-			$full_cluster[] = $articles_by_qid[$article_qid] ;
+			$article_list[] = $articles_by_qid[$article_qid] ;
 		}
-		usort( $full_cluster, 'WikidataArticleEntry::dateCompare' ) ;
-		$full_clusters[$label] = $full_cluster ;
+		usort( $article_list, 'WikidataArticleEntry::dateCompare' ) ;
+		$cluster->article_list = $article_list ;
 	}
-	return $full_clusters ;
+	return $clusters ;
+}
+
+function author_matches_cluster( $cluster, $author_data, $names_to_ignore ) {
+	if (isset($cluster->authors[$author_data->qid])) return true;
+	foreach ( $author_data->coauthors as $coauthor ) {
+		if (isset($cluster->authors[$coauthor])) return true;
+	}
+	$name_matches = 0 ;
+	$journal_matches = 0 ;
+	$topic_matches = 0 ;
+	foreach ( $author_data->coauthor_names as $name) {
+		if (in_array($name, $names_to_ignore)) continue ;
+		if (isset($cluster->author_names[$name])) $name_matches ++ ;
+	}
+	foreach ( $author_data->journal_qids as $journal) {
+		if (isset($cluster->journal_qids[$journal])) $journal_matches ++ ;
+	}
+	foreach ( $author_data->topic_qids as $topic) {
+		if (isset($cluster->topic_qids[$topic])) $topic_matches ++ ;
+	}
+	$match = (($name_matches >= 2) || (($name_matches == 1) && ($journal_matches + $topic_matches > 0))) ;
+	return $match;
 }
 
 function article_matches_cluster( $cluster, $article_item, $names_to_ignore ) {
@@ -150,7 +171,6 @@ function cluster_articles ( $article_items, $names_to_ignore ) {
 	if ( count($cluster->articles) > 0 ) {
 		$clusters['Misc'] = $cluster ;
 	}
-	print("<br/>") ;
 
 	return map_qids_to_articles($clusters, $article_items);
 }
