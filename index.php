@@ -27,6 +27,7 @@ $action = get_request ( 'action' , '' ) ;
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
 $fuzzy_checked = $fuzzy ? 'checked' : '' ;
+$filter = get_request ( 'filter', '' ) ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 
@@ -34,7 +35,9 @@ print "<form method='get' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<input type='submit' class='btn btn-primary' name='doit' value='Look for author' />
+<input type='submit' class='btn btn-primary' name='doit' value='Look for author' /><br />
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
 
 if ( $name == '' ) {
@@ -51,7 +54,8 @@ if ( $fuzzy ) {
 }
 $names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 #print "$names_strings" ;
-$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name } LIMIT 900" ;
+$filter_in_context = "; $filter . ";
+$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 900" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 
 // Potential authors
@@ -207,6 +211,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$q_authors = array() ;
 		foreach ( $article->authors AS $num => $qt ) {
 			$i2 = $wil->getItem ( $qt ) ;
+			if ( !isset($i2) ) continue ;
 			$q_authors[] = "[$num]<a href='author_item.php?id=" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
 		}
 		$author_entity_list = implode ( ', ' , $q_authors ) ;
