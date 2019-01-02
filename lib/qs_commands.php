@@ -94,4 +94,37 @@ function revert_authors_qs_commands ( $wil, $papers, $author_q ) {
 	return $commands ;
 }
 
+// Quickstatements V1 commands to move author item to a different author:
+function move_authors_qs_commands ( $wil, $papers, $author_q, $new_author_q ) {
+	$commands = array() ;
+	$author_item = $wil->getItem ( $author_q ) ;
+	foreach ( $papers AS $paperq ) {
+		$i = $wil->getItem ( $paperq ) ;
+		if ( !isset($i) ) continue ;
+		$authors = $i->getClaims ( 'P50' ) ;
+		foreach ( $authors AS $a ) {
+			$q = $i->getTarget ( $a ) ;
+			if ($q != $author_q) continue;
+			$add = "$paperq\tP50\t$new_author_q";
+
+			$quals = $i->statementQualifiersToQS ( $a ) ;
+			if (count($quals) > 0) {
+				$add = $add . "\t" . implode("\t", $quals) ;
+			}
+			
+			$refs = $i->statementReferencesToQS( $a ) ;
+			if ( count($refs) > 0 ) {
+				foreach ( $refs AS $ref ) {
+					$commands[] = $add . "\t" . implode("\t", $ref) ;
+				}
+			} else {
+				$commands[] = $add ;
+			}
+			
+			$commands[] = "-STATEMENT\t" . $a->id ;
+		}
+	}
+	return $commands ;
+}
+
 ?>
