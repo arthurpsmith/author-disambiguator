@@ -46,4 +46,52 @@ function replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) {
 	return $commands ;
 }
 
+// Commands for reverting author name to author name strings (when assigned to wrong author item):
+function revert_authors_qs_commands ( $wil, $papers, $author_q ) {
+	$commands = array() ;
+	$author_item = $wil->getItem ( $author_q ) ;
+	foreach ( $papers AS $paperq ) {
+		$i = $wil->getItem ( $paperq ) ;
+		if ( !isset($i) ) continue ;
+		$authors = $i->getClaims ( 'P50' ) ;
+		foreach ( $authors AS $a ) {
+			$q = $i->getTarget ( $a ) ;
+			if ($q != $author_q) continue;
+			$num = "" ;
+			$name = "" ;
+			if ( isset($a->qualifiers) ) {
+				if ( isset($a->qualifiers->P1545) ) {
+					$tmp = $a->qualifiers->P1545 ;
+					$num = $tmp[0]->datavalue->value ;
+				}
+				if ( isset($a->qualifiers->P1932) ) {
+					$tmp = $a->qualifiers->P1932 ;
+					$name = $tmp[0]->datavalue->value ;
+				}
+			}
+			if ( $name == '' ) {
+				$name = $author_item->getLabel() ;
+			}
+			if ($name == '' ) {
+				print 'Warning: null author name label; skipping' ;
+				continue;
+			}
+			$add = "$paperq\tP2093\t\"$name\"" ;
+			if ( $num != "" ) $add .= "\tP1545\t\"$num\"" ;
+			
+			$refs = $i->statementReferencesToQS( $a ) ;
+			if ( count($refs) > 0 ) {
+				foreach ( $refs AS $ref ) {
+					$commands[] = $add . "\t" . implode("\t", $ref) ;
+				}
+			} else {
+				$commands[] = $add ;
+			}
+			
+			$commands[] = "-STATEMENT\t" . $a->id ;
+		}
+	}
+	return $commands ;
+}
+
 ?>
