@@ -39,7 +39,11 @@ class WikidataArticleEntry {
 			if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
 				$tmp = $c->qualifiers->P1545 ;
 				$num = $tmp[0]->datavalue->value ;
-				$this->authors[$num] = $author_q ;
+				if ( isset($this->authors[$num]) ) {
+					$this->authors["$num-$author_q"] = $author_q ;
+				} else {
+					$this->authors[$num] = $author_q ;
+				}
 			} else {
 				$this->authors[] = $author_q ;
 			}
