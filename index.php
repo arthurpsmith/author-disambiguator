@@ -231,7 +231,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		print "<td style='font-size:9pt'>$published_in_list</td>" ;
                 print "<td style='font-size:9pt'>" ;
 		if ( $article->doi != '' ) {
-			print "DOI: <a target='_blank' href='https://doi.org//$article->doi'>$article->doi</a>" ;
+			print "DOI: <a target='_blank' href='https://doi.org/$article->doi'>$article->doi</a>" ;
 			print "&nbsp;[<a href='" . getORCIDurl ( $article->doi ) . "'>ORCID</a>]<br/>" ;
 		}
 		if ( $article->pmid != '' ) {
