@@ -53,10 +53,96 @@ class NameModel {
 		$this->suffixes = $name_suffixes;
 	}
 
+	public function name_with_middles_and_suffixes() {
+		$name_parts = array_merge([$this->first_name],
+			$this->middle_names, [$this->last_name],
+			$this->suffixes);
+		return implode(' ', $name_parts);
+	}
+
+	public function name_with_middles() {
+		$name_parts = array_merge([$this->first_name],
+			$this->middle_names, [$this->last_name]);
+		return implode(' ', $name_parts);
+	}
+
+	public function name_with_middle_initials() {
+		$middle_initials = array_map('NameModel::to_initial', $this->middle_names);
+		$name_parts = array_merge([$this->first_name],
+			$middle_initials, [$this->last_name]);
+		return implode(' ', $name_parts);
+	}
+
+	public function name_with_middle_first_letters() {
+		$middle_initials = array_map(function($value) { return $value[0]; }, $this->middle_names);
+		$name_parts = array_merge([$this->first_name],
+			$middle_initials, [$this->last_name]);
+		return implode(' ', $name_parts);
+	}
+
+	public function first_last_name() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name;
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
+	public function first_last_suffixes() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name;
+		$name_parts[] = $this->last_name;
+		$name_parts = array_merge($name_parts, $this->suffixes);
+		return implode(' ', $name_parts);
+	}
+
+	public function first_initial_last_name() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name[0] . '.';
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
+	public function first_letter_last_name() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name[0] ;
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
 	public function default_search_strings() {
+		$search_strings = array();
+		$search_strings[$this->name_provided] = 1;
+		$search_strings[$this->name_with_middles_and_suffixes()] = 1;
+		$search_strings[$this->name_with_middles()] = 1;
+		$search_strings[$this->first_last_name()] = 1;
+		$search_strings[$this->first_last_suffixes()] = 1;
+		$search_strings[$this->name_with_middle_initials()] = 1;
+		$search_strings[$this->name_with_middle_first_letters()] = 1;
+		return array_keys($search_strings);
 	}
 
 	public function fuzzy_search_strings() {
+		$search_strings = $this->default_search_strings();
+		$search_strings[] = $this->first_initial_last_name();
+		$search_strings[] = $this->first_letter_last_name();
+		if (NameModel::is_initial($this->first_name)) {
+			foreach($this->middle_names AS $middle_name) {
+				$search_strings[] = $middle_name . ' ' . $this->last_name;
+				$search_strings[] = $middle_name[0] . '. ' . $this->last_name;
+				$search_strings[] = $middle_name[0] . ' ' . $this->last_name;
+			}
+		}
+		return $search_strings;
+	}
+
+	public static function is_initial($name_part) {
+		if (strlen($name_part) > 3) return false ;
+		if ($name_part[strlen($name_part)-1] == '.') return true ; // Ends in .
+		return (strlen($name_part) < 2) ; // Single letter
+	}
+
+	public static function to_initial($name_part) {
+		return $name_part[0] . '.' ;
 	}
 }
 ?>

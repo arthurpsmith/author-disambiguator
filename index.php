@@ -13,6 +13,7 @@ require_once ( __DIR__ . '/lib/cluster.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
 require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
 require_once ( __DIR__ . '/lib/author_data.php' ) ;
+require_once ( __DIR__ . '/lib/name_model.php' ) ;
 
 function getORCIDurl ( $s ) {
 	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
@@ -47,32 +48,32 @@ if ( $name == '' ) {
 
 
 // Publications
-$names = array ( $name ) ;
+$nm = new NameModel($name);
+$names = $nm->default_search_strings();
 if ( $fuzzy ) {
-	$names[] = preg_replace ( '/^([A-Z])\S+.*\s(\S+)$/' , '$1 $2' , $name ) ;
-	$names[] = preg_replace ( '/^([A-Z][a-z]+).*\s(\S+)$/' , '$1 $2' , $name ) ;
+	$names = $nm->fuzzy_search_strings();
 }
-$names_strings = '"' . implode ( '" "' , $names ) . '"' ;
-#print "$names_strings" ;
+$author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
+
+$languages_to_search = ['en', 'de', 'fr', 'es', 'nl'] ;
+$names_with_langs = array();
+foreach($languages_to_search AS $lang) {
+	foreach($names AS $name) {
+		$names_with_langs[] = '"' . $name . '"@' . $lang ;
+	}
+}
+$names_strings = implode ( ' ' , $names_with_langs ) ;
 $filter_in_context = "; $filter . ";
-$sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 900" ;
+$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 900" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 
 // Potential authors
-$no_middle = preg_replace('/\b[A-Z]\.? /',' ',$name) ;
-#print "<pre>$no_middle</pre>" ;
-$url = "https://www.wikidata.org/w/api.php?action=query&list=search&srlimit=500&format=json&srsearch=" . urlencode($no_middle) ;
-#print "<pre>$url</pre>" ;
-$j = json_decode ( file_get_contents ( $url ) ) ;
-#print "<pre>" ; print_r ( $j ) ; print "</pre>" ;
 $items_authors = array() ;
-foreach ( $j->query->search AS $a ) $items_authors[] = "wd:" . $a->title ;
-if (count($items_authors) == 500) {
-	print "<div><b>Warning:</b> common name - some Wikidata items may be missing from the potential authors list below</div>";
-} ;
-$sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31 wd:Q5 }" ;
+$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . }" ;
+#print $sparql ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
-$sparql = "SELECT ?q { VALUES ?q { " . implode ( ' ' , $items_authors ) . " } . ?q wdt:P31/wdt:P279* wd:Q16334295 }" ;
+$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . }" ;
+#print $sparql ;
 $items_collective_authors = getSPARQLitems ( $sparql ) ;
 
 $items_authors = array_merge( $items_individual_authors, $items_collective_authors ) ;
