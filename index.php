@@ -59,7 +59,7 @@ $sparql = "SELECT ?q { VALUES ?name { $names_strings } . ?q wdt:P2093 ?name $fil
 $items_papers = getSPARQLitems ( $sparql ) ;
 
 // Potential authors
-$no_middle = preg_replace('/\s*[A-Z]\. /',' ',$name) ;
+$no_middle = preg_replace('/\b[A-Z]\.? /',' ',$name) ;
 #print "<pre>$no_middle</pre>" ;
 $url = "https://www.wikidata.org/w/api.php?action=query&list=search&srlimit=500&format=json&srsearch=" . urlencode($no_middle) ;
 #print "<pre>$url</pre>" ;
@@ -178,7 +178,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$author_data = $potential_author_data[$potential_qid] ;
 		$potential_item = $wil->getItem ( $potential_qid ) ;
 		print "Matched potential author: <a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
-		print " - author of $author_data->article_count items" ;
+		print " - author of $author_data->article_count items<br/>" ;
 	}
 	if (count($potential_authors) > 1) {
 		print "<div><b>Warning:</b> Multiple potential authors match this cluster!</div>" ;
