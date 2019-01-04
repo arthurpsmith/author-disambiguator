@@ -58,8 +58,8 @@ $author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 $languages_to_search = ['en', 'de', 'fr', 'es', 'nl'] ;
 $names_with_langs = array();
 foreach($languages_to_search AS $lang) {
-	foreach($names AS $name) {
-		$names_with_langs[] = '"' . $name . '"@' . $lang ;
+	foreach($names AS $name_entry) {
+		$names_with_langs[] = '"' . $name_entry . '"@' . $lang ;
 	}
 }
 $names_strings = implode ( ' ' , $names_with_langs ) ;
