@@ -181,7 +181,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$i2 = $wil->getItem($qt) ;
 			if ( !isset($i2) ) continue ;
-			$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:red'>" . $i2->getLabel() . "</a>[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:red'>" . $i2->getLabel() . "</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
