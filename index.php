@@ -46,13 +46,54 @@ if ( $name == '' ) {
 	exit ( 0 ) ;
 }
 
-
 // Publications
 $nm = new NameModel($name);
 $names = $nm->default_search_strings();
 if ( $fuzzy ) {
 	$names = $nm->fuzzy_search_strings();
 }
+
+if ( $action == 'add' ) {
+	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<input type='hidden' name='action' value='import' />" ;
+	print "<input type='hidden' name='temporary' value='1' />" ;
+	print "<input type='hidden' name='openpage' value='1' />" ;
+	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
+	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
+	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
+	if ( $author_q == '' ) $author_q = $author_match ;
+	$papers = get_request ( 'papers' , array() ) ;
+
+	if ( $author_match == 'new' ) {
+		print "<br/>Quickstatements V1 commands for creating new author item:" ;
+		$commands = new_author_qs_commands ( $name, $orcid_author ) ;
+		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
+		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
+		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
+		print "</form>" ;
+		exit ( 0 ) ;
+	}
+	if ( $author_q == '' ) {
+		print "Sorry, can't find author" ;
+		exit ( 0 ) ;
+	}
+
+	$wil = new WikidataItemList ;
+	$to_load = array() ;
+	$to_load[] = $author_q ;
+	foreach ( $papers AS $q ) $to_load[] = $q ;
+	$wil->loadItems ( $to_load ) ;
+
+	$commands = replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) ;
+
+	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
+	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
+	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
+	print "</form>" ;
+	
+	exit ( 0 ) ;
+}
+
 $author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 
 $languages_to_search = ['en', 'de', 'fr', 'es', 'nl'] ;
@@ -91,43 +132,6 @@ foreach ($potential_author_data AS $author_data) {
 	foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
 }
 $wil->loadItems ( $to_load ) ;
-
-$delete_statements = array() ;
-if ( $action == 'add' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
-	print "<input type='hidden' name='action' value='import' />" ;
-	print "<input type='hidden' name='temporary' value='1' />" ;
-	print "<input type='hidden' name='openpage' value='1' />" ;
-	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
-	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
-	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
-	if ( $author_q == '' ) $author_q = $author_match ;
-	$papers = get_request ( 'papers' , array() ) ;
-
-	if ( $author_match == 'new' ) {
-		print "<br/>Quickstatements V1 commands for creating new author item:" ;
-		$commands = new_author_qs_commands ( $name, $orcid_author ) ;
-		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
-		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
-		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
-		print "</form>" ;
-		exit ( 0 ) ;
-	}
-	if ( $author_q == '' ) {
-		print "Sorry, can't find author" ;
-		exit ( 0 ) ;
-	}
-
-	$commands = replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) ;
-
-	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
-	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
-	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
-	print "</form>" ;
-	
-	exit ( 0 ) ;
-}
-
 
 print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='action' value='add' />
