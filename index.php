@@ -105,8 +105,11 @@ foreach($languages_to_search AS $lang) {
 }
 $names_strings = implode ( ' ' , $names_with_langs ) ;
 $filter_in_context = "; $filter . ";
-$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 900" ;
+$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 100" ;
+#print $sparql ;
 $items_papers = getSPARQLitems ( $sparql ) ;
+$limit_reached = (count($items_papers) == 100) ;
+$items_papers = array_unique( $items_papers );
 
 // Potential authors
 $items_authors = array() ;
@@ -116,8 +119,11 @@ $items_individual_authors = getSPARQLitems ( $sparql ) ;
 $sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . }" ;
 #print $sparql ;
 $items_collective_authors = getSPARQLitems ( $sparql ) ;
+$sparql = "SELECT DISTINCT ?q { ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 '$name' . }" ;
+#print $sparql ;
+$items_stated_as_authors = getSPARQLitems ( $sparql ) ;
 
-$items_authors = array_merge( $items_individual_authors, $items_collective_authors ) ;
+$items_authors = array_unique( array_merge( $items_individual_authors, $items_collective_authors, $items_stated_as_authors ) ) ;
 
 // Load items
 $wil = new WikidataItemList ;
@@ -131,6 +137,7 @@ $to_load = array() ;
 foreach ($potential_author_data AS $author_data) {
 	foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
 }
+$to_load = array_unique($to_load);
 $wil->loadItems ( $to_load ) ;
 
 print "<form method='post' class='form' target='_blank' action='?'>
@@ -151,6 +158,7 @@ foreach ( $items_papers AS $q ) {
 	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
 	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
 }
+$to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
 
 $clusters = cluster_articles ( $article_items, $names ) ;
@@ -170,7 +178,7 @@ foreach ($clusters AS $label => $cluster ) {
 $name_counter = array() ;
 print "<h2>Potential publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
-if (count($article_items) == 900) {
+if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author</div>" ;
 }
 
