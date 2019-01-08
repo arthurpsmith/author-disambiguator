@@ -1,12 +1,13 @@
 <?PHP
 
 // Quickstatements V1 commands for creating new author item:
-function new_author_qs_commands ( $name, $orcid_author ) {
+function new_author_qs_commands ( $name, $orcid_author, $viaf_author ) {
 	$commands = array() ;
 	$commands[] = "CREATE" ;
 	$commands[] = "LAST\tLen\t\"$name\""  ;
 	$commands[] = "LAST\tP31\tQ5"  ;
 	if ( $orcid_author != '' ) $commands[] = "LAST\tP496\t\"$orcid_author\"" ;
+	if ( $viaf_author != '' ) $commands[] = "LAST\tP214\t\"$viaf_author\"" ;
 	return $commands ;
 }
 

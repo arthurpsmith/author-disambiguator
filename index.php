@@ -59,6 +59,7 @@ if ( $action == 'add' ) {
 	print "<input type='hidden' name='temporary' value='1' />" ;
 	print "<input type='hidden' name='openpage' value='1' />" ;
 	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
+	$viaf_author = trim ( get_request ( 'viaf_author' , '' ) ) ;
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
 	if ( $author_q == '' ) $author_q = $author_match ;
@@ -66,7 +67,7 @@ if ( $action == 'add' ) {
 
 	if ( $author_match == 'new' ) {
 		print "<br/>Quickstatements V1 commands for creating new author item:" ;
-		$commands = new_author_qs_commands ( $name, $orcid_author ) ;
+		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author ) ;
 		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
 		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
 		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
@@ -298,6 +299,9 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	if ( $author_data->rsrchrid != '' ) {
 		print "Researcher ID: <a target='_blank' href='https://www.researcherid.com/rid/$author_data->rsrchrid'>$author_data->rsrchrid</a><br/>" ;
 	}
+	if ( $author_data->viaf != '' ) {
+		print "VIAF ID: <a target='_blank' href='https://viaf.org/viaf/$author_data->viaf'>$author_data->viaf</a><br/>" ;
+	}
 	print "</td><td>" ;
 	foreach ( $author_data->employer_qids AS $emp_qid ) {
 		$emp_item = $wil->getItem ( $emp_qid ) ;
@@ -320,6 +324,7 @@ print "<form method='post' class='form form-inline' target='_blank' action='?'>
 <input type='hidden' name='author_match' value='new'/>
 <div>Author name: <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' /></div>";
 print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for $name</a> | Author has ORCID ID: <input type='text' name='orcid_author' placeholder='xxxx-xxxx-xxxx-xxxx' /></div>" ;
+print "<div><a href='https://viaf.org/viaf/search?query=local.personalNames%20all%20%22$name' target='_blank'>Check VIAF for $name</a> | Author has VIAF ID: <input type='text' name='viaf_author' placeholder='xxxxxxxxxxxxxxxxxxxx' /></div>" ;
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to create author item' class='btn btn-primary' /></div>" ;
 print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;

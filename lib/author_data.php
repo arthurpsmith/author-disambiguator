@@ -11,6 +11,7 @@ class AuthorData {
 	public $orcid = '' ;
 	public $isni = '' ;
 	public $rsrchrid = '' ;
+	public $viaf = '' ;
 
 	public function __construct ( $author_item ) {
 		$this->qid = $author_item->getQ() ;
@@ -25,6 +26,10 @@ class AuthorData {
 		$x = $author_item->getStrings ( 'P1053' ) ;
 		if ( count($x) > 0 ) {
 			$this->rsrchrid = $x[0] ;
+		}
+		$x = $author_item->getStrings ( 'P214' ) ;
+		if ( count($x) > 0 ) {
+			$this->viaf = $x[0] ;
 		}
 		if ( $author_item->hasClaims('P108') ) { // employer
 			$claims = $author_item->getClaims('P108') ;
