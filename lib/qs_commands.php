@@ -24,12 +24,12 @@ function replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) {
 			$author_name = $a->mainsnak->datavalue->value ;
 			if ( !in_array ( $author_name , $names ) ) continue ;
 			$num = '' ;
-			if ( isset($a->qualifiers) and isset($a->qualifiers->P1545) ) {
-				$tmp = $a->qualifiers->P1545 ;
-				$num = $tmp[0]->datavalue->value ;
-			}
 			$add = "$paperq\tP50\t$author_q" ;
-			if ( $num != "" ) $add .= "\tP1545\t\"$num\"" ;
+
+			$quals = $i->statementQualifiersToQS ( $a ) ;
+			if (count($quals) > 0) {
+				$add = $add . "\t" . implode("\t", $quals) ;
+			}
 			
 			$add .= "\tP1932\t\"$author_name\"" ;
 			$refs = $i->statementReferencesToQS( $a ) ;
@@ -58,17 +58,18 @@ function revert_authors_qs_commands ( $wil, $papers, $author_q ) {
 		foreach ( $authors AS $a ) {
 			$q = $i->getTarget ( $a ) ;
 			if ($q != $author_q) continue;
-			$num = "" ;
+			$quals = $i->statementQualifiersToQS ( $a ) ;
 			$name = "" ;
-			if ( isset($a->qualifiers) ) {
-				if ( isset($a->qualifiers->P1545) ) {
-					$tmp = $a->qualifiers->P1545 ;
-					$num = $tmp[0]->datavalue->value ;
+			$name_qual_index = -1 ;
+			foreach ( $quals AS $index => $qual ) {
+				$matches = array();
+				if (preg_match('/^P1932\t"(.*)"$/', $qual, $matches)) {
+					$name = $matches[1];
+					$name_qual_index = $index ;
 				}
-				if ( isset($a->qualifiers->P1932) ) {
-					$tmp = $a->qualifiers->P1932 ;
-					$name = $tmp[0]->datavalue->value ;
-				}
+			}
+			if ( $name_qual_index >= 0 ) {
+				unset($quals[$name_qual_index]); // Remove stated as from qualifier list
 			}
 			if ( $name == '' ) {
 				$name = $author_item->getLabel() ;
@@ -78,7 +79,9 @@ function revert_authors_qs_commands ( $wil, $papers, $author_q ) {
 				continue;
 			}
 			$add = "$paperq\tP2093\t\"$name\"" ;
-			if ( $num != "" ) $add .= "\tP1545\t\"$num\"" ;
+			if (count($quals) > 0) {
+				$add = $add . "\t" . implode("\t", $quals) ;
+			}
 			
 			$refs = $i->statementReferencesToQS( $a ) ;
 			if ( count($refs) > 0 ) {
