@@ -12,11 +12,7 @@ require_once ( __DIR__ . '/lib/article_model.php' ) ;
 require_once ( __DIR__ . '/lib/cluster.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
 require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
-
-function print_footer () {
-	print "<hr/><a href='https://github.com/arthurpsmith/author-disambiguator/issues' target='_blank'>Feedback</a><br/><a href='https://github.com/arthurpsmith/author-disambiguator/'>Source and documentation (at github)</a><br/>" ;
-	print get_common_footer() ;
-}
+require_once ( __DIR__ . '/lib/display_code.php' ) ;
 
 $action = get_request ( 'action' , '' ) ;
 $author_qid = get_request( 'id', '' ) ;
@@ -103,7 +99,7 @@ if ( !isset($author_item) )  {
 }
 print "<h2>" . $author_item->getLabel() . "</h2>" ;
 print "<div>" ;
-print "<a target='_blank' href='https://www.wikidata.org/wiki/$author_qid'>Wikidata Item</a>" ;
+print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid'>Scholia Profile</a>" ;
 print ' | ' ;
@@ -157,13 +153,13 @@ foreach ( $article_items AS $article ) {
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
-		if ( isset($i2) ) $published_in[] = $i2->getLabel() ;
+		if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
 	print "<tr>" ;
 	print "<td><input type='checkbox' name='papers[$q]' value='$q'/></td>" ;
-	print "<td style='width:20%;font-size:10pt'><a href='//www.wikidata.org/wiki/$q' target='_blank'>" . $article->title . "</a></td>" ;
+	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
 	print "<td style='width:30%;font-size:9pt'>$author_string_list</td>" ;
 	print "<td style='width:30%;font-size:9pt'>$author_entity_list</td>" ;
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
@@ -181,7 +177,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$i2 = $wil->getItem($qt) ;
 			if ( !isset($i2) ) continue ;
-			$topics[] = "<a href='https://www.wikidata.org/wiki/" . $i2->getQ() . "' target='_blank' style='color:red'>" . $i2->getLabel() . "</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
