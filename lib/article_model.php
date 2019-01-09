@@ -12,7 +12,10 @@ class WikidataArticleEntry {
 	public $topics = array() ;
 	public $publication_date = '';
 
-	public function __construct ( $item ) {
+	public function __construct ( $item = NULL ) {
+		if (! isset($item) ) {
+			return ;
+		}
 		$this->q = $item->getQ() ;
 
 		$title = $item->getStrings ( 'P1476' ) ;
@@ -95,4 +98,135 @@ class WikidataArticleEntry {
 		return ($adate > $bdate) ? -1 : 1 ;
 	}
 }
+
+function item_id_from_uri ( $item_uri ) {
+	return preg_replace( ' /http:\/\/www.wikidata.org\/entity\//', '', $item_uri );
+}
+
+function prepend_q ( $id ) {
+	return 'Q'.preg_replace('/\D/','',"$id") ;
+}
+
+function generate_article_entries($id_list) {
+	$id_uris = array_map(function($id) { return "wd:" . prepend_q($id); }, $id_list);
+
+	$batch_size = 50 ;
+	$batches = [ [] ] ;
+	foreach ( $id_uris AS $k => $v ) {
+		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
+		$batches[count($batches)-1][$k] = $v ;
+	}
+
+	$article_entries = array();
+	foreach ( $batches as $batch ) {
+		$new_article_entries = generate_entries_for_batch($batch);
+		$article_entries = array_merge($article_entries, $new_article_entries);
+	}
+	return $article_entries;
+}
+
+function generate_entries_for_batch( $uri_list ) {
+	$id_uris = implode(' ', $uri_list);
+	$keyed_article_entries = array() ;
+
+	$sparql = "SELECT ?q ?qLabel ?title ?published_in ?doi ?pmid ?topic ?pub_date WHERE {
+  VALUES ?q { $id_uris } .
+  OPTIONAL { ?q wdt:P1476 ?title } .
+  OPTIONAL { ?q wdt:P1433 ?published_in } .
+  OPTIONAL { ?q wdt:P356 ?doi } .
+  OPTIONAL { ?q wdt:P698 ?pmid }.
+  OPTIONAL { ?q wdt:P921 ?topic }.
+  OPTIONAL { ?q wdt:P577 ?pub_date }.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
+}" ;
+	$query_result = getSPARQL( $sparql ) ;
+	$bindings = $query_result->results->bindings ;
+	foreach ( $bindings AS $binding ) {
+		$qid = item_id_from_uri($binding->q->value) ;
+		$article_entry = NULL ;
+		if (isset ( $keyed_article_entries[$qid] ) ) {
+			$article_entry = $keyed_article_entries[$qid] ;
+		} else {
+			$article_entry = new WikidataArticleEntry();
+			$article_entry->q = $qid ;
+			$keyed_article_entries[$qid] = $article_entry ;
+		}
+		if ( isset( $binding->title ) ) {
+			$article_entry->title = $binding->title->value ;
+		} else if ( isset( $binding->qLabel ) ) {
+			$article_entry->title = $binding->qLabel->value ;
+		}
+		if ( isset( $binding->published_in ) ) {
+			$article_entry->published_in[] = item_id_from_uri( $binding->published_in->value );
+		}
+		if ( isset( $binding->doi ) ) {
+			$article_entry->doi = $binding->doi->value ;
+		}
+		if ( isset( $binding->pmid ) ) {
+			$article_entry->pmid = $binding->pmid->value ;
+		}
+		if ( isset( $binding->topic ) ) {
+			$article_entry->topics[] = item_id_from_uri( $binding->topic->value );
+		}
+		if ( isset( $binding->pub_date ) ) {
+			$article_entry->publication_date = '+' . $binding->pub_date->value ; // Prepend '+' to match what wikidata API returns
+		}
+	}
+
+	$sparql = "SELECT ?q ?name_string ?ordinal WHERE {
+  VALUES ?q { $id_uris } .
+  ?q p:P2093 ?name_statement .
+  ?name_statement ps:P2093 ?name_string .
+  OPTIONAL { ?name_statement pq:P1545 ?ordinal } .
+}" ;
+	$query_result = getSPARQL( $sparql ) ;
+	$bindings = $query_result->results->bindings ;
+	foreach ( $bindings AS $binding ) {
+		$qid = item_id_from_uri($binding->q->value) ;
+		$article_entry = $keyed_article_entries[$qid] ;
+		$name = $binding->name_string->value ;
+		if ( isset( $binding->ordinal ) ) {
+			$num = $binding->ordinal->value ;
+			$article_entry->author_names[$num] = $name ;
+		} else {
+			$article_entry->author_names[] = $name ;
+		}
+	}
+
+	$sparql = "SELECT ?q ?author ?stated_as ?ordinal WHERE {
+  VALUES ?q { $id_uris } .
+  ?q p:P50 ?author_statement .
+  ?author_statement ps:P50 ?author .
+  OPTIONAL { ?author_statement pq:P1932 ?stated_as } .
+  OPTIONAL { ?author_statement pq:P1545 ?ordinal } .
+}" ;
+	$query_result = getSPARQL( $sparql ) ;
+	$bindings = $query_result->results->bindings ;
+	foreach ( $bindings AS $binding ) {
+		$qid = item_id_from_uri($binding->q->value) ;
+		$article_entry = $keyed_article_entries[$qid] ;
+		$author_q = item_id_from_uri($binding->author->value) ;
+		if ( isset( $binding->ordinal ) ) {
+			$num = $binding->ordinal->value ;
+			if ( isset ( $article_entry->authors[$num] ) ) {
+				$article_entry->authors["$num-$author_q"] = $author_q ;
+			} else {
+				$article_entry->authors[$num] = $author_q ;
+			}
+		} else {
+			$article_entry->authors[] = $author_q ;
+		}
+		if ( isset( $binding->stated_as ) ) {
+			$article_entry->authors_stated_as[$author_q] = $binding->stated_as->value ;
+		}
+	}
+
+	foreach( $keyed_article_entries AS $article_entry ) {
+		ksort($article_entry->author_names) ;
+		ksort($article_entry->authors) ;
+	}
+
+	return $keyed_article_entries;
+}
+
 ?>

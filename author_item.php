@@ -71,22 +71,16 @@ $items_papers = getSPARQLitems ( $sparql ) ;
 // Load items
 $to_load = array() ;
 $to_load[] = $author_qid ;
-foreach ( $items_papers AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
+$article_items = generate_article_entries( $items_papers );
 $to_load = array() ;
-$article_items = array();
-foreach ( $items_papers AS $q ) {
-	$i = $wil->getItem ( $q ) ;
-	if ( !isset($i) ) continue ;
-
-	$article = new WikidataArticleEntry( $i ) ;
-	$article_items[] = $article ;
-
+foreach ( $article_items AS $article ) {
 	foreach ( $article->authors AS $auth ) $to_load[] = $auth ;
 	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
 	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
 }
+$to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
 
 usort( $article_items, 'WikidataArticleEntry::dateCompare' ) ;

@@ -21,6 +21,9 @@ $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
 $fuzzy_checked = $fuzzy ? 'checked' : '' ;
 $filter = get_request ( 'filter', '' ) ;
+$article_limit = get_request ( 'limit', '' ) ;
+if ($article_limit == '' ) $article_limit = 500 ;
+$limit_options = [10, 50, 200, 500] ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 
@@ -28,7 +31,14 @@ print "<form method='get' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<input type='submit' class='btn btn-primary' name='doit' value='Look for author' /><br />
+<div style='margin:20px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
+Limit: <select name='limit'>" ;
+foreach ($limit_options AS $limit_option) {
+	print "<option value='$limit_option'" ;
+	if ($article_limit == $limit_option) print ' selected' ;
+	print ">$limit_option</option>" ;
+}
+print "</select><br />
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
@@ -98,10 +108,10 @@ foreach($languages_to_search AS $lang) {
 }
 $names_strings = implode ( ' ' , $names_with_langs ) ;
 $filter_in_context = "; $filter . ";
-$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT 100" ;
+$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT $article_limit" ;
 #print $sparql ;
 $items_papers = getSPARQLitems ( $sparql ) ;
-$limit_reached = (count($items_papers) == 100) ;
+$limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
 // Potential authors
@@ -121,7 +131,6 @@ $items_authors = array_unique( array_merge( $items_individual_authors, $items_co
 // Load items
 $wil = new WikidataItemList ;
 $to_load = array() ;
-foreach ( $items_papers AS $q ) $to_load[] = $q ;
 foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
@@ -139,15 +148,9 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
 $to_load = array() ;
-$article_items = array();
-foreach ( $items_papers AS $q ) {
-	$i = $wil->getItem ( $q ) ;
-	if ( !isset($i) ) continue ;
-
-	$article = new WikidataArticleEntry( $i ) ;
-	$article_items[] = $article ;
-
-	foreach ( $article->authors AS $auth ) $to_load[] = $auth ;
+$article_items = generate_article_entries( $items_papers );
+foreach ( $article_items AS $article ) {
+	foreach ( $article->authors AS $auth) $to_load[] = $auth ;
 	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
 	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
 }
@@ -216,9 +219,11 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		
 		$q_authors = array() ;
 		foreach ( $article->authors AS $num => $qt ) {
+//			$stated_as = $article->authors_stated_as[$qt] ;
 			$i2 = $wil->getItem ( $qt ) ;
 			if ( !isset($i2) ) continue ;
-			$q_authors[] = "[$num]<a href='author_item.php?id=" . $i2->getQ() . "' target='_blank' style='color:green'>" . $i2->getLabel() . "</a>" ;
+			$label = $i2->getLabel() ;
+			$q_authors[] = "[$num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		$author_entity_list = implode ( ', ' , $q_authors ) ;
 
