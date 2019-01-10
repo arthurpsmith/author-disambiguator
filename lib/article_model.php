@@ -224,6 +224,12 @@ function generate_entries_for_batch( $uri_list ) {
 	foreach( $keyed_article_entries AS $article_entry ) {
 		ksort($article_entry->author_names) ;
 		ksort($article_entry->authors) ;
+		if (count($article_entry->published_in) > 1) {
+			$article_entry->published_in = array_unique($article_entry->published_in);
+		}
+		if (count($article_entry->topics) > 1) {
+			$article_entry->topics = array_unique($article_entry->topics);
+		}
 	}
 
 	return $keyed_article_entries;

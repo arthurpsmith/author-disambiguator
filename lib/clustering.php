@@ -60,6 +60,28 @@ function map_qids_to_articles( $clusters, $article_items ) {
 	return $clusters ;
 }
 
+function author_matches_article( $article, $author_data, $names_to_ignore ) {
+	if ( in_array($author_data->qid, $article->authors) ) return true;
+	foreach ( $author_data->coauthors as $coauthor ) {
+		if ( in_array($coauthor, $article->authors) ) return true;
+	}
+	$name_matches = 0 ;
+	$journal_matches = 0 ;
+	$topic_matches = 0 ;
+	foreach ( $author_data->coauthor_names as $name) {
+		if (in_array($name, $names_to_ignore)) continue ;
+		if (in_array($name, $article->author_names)) $name_matches ++ ;
+	}
+	foreach ( $author_data->journal_qids as $journal) {
+		if (in_array($journal, $article->published_in) ) $journal_matches ++ ;
+	}
+	foreach ( $author_data->topic_qids as $topic) {
+		if (in_array($topic, $article->topics)) $topic_matches ++ ;
+	}
+	$match = (($name_matches >= 2) || (($name_matches == 1) && ($journal_matches + $topic_matches > 0))) ;
+	return $match;
+}
+
 function author_matches_cluster( $cluster, $author_data, $names_to_ignore ) {
 	if (isset($cluster->authors[$author_data->qid])) return true;
 	foreach ( $author_data->coauthors as $coauthor ) {
