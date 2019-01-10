@@ -21,6 +21,8 @@ $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
 $fuzzy_checked = $fuzzy ? 'checked' : '' ;
 $filter = get_request ( 'filter', '' ) ;
+$filter_authors = get_request ( 'filter_authors', '') ;
+$filter_authors_checked = $filter_authors ? 'checked' : '' ;
 $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 500 ;
 $limit_options = [10, 50, 200, 500] ;
@@ -41,6 +43,7 @@ foreach ($limit_options AS $limit_option) {
 print "</select><br />
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
+<div style='font-size:9p6'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div>
 </form>" ;
 
 if ( $name == '' ) {
@@ -115,14 +118,15 @@ $limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
 // Potential authors
+$author_filter = $filter_authors ? "?article wdt:P50 ?q $filter_in_context" : '' ;
 $items_authors = array() ;
-$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . }" ;
+$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . $author_filter }" ;
 #print $sparql ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
-$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . }" ;
+$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
 #print $sparql ;
 $items_collective_authors = getSPARQLitems ( $sparql ) ;
-$sparql = "SELECT DISTINCT ?q { ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 '$name' . }" ;
+$sparql = "SELECT DISTINCT ?q { ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 '$name' . $author_filter }" ;
 #print $sparql ;
 $items_stated_as_authors = getSPARQLitems ( $sparql ) ;
 
