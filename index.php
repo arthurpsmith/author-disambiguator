@@ -123,10 +123,15 @@ $items_authors = array() ;
 $sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . $author_filter }" ;
 #print $sparql ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
-$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
+
+if (strlen($nm->last_name) < 4) {
+	$items_collective_authors = []; # Otherwise may time out
+} else {
+	$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
 #print $sparql ;
-$items_collective_authors = getSPARQLitems ( $sparql ) ;
-$sparql = "SELECT DISTINCT ?q { ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 '$name' . $author_filter }" ;
+	$items_collective_authors = getSPARQLitems ( $sparql ) ;
+}
+$sparql = "SELECT DISTINCT ?q { VALUES ?name { $author_names_strings } . ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 ?name . $author_filter }" ;
 #print $sparql ;
 $items_stated_as_authors = getSPARQLitems ( $sparql ) ;
 
