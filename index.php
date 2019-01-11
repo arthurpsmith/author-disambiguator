@@ -212,9 +212,12 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$q = $article->q ;
 
 		$formatted_authors = array();
+		$highlighted_authors = array();
 		foreach ( $article->author_names AS $num => $a ) {
-			if ( in_array ( $a , $names ) ) $formatted_authors[$num] = "[$num]<b>$a</b>" ;
-			else {
+			if ( in_array ( $a , $names ) ) {
+				$formatted_authors[$num] = "[$num]<b>$a</b>" ;
+				$highlighted_authors[] = $num ;
+			} else {
 				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
 				$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 			}
@@ -232,7 +235,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		ksort($formatted_authors);
-		$authors_list = implode ( ', ' , $formatted_authors) ;
+		$authors_list = implode ( ', ' , compress_display_list($formatted_authors, $highlighted_authors, 20, 10, 2)) ;
 
 		$published_in = array() ;
 		foreach ( $article->published_in AS $qt ) {

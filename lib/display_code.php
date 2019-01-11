@@ -18,4 +18,27 @@ function print_footer () {
 	print get_common_footer() ;
 }
 
+function compress_display_list($list, $highlights, $total_limit, $limit_first, $limit_nbr) {
+	if (count($list) <= $total_limit) return $list ;
+	$compressed_list = array();
+	foreach ($list AS $index => $item) {
+		if ($index <= $limit_first) {
+			$compressed_list[] = $item;
+			continue;
+		}
+		$in_highlight = 0;
+		foreach ($highlights as $hl_index) {
+			if (($index >= $hl_index - $limit_nbr) && ($index <= $hl_index + $limit_nbr)) {
+				$compressed_list[] = $item ;
+				$in_highlight = 1;
+				break(1) ;
+			}
+		}
+		if ($in_highlight == 0) {
+			if ($compressed_list[count($compressed_list) - 1] != '...') $compressed_list[] = '...' ;
+		}
+	}
+	return $compressed_list ;
+}
+
 ?>
