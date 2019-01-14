@@ -119,30 +119,35 @@ print "<div class='group'>" ;
 print "<table class='table table-striped table-condensed'>" ;
 print "<tbody>" ;
 print "<tr><th></th><th>Title</th>" ;
-print "<th>Author Name Strings</th><th>Identified Authors</th>" ;
+print "<th>Authors (<span style='color:green'>identified</span>)</th>" ;
 print "<th>Published In</th><th>Identifier(s)</th>" ;
 print "<th>Topic</th><th>Published Date</th></tr>" ;
 foreach ( $article_items AS $article ) {
 	$q = $article->q ;
 
-	$out = array() ;
+	$formatted_authors = array();
 	foreach ( $article->author_names AS $num => $a ) {
-		$out[] = "[$num]<a href='index.php?name=" . urlencode($a) . "'>$a</a>" ;
-			$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
+		$formatted_authors[$num] = "[$num]<a href='index.php?name=" . urlencode($a) . "'>$a</a>" ;
+		$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 	}
-	$author_string_list = implode ( ', ' , $out ) ;
-		
-	$q_authors = array() ;
+
+	$highlighted_authors = array();
 	foreach ( $article->authors AS $num => $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
 		$label = $i2->getLabel() ;
+		$display_num = $num ;
+		if (isset($formatted_authors[$num])) {
+			$display_num = "$num-$qt";
+		}
 		if ( $qt == $author_qid ) {
-			$q_authors[] = "[$num]<b>$label</b>" ;
+			$formatted_authors[$display_num] = "[$display_num]<b>$label</b>" ;
+			$highlighted_authors[] = $display_num ;
 		} else {
-			$q_authors[] = "[$num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+			$formatted_authors[$display_num] = "[$display_num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		}
 	}
-	$author_entity_list = implode ( ', ' , $q_authors ) ;
+	ksort($formatted_authors);
+	$authors_list = implode ( ', ' , compress_display_list($formatted_authors, $highlighted_authors, 20, 10, 2)) ;
 
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
@@ -154,8 +159,7 @@ foreach ( $article_items AS $article ) {
 	print "<tr>" ;
 	print "<td><input type='checkbox' name='papers[$q]' value='$q'/></td>" ;
 	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
-	print "<td style='width:30%;font-size:9pt'>$author_string_list</td>" ;
-	print "<td style='width:30%;font-size:9pt'>$author_entity_list</td>" ;
+	print "<td style='width:50%;font-size:9pt'>$authors_list</td>" ;
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
