@@ -23,7 +23,8 @@ class WDClaim {
 				print("WARNING: unexpected number of statements in wbgetclaims for $id/$prop_label");
 			}
 			$this->p = $prop_label ;
-			$this->c = $j->claims->$prop_label[0];
+			$statements = $j->claims->$prop_label;
+			$this->c = $statements[0];
 		}
 	}
 	
