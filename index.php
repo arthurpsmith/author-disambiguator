@@ -8,6 +8,7 @@ set_time_limit ( 60 * 10 ) ; // Seconds
 
 require_once ( __DIR__ . '/magnustools/common.php' ) ;
 require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
+require_once ( __DIR__ . '/lib/wikidata_claims.php' ) ;
 require_once ( __DIR__ . '/lib/article_model.php' ) ;
 require_once ( __DIR__ . '/lib/cluster.php' ) ;
 require_once ( __DIR__ . '/lib/clustering.php' ) ;
@@ -84,13 +85,7 @@ if ( $action == 'add' ) {
 		exit ( 0 ) ;
 	}
 
-	$wil = new WikidataItemList ;
-	$to_load = array() ;
-	$to_load[] = $author_q ;
-	foreach ( $papers AS $q ) $to_load[] = $q ;
-	$wil->loadItems ( $to_load ) ;
-
-	$commands = replace_authors_qs_commands ( $wil, $papers, $names, $author_q ) ;
+	$commands = replace_authors_qs_commands ( $papers, $names, $author_q ) ;
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
 	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
@@ -209,7 +204,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 <?PHP
 	print "<table class='table table-striped table-condensed'>" ;
 	print "<tbody>" ;
-	print "<tr><th></th><th>Title</th>" ;
+	print "<tr><th>Title</th>" ;
 	print "<th>Authors (<span style='color:green'>identified</span>)</th>" ;
 	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th><th>Match?</th></tr>" ;
@@ -220,7 +215,9 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$highlighted_authors = array();
 		foreach ( $article->author_names AS $num => $a ) {
 			if ( in_array ( $a , $names ) ) {
-				$formatted_authors[$num] = "[$num]<b>$a</b>" ;
+				$formatted_authors[$num] = "[$num]" .
+			"<input type='checkbox' name='papers[$q:$num]' value='$q:$num' " .
+			($is_first_group?'checked':'') . " /><b>$a</b>" ;
 				$highlighted_authors[] = $num ;
 			} else {
 				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
@@ -250,7 +247,6 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
 		print "<tr>" ;
-		print "<td><input type='checkbox' name='papers[$q]' value='$q' " . ($is_first_group?'checked':'') . " /></td>" ;
 		print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
 		print "<td style='width:50%;font-size:9pt'>$authors_list</td>" ;
 		print "<td style='font-size:9pt'>$published_in_list</td>" ;
