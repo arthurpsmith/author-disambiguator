@@ -197,7 +197,7 @@ print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='index.php?name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
+	print "<li><a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
 }
 print "</ul>" ;
 
