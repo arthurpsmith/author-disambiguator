@@ -30,28 +30,6 @@ $limit_options = [10, 50, 200, 500] ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 
-print "<form method='get' class='form form-inline'>
-Author name: 
-<input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
-<label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<div style='margin:20px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
-Limit: <select name='limit'>" ;
-foreach ($limit_options AS $limit_option) {
-	print "<option value='$limit_option'" ;
-	if ($article_limit == $limit_option) print ' selected' ;
-	print ">$limit_option</option>" ;
-}
-print "</select><br />
-<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
-<input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
-<div style='font-size:9pt'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div>
-</form>" ;
-
-if ( $name == '' ) {
-	print_footer() ;
-	exit ( 0 ) ;
-}
-
 // Publications
 $nm = new NameModel($name);
 $names = $nm->default_search_strings();
@@ -94,6 +72,29 @@ if ( $action == 'add' ) {
 	
 	exit ( 0 ) ;
 }
+
+print "<form method='get' class='form form-inline'>
+Author name: 
+<input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
+<label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
+<div style='margin:20px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
+Limit: <select name='limit'>" ;
+foreach ($limit_options AS $limit_option) {
+	print "<option value='$limit_option'" ;
+	if ($article_limit == $limit_option) print ' selected' ;
+	print ">$limit_option</option>" ;
+}
+print "</select><br />
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
+<div style='font-size:9pt'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div>
+</form>" ;
+
+if ( $name == '' ) {
+	print_footer() ;
+	exit ( 0 ) ;
+}
+
 
 $author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 

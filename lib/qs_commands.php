@@ -21,12 +21,12 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 		$result = getSPARQL( $sparql ) ;
 		$bindings = $result->results->bindings ;
 		if (count($bindings) == 0) {
-			print "WARNING: NO matching statement found for $paperq $author_num";
+			print "WARNING: NO matching statement found for $paperq $author_num<br/>";
 			return NULL;
 		}
 	}
 	if (count($bindings) > 1) {
-		print "WARNING: Multiple matching statements for $paperq $author_num?" ;
+		print "WARNING: Multiple matching statements for $paperq $author_num?<br/>" ;
 	}
 	$name_string = $bindings[0]->author_name->value ;
 	$statement_uri = $bindings[0]->statement->value ;
@@ -38,6 +38,7 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 // Quickstatements V1 commands for replacing author name strings with author items:
 function replace_authors_qs_commands ( $papers, $names, $author_q ) {
 	$commands = array() ;
+	$paperq_set = array();
 	foreach ( $papers AS $author_match ) {
 		$paperq = '';
 		$author_num = -1;
@@ -46,9 +47,14 @@ function replace_authors_qs_commands ( $papers, $names, $author_q ) {
 			$paperq = $matches[1];
 			$author_num = $matches[2];
 		} else {
-			print("WARNING: Failed to match '$author_match'");
+			print("WARNING: Failed to match '$author_match'<br/>");
 			continue ;
 		}
+		if (isset($paper_q_set[$paperq])) {
+			print("WARNING: Author already matched for '$paperq' - skipping author #$author_num<br/>");
+			continue;
+		}
+		$paper_q_set[$paperq] = $author_num ;
 
 		$statement_gid = get_author_statement_guid($paperq, $author_num, $names);
 
