@@ -181,6 +181,10 @@ function generate_entries_for_batch( $uri_list ) {
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
 	$bindings = $query_result->results->bindings ;
+	if (! is_array($bindings) ) {
+		print "WARNING: no results from SPARQL query '$sparql'";
+		return $keyed_article_entries;
+	}
 	foreach ( $bindings AS $binding ) {
 		$qid = item_id_from_uri($binding->q->value) ;
 		$article_entry = $keyed_article_entries[$qid] ;
@@ -202,6 +206,10 @@ function generate_entries_for_batch( $uri_list ) {
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
 	$bindings = $query_result->results->bindings ;
+	if (! is_array($bindings) ) {
+		print "WARNING: no results from SPARQL query '$sparql'";
+		return $keyed_article_entries;
+	}
 	foreach ( $bindings AS $binding ) {
 		$qid = item_id_from_uri($binding->q->value) ;
 		$article_entry = $keyed_article_entries[$qid] ;
