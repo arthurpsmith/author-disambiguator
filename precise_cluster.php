@@ -163,19 +163,46 @@ foreach ( $article_items AS $article ) {
 $to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
 
-$clusters = cluster_articles ( $article_items, $names ) ;
-
-$potential_authors_by_cluster_label = array();
-foreach ($clusters AS $label => $cluster ) {
-	$potential_authors_by_cluster_label[$label]  = array();
-	foreach ( $potential_author_data AS $author_data ) {
-		if (author_matches_cluster( $cluster, $author_data, $names )) {
-			$potential_authors_by_cluster_label[$label][$author_data->qid] = 1 ;
+$clusters = array();
+foreach ($article_items as $article) {
+	foreach ( $article->author_names AS $num => $a ) {
+		if ( in_array ( $a , $names ) ) {
+			$neighbor_names = neighboring_author_strings($article, $num);
+			$article_num = $article->q . ':' . $num ;
+			if (! isset($clusters[$neighbor_names])) {
+				$clusters[$neighbor_names] = array();
+			}
+			$clusters[$neighbor_names][] = $article_num;
 		}
 	}
 }
 
-#print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
+uasort ( $clusters, function ($a, $b) {
+		return count($b) - count($a) ;
+	}
+);
+
+foreach ($clusters as $key => $cluster) {
+	if (count($cluster) == 1) {
+		if (! isset($clusters['Misc']) ) {
+			$clusters['Misc'] = array();
+		}
+		$clusters['Misc'][] = $cluster[0];
+		unset($clusters[$key]);
+	}
+}
+
+
+foreach ($clusters as $cluster) {
+	usort( $cluster, function ($a, $b ) use ($article_items) {
+		$q_a = substr($a, 0, strpos($a, ':'));
+		$q_b = substr($b, 0, strpos($a, ':'));
+		$article_a = $article_items[$q_a] ;
+		$article_b = $article_items[$q_b] ;
+		return WikidataArticleEntry::dateCompare($article_a, $article_b);
+	} ) ;
+}
+
 // Publications
 $name_counter = array() ;
 print "<h2>Potential publications</h2>" ;
@@ -183,22 +210,12 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author</div>" ;
 }
-print "<div style='font-size:9pt'><a href='precise_cluster.php?name=$name&fuzzy=$fuzzy&limit=$article_limit'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
+print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&limit=$article_limit'> Click here for rougher clustering.</a> </div> " ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<div class='group'>" ;
 	print "<h3>$cluster_name</h3>" ;
-	$potential_authors = array_keys($potential_authors_by_cluster_label[$cluster_name]);
-	foreach ( $potential_authors AS $potential_qid ) {
-		$author_data = $potential_author_data[$potential_qid] ;
-		$potential_item = $wil->getItem ( $potential_qid ) ;
-		print "Matched potential author: <a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
-		print " - author of $author_data->article_count items<br/>" ;
-	}
-	if (count($potential_authors) > 1) {
-		print "<div><b>Warning:</b> Multiple potential authors match this cluster!</div>" ;
-	}
 ?>
 <div>
 <a href='#' onclick='$($(this).parents("div.group")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
@@ -211,17 +228,18 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<th>Authors (<span style='color:green'>identified</span>)</th>" ;
 	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th><th>Match?</th></tr>" ;
-	foreach ( $cluster->article_list AS $article ) {
-		$q = $article->q ;
+	foreach ( $cluster AS $article_author ) {
+		$sep_pos = strpos($article_author, ':');
+		$q = substr($article_author, 0, $sep_pos);
+		$auth_num = substr($article_author, $sep_pos + 1) ;
+		$article = $article_items[$q];
 
 		$formatted_authors = array();
-		$highlighted_authors = array();
 		foreach ( $article->author_names AS $num => $a ) {
-			if ( in_array ( $a , $names ) ) {
+			if ( $num == $auth_num ) {
 				$formatted_authors[$num] = "[$num]" .
 			"<input type='checkbox' name='papers[$q:$num]' value='$q:$num' " .
 			($is_first_group?'checked':'') . " /><b>$a</b>" ;
-				$highlighted_authors[] = $num ;
 			} else {
 				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
 				$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
@@ -229,7 +247,6 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		}
 		
 		foreach ( $article->authors AS $num => $qt ) {
-//			$stated_as = $article->authors_stated_as[$qt] ;
 			$display_num = $num ;
 			if (isset($formatted_authors[$num])) {
 				$display_num = "$num-$qt";
@@ -240,7 +257,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		ksort($formatted_authors);
-		$authors_list = implode ( ', ' , compress_display_list($formatted_authors, $highlighted_authors, 20, 10, 2)) ;
+		$authors_list = implode ( ', ' , compress_display_list($formatted_authors, [$auth_num], 20, 10, 2)) ;
 
 		$published_in = array() ;
 		foreach ( $article->published_in AS $qt ) {
@@ -278,13 +295,6 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		print $article->formattedPublicationDate () ;
 		print "</td><td style='font-size:10pt'>" ;
 
-		foreach ( $potential_author_data AS $author_data ) {
-			if (author_matches_article( $article, $author_data, $names )) {
-				$potential_item = $wil->getItem ( $author_data->qid ) ;
-				print "<a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
-				print " ($author_data->qid; $author_data->article_count items)<br/>" ;
-			}
-		}
 		print "</td>" ;
 		print "</tr>" ;
 	}

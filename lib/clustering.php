@@ -197,4 +197,20 @@ function cluster_articles ( $article_items, $names_to_ignore ) {
 	return map_qids_to_articles($clusters, $article_items);
 }
 
+function neighboring_author_strings ( $article, $num, $preceding = 1, $following = 1 ) {
+	$author_name_strings = array();
+	for ($i = $num - $preceding; $i <= $num + $following; $i++) {
+		if (isset($article->author_names[$i]) ) {
+			$name = $article->author_names[$i] ;
+			$author_name_strings[] = $name ;
+		} else if (isset($article->authors[$i])) {
+			$author_q = $article->authors[$i] ;
+			if (isset($article->authors_stated_as[$author_q])) {
+				$author_name_strings[] = $article->authors_stated_as[$author_q] ;
+			}
+		}
+	}
+	return implode('|', $author_name_strings);
+}
+
 ?>
