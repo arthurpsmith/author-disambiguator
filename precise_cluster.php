@@ -192,9 +192,8 @@ foreach ($clusters as $key => $cluster) {
 	}
 }
 
-
-foreach ($clusters as $cluster) {
-	usort( $cluster, function ($a, $b ) use ($article_items) {
+foreach (array_keys($clusters) as $key) {
+	usort( $clusters[$key], function ($a, $b ) use ($article_items) {
 		$q_a = substr($a, 0, strpos($a, ':'));
 		$q_b = substr($b, 0, strpos($a, ':'));
 		$article_a = $article_items[$q_a] ;
