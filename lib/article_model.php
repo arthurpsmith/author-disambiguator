@@ -110,7 +110,7 @@ function prepend_q ( $id ) {
 function generate_article_entries($id_list) {
 	$id_uris = array_map(function($id) { return "wd:" . prepend_q($id); }, $id_list);
 
-	$batch_size = 50 ;
+	$batch_size = 20 ;
 	$batches = [ [] ] ;
 	foreach ( $id_uris AS $k => $v ) {
 		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
@@ -180,6 +180,10 @@ function generate_entries_for_batch( $uri_list ) {
   OPTIONAL { ?name_statement pq:P1545 ?ordinal } .
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
+	if (! isset($query_result->results ) ) {
+		print "WARNING: no results from SPARQL query '$sparql'";
+		return $keyed_article_entries;
+	}
 	$bindings = $query_result->results->bindings ;
 	if (! is_array($bindings) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
@@ -205,6 +209,10 @@ function generate_entries_for_batch( $uri_list ) {
   OPTIONAL { ?author_statement pq:P1545 ?ordinal } .
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
+	if (! isset($query_result->results ) ) {
+		print "WARNING: no results from SPARQL query '$sparql'";
+		return $keyed_article_entries;
+	}
 	$bindings = $query_result->results->bindings ;
 	if (! is_array($bindings) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
