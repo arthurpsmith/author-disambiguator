@@ -36,26 +36,29 @@ if ( $action == 'add' ) {
 	$papers = get_request ( 'papers' , array() ) ;
 
 	if ( $author_match == 'new' ) {
-		print "<br/>Quickstatements V1 commands for creating new author item:" ;
+		print "</div></div><div>Quickstatements V1 commands for creating new author item:" ;
 		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author ) ;
 		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
 		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
 		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
-		print "</form>" ;
+		print "</form></div><div>" ;
+		print_footer() ;
 		exit ( 0 ) ;
 	}
 	if ( $author_q == '' ) {
 		print "Sorry, can't find author" ;
+		print_footer() ;
 		exit ( 0 ) ;
 	}
 
 	$commands = replace_authors_qs_commands ( $papers, $names, $author_q ) ;
 
-	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
+	print "</div></div><div>Quickstatements V1 commands for replacing author name strings with author item:" ;
 	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
 	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
-	print "</form>" ;
+	print "</form></div><div>" ;
 	
+	print_footer() ;
 	exit ( 0 ) ;
 }
 
