@@ -156,6 +156,7 @@ print "<form method='post' class='form' target='_blank' action='?'>
 
 // Publications
 $name_counter = array() ;
+$author_qid_counter = array() ;
 print "<h2>Listed Publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
 
@@ -196,9 +197,11 @@ foreach ( $article_items AS $article ) {
 		if (isset($formatted_authors[$num])) {
 			$display_num = "$num-$qt";
 		}
-		$formatted_authors[$display_num] = "[$display_num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		if ( in_array($qt, $author_qids) ) {
 			$highlighted_authors[] = $display_num ;
+		} else {
+			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
 		}
 	}
 	ksort($formatted_authors);
@@ -244,8 +247,19 @@ print "</tbody></table></div>" ;
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to add selected authorships for these authors' class='btn btn-primary' /></div>" ;
 print "</form>";
 
+arsort ( $author_qid_counter, SORT_NUMERIC ) ;
+print "</div><h2>Common author items in these papers</h2>" ;
+print "<ul>" ;
+foreach ( $author_qid_counter AS $qt => $cnt ) {
+	if ( $cnt == 1 ) break ;
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qids_string+$qt'>Add to search</a></li>" ;
+}
+print "</ul>" ;
+
 arsort ( $name_counter , SORT_NUMERIC ) ;
-print "</div><h2>Common names in these papers</h2>" ;
+print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;

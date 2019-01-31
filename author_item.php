@@ -94,6 +94,7 @@ print "<form method='post' class='form' target='_blank' action='?'>
 
 // Publications
 $name_counter = array() ;
+$author_qid_counter = array() ;
 print "<h2>Listed Publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
 
@@ -131,6 +132,7 @@ foreach ( $article_items AS $article ) {
 			$formatted_authors[$display_num] = "[$display_num]<b>$label</b>" ;
 			$highlighted_authors[] = $display_num ;
 		} else {
+			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
 			$formatted_authors[$display_num] = "[$display_num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		}
 	}
@@ -179,6 +181,17 @@ print "<div><input type='radio' name='author_match' value='manual' /><span style
 print "<div><input type='radio' name='author_match' value='none' checked /> NO replacement author: revert to author name strings</div>" ;
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to REMOVE selected works from this author' class='btn btn-primary' /></div>" ;
 print "</form>";
+
+arsort ( $author_qid_counter, SORT_NUMERIC ) ;
+print "<h2>Common author items in these papers</h2>" ;
+print "<ul>" ;
+foreach ( $author_qid_counter AS $qt => $cnt ) {
+	if ( $cnt == 1 ) break ;
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a></li>" ;
+}
+print "</ul>" ;
 
 arsort ( $name_counter , SORT_NUMERIC ) ;
 print "<h2>Common names in these papers</h2>" ;
