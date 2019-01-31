@@ -1,21 +1,6 @@
 <?PHP
 
-// error_reporting(E_ERROR|E_CORE_ERROR|E_COMPILE_ERROR); // E_ALL|
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
-ini_set('memory_limit','1500M');
-set_time_limit ( 60 * 10 ) ; // Seconds
-
-require_once ( __DIR__ . '/magnustools/common.php' ) ;
-require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
-require_once ( __DIR__ . '/lib/wikidata_claims.php' ) ;
-require_once ( __DIR__ . '/lib/article_model.php' ) ;
-require_once ( __DIR__ . '/lib/cluster.php' ) ;
-require_once ( __DIR__ . '/lib/clustering.php' ) ;
-require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
-require_once ( __DIR__ . '/lib/author_data.php' ) ;
-require_once ( __DIR__ . '/lib/name_model.php' ) ;
-require_once ( __DIR__ . '/lib/display_code.php' ) ;
+require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $action = get_request ( 'action' , '' ) ;
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
@@ -39,7 +24,7 @@ if ( $fuzzy ) {
 }
 
 if ( $action == 'add' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<form method='post' class='form form-inline' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
 	print "<input type='hidden' name='action' value='import' />" ;
 	print "<input type='hidden' name='temporary' value='1' />" ;
 	print "<input type='hidden' name='openpage' value='1' />" ;

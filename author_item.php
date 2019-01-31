@@ -1,18 +1,6 @@
 <?PHP
 
-// error_reporting(E_ERROR|E_CORE_ERROR|E_COMPILE_ERROR); // E_ALL|
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
-ini_set('memory_limit','1500M');
-set_time_limit ( 60 * 10 ) ; // Seconds
-
-require_once ( __DIR__ . '/magnustools/common.php' ) ;
-require_once ( __DIR__ . '/magnustools/wikidata.php' ) ;
-require_once ( __DIR__ . '/lib/article_model.php' ) ;
-require_once ( __DIR__ . '/lib/cluster.php' ) ;
-require_once ( __DIR__ . '/lib/clustering.php' ) ;
-require_once ( __DIR__ . '/lib/qs_commands.php' ) ;
-require_once ( __DIR__ . '/lib/display_code.php' ) ;
+require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $action = get_request ( 'action' , '' ) ;
 $author_qid = get_request( 'id', '' ) ;
