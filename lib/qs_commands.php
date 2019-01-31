@@ -15,7 +15,7 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 	$sparql = "SELECT ?author_name ?statement WHERE { wd:$paperq p:P2093 ?statement . ?statement ps:P2093 ?author_name ; pq:P1545 '$author_num' . }" ;
 	$result = getSPARQL( $sparql ) ;
 	$bindings = $result->results->bindings ;
-	if (count($bindings) == 0) {
+	if (count($bindings) == 0 && count($names) > 0) {
 		$author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 		$sparql = "SELECT ?author_name ?statement WHERE { VALUES ?author_name { $author_names_strings } . wd:$paperq p:P2093 ?statement . ?statement ps:P2093 ?author_name . }" ;
 		$result = getSPARQL( $sparql ) ;
@@ -24,6 +24,9 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 			print "WARNING: NO matching statement found for $paperq $author_num<br/>";
 			return NULL;
 		}
+	} else if (count($bindings) == 0) {
+		print "WARNING: NO matching statement found for $paperq $author_num<br/>";
+		return NULL;
 	}
 	if (count($bindings) > 1) {
 		print "WARNING: Multiple matching statements for $paperq $author_num?<br/>" ;
@@ -166,6 +169,59 @@ function move_authors_qs_commands ( $wil, $papers, $author_q, $new_author_q ) {
 			
 			$commands[] = "-STATEMENT\t" . $a->id ;
 		}
+	}
+	return $commands ;
+}
+
+// Quickstatements V1 commands for replacing multiple matched author name strings with author items:
+function match_authors_qs_commands ( $papers ) {
+	$commands = array() ;
+	$paperq_set = array();
+	foreach ( $papers AS $author_match ) {
+		$paperq = '';
+		$author_num = -1;
+		$author_q = '';
+		$matches = array();
+		if (preg_match('/^(Q\d+):(\d+):(Q\d+)/', $author_match, $matches)) {
+			$paperq = $matches[1];
+			$author_num = $matches[2];
+			$author_q = $matches[3];
+		} else {
+			print("WARNING: Failed to match '$author_match'<br/>");
+			continue ;
+		}
+		if (isset($paper_q_set["$paperq:$author_q"])) {
+			print("WARNING: Author already matched for '$paperq:$author_q' - skipping author #$author_num<br/>");
+			continue;
+		}
+		$paper_q_set["$paperq:$author_q"] = $author_num ;
+
+		$statement_gid = get_author_statement_guid($paperq, $author_num, []);
+
+		$claim = new WDClaim($statement_gid);
+		if ( !isset($claim)) {
+			print("WARNING: claim not found for $statement_gid");
+			continue;
+		}
+
+		$add = "$paperq\tP50\t$author_q" ;
+		$author_name = $claim->c->mainsnak->datavalue->value ;
+
+		$quals = $claim->statementQualifiersToQS() ;
+		if (count($quals) > 0) {
+			$add = $add . "\t" . implode("\t", $quals) ;
+		}
+			
+		$add .= "\tP1932\t\"$author_name\"" ;
+		$refs = $claim->statementReferencesToQS() ;
+		if ( count($refs) > 0 ) {
+			foreach ( $refs AS $ref ) {
+				$commands[] = $add . "\t" . implode("\t", $ref) ;
+			}
+		} else {
+			$commands[] = $add ;
+		}
+		$commands[] = "-STATEMENT\t" . $claim->id ;
 	}
 	return $commands ;
 }
