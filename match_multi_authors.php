@@ -40,7 +40,7 @@ print "<form method='get' class='form'>
 <div style='display:table-row'>
 <div style='display:table-cell'>Author Wikidata IDs (space-separated):</div>
 <div style='display:table-cell'>
-<input name='id' value='" . escape_attribute(implode(" ", $author_qids)) . "' type='text' placeholder='Qxxxxx' /> </div></div></div>" ;
+<input name='id' value='" . escape_attribute(implode(" ", $author_qids)) . "' type='text' placeholder='Qxxxxx Qyyyyy' size=65 /> </div></div></div>" ;
 
 $wil = new WikidataItemList ;
 $wil->loadItems ( $author_qids ) ;
