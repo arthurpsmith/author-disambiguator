@@ -67,15 +67,23 @@ class NameModel {
 	}
 
 	public function name_with_middle_initials() {
+		$first_name = $this->first_name;
+		if (NameModel::is_initial($first_name)) {
+			$first_name = $first_name[0] . '.';
+		}
 		$middle_initials = array_map('NameModel::to_initial', $this->middle_names);
-		$name_parts = array_merge([$this->first_name],
+		$name_parts = array_merge([$first_name],
 			$middle_initials, [$this->last_name]);
 		return implode(' ', $name_parts);
 	}
 
 	public function name_with_middle_first_letters() {
+		$first_name = $this->first_name;
+		if (NameModel::is_initial($first_name)) {
+			$first_name = $first_name[0];
+		}
 		$middle_initials = array_map(function($value) { return $value[0]; }, $this->middle_names);
-		$name_parts = array_merge([$this->first_name],
+		$name_parts = array_merge([$first_name],
 			$middle_initials, [$this->last_name]);
 		return implode(' ', $name_parts);
 	}
