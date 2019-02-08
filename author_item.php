@@ -84,6 +84,7 @@ print "<div>" ;
 print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid'>Scholia Profile</a>" ;
+print " [<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid/missing'>missing</a>]" ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
 print '</div>' ;
