@@ -130,17 +130,21 @@ class NameModel {
 	}
 
 	public function fuzzy_search_strings() {
-		$search_strings = $this->default_search_strings();
-		$search_strings[] = $this->first_initial_last_name();
-		$search_strings[] = $this->first_letter_last_name();
+		$search_strings = array_fill_keys($this->default_search_strings(), 1);
+		$search_strings[$this->first_initial_last_name()] = 1;
+		$search_strings[$this->first_letter_last_name()] = 1;
 		if (NameModel::is_initial($this->first_name)) {
 			foreach($this->middle_names AS $middle_name) {
-				$search_strings[] = $middle_name . ' ' . $this->last_name;
-				$search_strings[] = $middle_name[0] . '. ' . $this->last_name;
-				$search_strings[] = $middle_name[0] . ' ' . $this->last_name;
+				$search_strings[$middle_name . ' ' . $this->last_name] = 1;
+				$search_strings[$middle_name[0] . '. ' . $this->last_name] = 1;
+				$search_strings[$middle_name[0] . ' ' . $this->last_name] = 1;
 			}
 		}
-		return $search_strings;
+		$lcstrings = array_keys($search_strings);
+		foreach ($lcstrings as $string) {
+			$search_strings[strtoupper($string)] = 1 ;
+		}
+		return array_keys($search_strings);
 	}
 
 	public static function is_initial($name_part) {
