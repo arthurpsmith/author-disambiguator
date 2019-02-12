@@ -14,7 +14,8 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
-		$name_parts = array_filter(explode(" ", $name), 'strlen');
+// Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' 
+		$name_parts = preg_split('/((?<=\.)\s*|\s+)/', $name);
 		$name_prefixes = array();
 		$first_name = '';
 // Pull out prefix(es) and first name:
@@ -117,6 +118,15 @@ class NameModel {
 		return implode(' ', $name_parts);
 	}
 
+	public function name_with_squashed_initials() {
+		$name_parts = array();
+		$name_parts[] = NameModel::to_initial($this->first_name) ;
+		foreach ($this->middle_names AS $middle_name) {
+			$name_parts[] = NameModel::to_initial($middle_name);
+		}
+		return implode('', $name_parts) . ' ' . $this->last_name;
+	}
+
 	public function default_search_strings() {
 		$search_strings = array();
 		$search_strings[$this->name_provided] = 1;
@@ -126,6 +136,9 @@ class NameModel {
 		$search_strings[$this->first_last_suffixes()] = 1;
 		$search_strings[$this->name_with_middle_initials()] = 1;
 		$search_strings[$this->name_with_middle_first_letters()] = 1;
+		if ($this->all_initials()) {
+			$search_strings[$this->name_with_squashed_initials()] = 1;
+		}
 		return array_keys($search_strings);
 	}
 
@@ -140,6 +153,7 @@ class NameModel {
 				$search_strings[$middle_name[0] . ' ' . $this->last_name] = 1;
 			}
 		}
+		$search_strings[$this->name_with_squashed_initials()] = 1;
 		$lcstrings = array_keys($search_strings);
 		foreach ($lcstrings as $string) {
 			$search_strings[strtoupper($string)] = 1 ;
@@ -155,6 +169,19 @@ class NameModel {
 
 	public static function to_initial($name_part) {
 		return $name_part[0] . '.' ;
+	}
+
+	public function all_initials() {
+		$all_init = NameModel::is_initial($this->first_name);
+		if ($all_init) {
+			foreach($this->middle_names AS $middle_name) {
+				if (! NameModel::is_initial($middle_name) ) {
+					$all_init = false;
+					break;
+				}
+			}
+		}
+		return $all_init;
 	}
 }
 ?>
