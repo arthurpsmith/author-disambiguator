@@ -127,6 +127,15 @@ class NameModel {
 		return implode('', $name_parts) . ' ' . $this->last_name;
 	}
 
+	public function squashed_reversed_name() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name[0] ;
+		foreach ($this->middle_names AS $middle_name) {
+			$name_parts[] = $middle_name[0];
+		}
+		return $this->last_name . ' ' . implode('', $name_parts);
+	}
+
 	public function default_search_strings() {
 		$search_strings = array();
 		$search_strings[$this->name_provided] = 1;
@@ -154,6 +163,7 @@ class NameModel {
 			}
 		}
 		$search_strings[$this->name_with_squashed_initials()] = 1;
+		$search_strings[$this->squashed_reversed_name()] = 1;
 		$lcstrings = array_keys($search_strings);
 		foreach ($lcstrings as $string) {
 			$search_strings[strtoupper($string)] = 1 ;
