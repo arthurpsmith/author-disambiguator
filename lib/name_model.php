@@ -153,6 +153,22 @@ class NameModel {
 
 	public function fuzzy_search_strings() {
 		$search_strings = array_fill_keys($this->default_search_strings(), 1);
+// Adopt fuzzy search strings for shorter versions of the name:
+		if (count($this->middle_names) > 0) {
+			$nm = new NameModel($this->first_last_name());
+			$names = $nm->fuzzy_search_strings();
+			foreach($names as $name) {
+				$search_strings[$name] = 1;
+			}
+		}
+		if (! $this->all_initials()) {
+                        $nm = new NameModel($this->name_with_squashed_initials());
+			$names = $nm->fuzzy_search_strings();
+			foreach($names as $name) {
+				$search_strings[$name] = 1;
+			}
+		}
+
 		$search_strings[$this->first_initial_last_name()] = 1;
 		$search_strings[$this->first_letter_last_name()] = 1;
 		if (NameModel::is_initial($this->first_name)) {
