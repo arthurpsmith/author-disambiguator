@@ -129,27 +129,34 @@ class AuthorData {
 
 	public static function authorDataFromItems( $author_items, $wil ) {
 		$author_data = array() ;
+		$direct_author_items = array();
 		foreach ($author_items AS $qid) {
-			$author_data_entry = new AuthorData($wil->getItem( $qid ) ) ;
+			$item = $wil->getItem( $qid ) ;
+     			if (property_exists($item->j, 'redirects')) {
+				continue; // Skip redirected author items!
+			}
+
+			$author_data_entry = new AuthorData($item) ;
 			$author_data[$author_data_entry->qid] = $author_data_entry ;
+			$direct_author_items[] = $author_data_entry->qid;
 		}
-		$author_papers = self::articlesForAuthors( $author_items ) ;
+		$author_papers = self::articlesForAuthors( $direct_author_items ) ;
 		foreach ($author_papers AS $qid => $article_qids ) {
 			$author_data[$qid]->article_count = count($article_qids) ;
 		}
-		$coauthors = self::coauthorsForAuthors( $author_items ) ;
+		$coauthors = self::coauthorsForAuthors( $direct_author_items ) ;
 		foreach ( $coauthors AS $qid => $coauthor_qids ) {
 			$author_data[$qid]->add_coauthors($coauthor_qids) ;
 		}
-		$coauthor_names = self::coauthorNamesForAuthors( $author_items ) ;
+		$coauthor_names = self::coauthorNamesForAuthors( $direct_author_items ) ;
 		foreach ( $coauthor_names AS $qid => $names ) {
 			$author_data[$qid]->add_coauthor_names($names) ;
 		}
-		$journals = self::journalsForAuthors( $author_items ) ;
+		$journals = self::journalsForAuthors( $direct_author_items ) ;
 		foreach ( $journals AS $qid => $journal_qids) {
 			$author_data[$qid]->add_journals($journal_qids) ;
 		}
-		$topics = self::topicsForAuthors( $author_items ) ;
+		$topics = self::topicsForAuthors( $direct_author_items ) ;
 		foreach ( $topics AS $qid => $topic_qids ) {
 			$author_data[$qid]->add_topics($topic_qids) ;
 		}
