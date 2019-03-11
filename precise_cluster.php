@@ -93,7 +93,7 @@ foreach($languages_to_search AS $lang) {
 }
 $names_strings = implode ( ' ' , $names_with_langs ) ;
 $filter_in_context = "; $filter . ";
-$sparql = "SELECT ?q { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT $article_limit" ;
+$sparql = "SELECT ?q WHERE { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT $article_limit" ;
 #print $sparql ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
@@ -102,18 +102,18 @@ $items_papers = array_unique( $items_papers );
 // Potential authors
 $author_filter = $filter_authors ? "?article wdt:P50 ?q $filter_in_context" : '' ;
 $items_authors = array() ;
-$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . $author_filter }" ;
+$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . $author_filter }" ;
 #print $sparql ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
 
 if (strlen($nm->last_name) < 4) {
 	$items_collective_authors = []; # Otherwise may time out
 } else {
-	$sparql = "SELECT DISTINCT ?q { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
+	$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
 #print $sparql ;
 	$items_collective_authors = getSPARQLitems ( $sparql ) ;
 }
-$sparql = "SELECT DISTINCT ?q { VALUES ?name { $author_names_strings } . ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 ?name . $author_filter }" ;
+$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $author_names_strings } . ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 ?name . $author_filter FILTER NOT EXISTS {?q owl:sameAs ?redirect} }" ;
 #print $sparql ;
 $items_stated_as_authors = getSPARQLitems ( $sparql ) ;
 
