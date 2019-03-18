@@ -26,20 +26,34 @@ class ClusteringContext {
 	}
 
 	public function add_articles_to_cluster($cluster, $articles) {
+		$authors_to_add = array() ;
 		foreach ($articles as $article_qid) {
 			if (isset($this->already_clustered[$article_qid])) continue;
 			$cluster->addArticle($article_qid) ;
 			$this->already_clustered[$article_qid] = 1 ;
-			$this->add_authors_to_cluster($cluster, $this->article_authors[$article_qid]);
+			foreach ($this->article_authors[$article_qid] as $author) {
+				if (isset($this->already_clustered[$author])) continue;
+				$authors_to_add[$author] = 1;
+			}
+		}
+		if (count(array_keys($authors_to_add)) > 0) {
+			$this->add_authors_to_cluster($cluster, array_keys($authors_to_add));
 		}
 	}
 
 	public function add_authors_to_cluster($cluster, $authors) {
+		$articles_to_add = array();
 		foreach ($authors as $author_qid) {
 			if (isset($this->already_clustered[$author_qid])) continue;
 			$cluster->addAuthor($author_qid) ;
 			$this->already_clustered[$author_qid] = 1 ;
-			$this->add_articles_to_cluster($cluster, $this->author_articles[$author_qid]);
+			foreach ($this->author_articles[$author_qid] as $article) {
+				if (isset($this->already_clustered[$article])) continue;
+				$articles_to_add[$article] = 1;
+			}
+		}
+		if (count(array_keys($articles_to_add)) > 0) {
+			$this->add_articles_to_cluster($cluster, array_keys($articles_to_add));
 		}
 	}
 }
