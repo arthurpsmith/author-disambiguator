@@ -169,7 +169,7 @@ $name_counter = array() ;
 print "<h2>Potential publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
-	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author</div>" ;
+	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
 print "<div style='font-size:9pt'><a href='precise_cluster.php?name=$name&fuzzy=$fuzzy&limit=$article_limit'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
 
