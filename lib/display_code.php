@@ -21,13 +21,22 @@ function print_footer () {
 function compress_display_list($list, $highlights, $total_limit, $limit_first, $limit_nbr) {
 	if (count($list) <= $total_limit) return $list ;
 	$compressed_list = array();
+
+        $int_highlights = array();
+	foreach ($highlights as $hl_index) {
+                $hl_value = $hl_index ;
+		if (! is_numeric($hl_index) ) {
+		    $hl_value = preg_replace('/-.*$/', '', $hl_index);
+		}
+		$int_highlights[] = $hl_value ;
+        }
 	foreach ($list AS $index => $item) {
 		if ($index <= $limit_first) {
 			$compressed_list[] = $item;
 			continue;
 		}
 		$in_highlight = 0;
-		foreach ($highlights as $hl_index) {
+		foreach ($int_highlights as $hl_index) {
 			if (($index >= $hl_index - $limit_nbr) && ($index <= $hl_index + $limit_nbr)) {
 				$compressed_list[] = $item ;
 				$in_highlight = 1;
