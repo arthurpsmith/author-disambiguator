@@ -31,8 +31,11 @@ if ( $action == 'add' ) {
 	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
 	$viaf_author = trim ( get_request ( 'viaf_author' , '' ) ) ;
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
-	$author_q = trim ( get_request ( 'q_author' , '' ) ) ;
-	if ( $author_q == '' ) $author_q = $author_match ;
+	$author_q = $author_match ;
+        if ( $author_match == 'manual' ) {
+           $author_q = trim ( get_request ( 'q_author' , '' ) );
+        }
+
 	$papers = get_request ( 'papers' , array() ) ;
 
 	if ( $author_match == 'new' ) {
