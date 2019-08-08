@@ -4,6 +4,8 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $action = get_request ( 'action' , '' ) ;
 $author_qid = get_request( 'id', '' ) ;
+$article_limit = get_request ( 'limit', '' ) ;
+if ($article_limit == '' ) $article_limit = 5000 ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 
@@ -52,8 +54,9 @@ if ( $action == 'remove' ) {
 }
 
 
-$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid }" ;
+$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid } LIMIT $article_limit" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
+$limit_reached = (count($items_papers) == $article_limit) ;
 
 
 // Load items
@@ -97,6 +100,9 @@ print "<form method='post' class='form' target='_blank' action='?'>
 $name_counter = array() ;
 $author_qid_counter = array() ;
 print "<h2>Listed Publications</h2>" ;
+if ( $limit_reached ) {
+	print "<div><b>Warning:</b> limit reached; query again or adjust the limit parameter if you need to see more papers from this author.</div>" ;
+}
 print "<p>" . count($article_items) . " publications found</p>" ;
 
 print "<div class='group'>" ;
