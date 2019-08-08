@@ -209,5 +209,50 @@ class NameModel {
 		}
 		return $all_init;
 	}
+
+	public function names_from_wbsearch($names) {
+		$new_names = array_fill_keys($names, 1);
+		$search_strings = '"\"' . implode( '\"" "\"', $names )  . '\""' ;
+		$sparql = "SELECT DISTINCT ?name WHERE {
+  hint:Query hint:optimizer \"None\" .
+  VALUES ?search_string { $search_strings }
+{  SERVICE wikibase:mwapi {
+    bd:serviceParam wikibase:api \"Search\";
+                    wikibase:endpoint \"www.wikidata.org\";
+                    mwapi:srsearch ?search_string.
+    ?page_title wikibase:apiOutput mwapi:title.
+  }
+}
+  BIND(IRI(CONCAT(STR(wd:), ?page_title)) AS ?item)
+  ?item wdt:P2093 ?name .
+  FILTER CONTAINS(LCASE(?name), LCASE(REPLACE(?search_string, '\"', ''))).
+}" ;
+		$query_result = getSPARQL( $sparql ) ;
+		$bindings = $query_result->results->bindings ;
+		foreach ( $bindings AS $binding ) {
+			$new_names[$binding->name->value] = 1 ;
+		}
+		$sparql = "SELECT DISTINCT ?name WHERE {
+  hint:Query hint:optimizer \"None\" .
+  VALUES ?search_string { $search_strings }
+{  SERVICE wikibase:mwapi {
+    bd:serviceParam wikibase:api \"Search\";
+                    wikibase:endpoint \"www.wikidata.org\";
+                    mwapi:srsearch ?search_string.
+    ?page_title wikibase:apiOutput mwapi:title.
+  }
+}
+  BIND(IRI(CONCAT(STR(wd:), ?page_title)) AS ?item)
+  ?item p:P50 ?statement .
+  ?statement pq:P1932 ?name .
+  FILTER CONTAINS(LCASE(?name), LCASE(REPLACE(?search_string, '\"', ''))).
+}" ;
+		$query_result = getSPARQL( $sparql ) ;
+		$bindings = $query_result->results->bindings ;
+		foreach ( $bindings AS $binding ) {
+			$new_names[$binding->name->value] = 1 ;
+		}
+		return array_keys($new_names);
+	}
 }
 ?>

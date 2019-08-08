@@ -6,6 +6,8 @@ $action = get_request ( 'action' , '' ) ;
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
 $fuzzy_checked = $fuzzy ? 'checked' : '' ;
+$wbsearch = get_request ( 'wbsearch' , 0 ) * 1 ;
+$wbsearch_checked = $wbsearch ? 'checked' : '' ;
 $filter = get_request ( 'filter', '' ) ;
 $filter_authors = get_request ( 'filter_authors', '') ;
 $filter_authors_checked = $filter_authors ? 'checked' : '' ;
@@ -21,6 +23,9 @@ $nm = new NameModel($name);
 $names = $nm->default_search_strings();
 if ( $fuzzy ) {
 	$names = $nm->fuzzy_search_strings();
+}
+if ( $wbsearch ) {
+	$names = $nm->names_from_wbsearch( $names );
 }
 
 if ( $action == 'add' ) {
@@ -66,7 +71,8 @@ print "<form method='get' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<div style='margin:20px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
+<label style='margin:10px'><input type='checkbox' name='wbsearch' value='1' $wbsearch_checked /> Wikibase search? </label>
+<div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
 Limit: <select name='limit'>" ;
 foreach ($limit_options AS $limit_option) {
 	print "<option value='$limit_option'" ;
@@ -139,6 +145,7 @@ $wil->loadItems ( $to_load ) ;
 print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='action' value='add' />
 <input type='hidden' name='fuzzy' value='$fuzzy' />
+<input type='hidden' name='wbsearch' value='$wbsearch' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
 $to_load = array() ;
@@ -197,7 +204,7 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
-print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&limit=$article_limit'> Click here for rougher clustering.</a> </div> " ;
+print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit'> Click here for rougher clustering.</a> </div> " ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
@@ -228,7 +235,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			"<input type='checkbox' name='papers[$q:$num]' value='$q:$num' " .
 			($is_first_group?'checked':'') . " /><b>$a</b>" ;
 			} else {
-				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
+				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
 				$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 			}
 		}
@@ -350,7 +357,7 @@ print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='?fuzzy=$fuzzy&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
+	print "<li><a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
 }
 print "</ul>" ;
 
