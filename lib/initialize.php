@@ -5,6 +5,8 @@ ini_set('display_errors', 'On');
 ini_set('memory_limit','1500M');
 set_time_limit ( 60 * 10 ) ; // Seconds
 
+setlocale(LC_CTYPE, 'en_US.UTF-8'); // Required for iconv to work
+
 require_once ( __DIR__ . '/../magnustools/common.php' ) ;
 require_once ( __DIR__ . '/../magnustools/wikidata.php' ) ;
 require_once ( __DIR__ . '/../lib/wikidata_claims.php' ) ;
