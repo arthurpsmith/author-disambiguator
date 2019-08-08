@@ -7,6 +7,7 @@ class NameModel {
 	public $middle_names = array();
 	public $prefixes = array();
 	public $suffixes = array();
+	public $ascii_nm = NULL;
 
 	const PREFIX_PATTERN = '/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$/' ;
 	const SUFFIX_PATTERN = '/^([SJ]r\.?|I{1,3}V?|VI{0,3})$/' ;
@@ -14,6 +15,10 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
+		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
+		if ($ascii_name != $name) {
+			$this->ascii_nm = new NameModel($ascii_name);
+		}
 // Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' 
 		$name_parts = preg_split('/((?<=\.)\s*|\s+)/', $name);
 		$name_prefixes = array();
@@ -138,6 +143,9 @@ class NameModel {
 
 	public function default_search_strings() {
 		$search_strings = array();
+		if (isset($this->ascii_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->default_search_strings(), 1));
+		}
 		$search_strings[$this->name_provided] = 1;
 		$search_strings[$this->name_with_middles_and_suffixes()] = 1;
 		$search_strings[$this->name_with_middles()] = 1;
@@ -153,6 +161,9 @@ class NameModel {
 
 	public function fuzzy_search_strings() {
 		$search_strings = array_fill_keys($this->default_search_strings(), 1);
+		if (isset($this->ascii_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->fuzzy_search_strings(), 1));
+		}
 // Adopt fuzzy search strings for shorter versions of the name:
 		if (count($this->middle_names) > 0) {
 			$nm = new NameModel($this->first_last_name());
