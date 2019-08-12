@@ -65,7 +65,8 @@ foreach ( $article_entry->published_in AS $qt ) {
 $published_in_list = implode ( ', ', $published_in ) ;
 print "Journal(s): $published_in_list" ;
 if ( count($article_entry->topics) > 0 ) {
-	print "\n Main subject(s): ";
+	print '</div><div>' ;
+	print "Main subject(s): ";
 	$topics = [] ;
 	foreach ( $article_entry->topics AS $qt ) {
 		$i2 = $wil->getItem($qt) ;
