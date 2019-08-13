@@ -209,8 +209,8 @@ foreach ( $article_items AS $article ) {
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
 	print "<tr>" ;
-	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . " <a href='work_item.php?id=" . $q . "'>[work]</a></td>" ;
-	print "<td style='width:50%;font-size:9pt'>$authors_list</td>" ;
+	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
+	print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item.php?id=$q'>[Full author list]</a></td>" ;
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
