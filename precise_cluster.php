@@ -16,16 +16,26 @@ $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 500 ;
 $limit_options = [10, 50, 200, 500] ;
 
+$use_name_strings = get_request ( 'use_name_strings' , 0 ) * 1 ;
+$use_name_strings_checked = $use_name_strings ? 'checked' : '' ;
+$name_strings = get_request ( 'name_strings' , '') ;
+$input_names = preg_split('/[\r\n]+/', $name_strings);
+
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 
 // Publications
 $nm = new NameModel($name);
 $names = $nm->default_search_strings();
-if ( $fuzzy ) {
-	$names = $nm->fuzzy_search_strings();
-}
-if ( $wbsearch ) {
-	$names = $nm->names_from_wbsearch( $names );
+
+if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) > 0 ) ) {
+	$names = $input_names ;
+} else {
+	if ( $fuzzy ) {
+		$names = $nm->fuzzy_search_strings();
+	}
+	if ( $wbsearch ) {
+		$names = $nm->names_from_wbsearch( $names );
+	}
 }
 
 if ( $action == 'add' ) {
@@ -71,7 +81,8 @@ print "<form method='get' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<label style='margin:10px'><input type='checkbox' name='wbsearch' value='1' $wbsearch_checked /> Wikibase search? </label>
+<label style='margin:10px'><input type='checkbox' name='wbsearch' value='1' $wbsearch_checked /> Wikibase search </label>
+<label style='margin:10px'><input type='checkbox' name='use_name_strings' value='1' $use_name_strings_checked /> Specify name strings </label>
 <div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
 Limit: <select name='limit'>" ;
 foreach ($limit_options AS $limit_option) {
@@ -82,8 +93,12 @@ foreach ($limit_options AS $limit_option) {
 print "</select><br />
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
-<div style='font-size:9pt'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div><br/>
-</form>" ;
+<div style='font-size:9pt'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div><br/>";
+
+if ( $use_name_strings ) {
+	print "<div><textarea name='name_strings' rows=5>" . implode("\n",$names) . "</textarea></div>" ;
+}
+print "</form>" ;
 
 if ( $name == '' ) {
 	print_footer() ;
@@ -204,7 +219,7 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
-print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit'> Click here for rougher clustering.</a> </div> " ;
+print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here for rougher clustering.</a> </div> " ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
