@@ -132,6 +132,20 @@ class NameModel {
 		return implode('', $name_parts) . ' ' . $this->last_name;
 	}
 
+	public function name_with_squashed_initials_minus_dot() {
+		$name_parts = array();
+		$name_parts[] = NameModel::to_initial($this->first_name) ;
+		foreach ($this->middle_names AS $middle_name) {
+			$name_parts[] = NameModel::to_initial($middle_name);
+		}
+		$num_given = count($name_parts);
+		if ($num_given > 1) {
+			$last_middle = $name_parts[$num_given-1];
+			$name_parts[$num_given-1] = $last_middle[0];
+		}
+		return implode('', $name_parts) . ' ' . $this->last_name;
+	}
+
 	public function squashed_reversed_name() {
 		$name_parts = array();
 		$name_parts[] = $this->first_name[0] ;
@@ -199,6 +213,7 @@ class NameModel {
 			}
 		}
 		$search_strings[$this->name_with_squashed_initials()] = 1;
+		$search_strings[$this->name_with_squashed_initials_minus_dot()] = 1;
 		$search_strings[$this->squashed_reversed_name()] = 1;
 		$search_strings[$this->squashed_reversed_hyphen_name()] = 1;
 		$lcstrings = array_keys($search_strings);
