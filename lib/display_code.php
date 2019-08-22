@@ -10,7 +10,7 @@ function wikidata_link ( $q, $text, $color ) {
 }
 
 function getORCIDurl ( $s ) {
-	return "https://orcid.org/orcid-search/quick-search?searchQuery=%22" . urlencode($s) . "%22" ;
+	return "https://orcid.org/orcid-search/quick-search?searchQuery=" . urlencode($s) ;
 }
 
 function print_footer () {
