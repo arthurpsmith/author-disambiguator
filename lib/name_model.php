@@ -9,9 +9,9 @@ class NameModel {
 	public $suffixes = array();
 	public $ascii_nm = NULL;
 
-	const PREFIX_PATTERN = '/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$/' ;
+	const PREFIX_PATTERN = '/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$/i' ;
 	const SUFFIX_PATTERN = '/^([SJ]r\.?|I{1,3}V?|VI{0,3})$/' ;
-	const SURNAME_PART = '/^(van|der|de|la|von|del|den|della|da|mac|das|ter|di|vander|vanden|le|das|sant|st|\'t)$/' ;
+	const SURNAME_PART = '/^(van|der|de|la|von|del|den|della|da|mac|das|ter|di|vander|vanden|le|das|sant|st|\'t)$/i' ;
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;

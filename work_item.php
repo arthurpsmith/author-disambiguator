@@ -20,13 +20,39 @@ if ( $work_qid == '' ) {
 
 $wil = new WikidataItemList ;
 
-$article_entry = generate_article_entries( [$work_qid] ) [ $work_qid ];
+if ( $action == 'add' ) {
+	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<input type='hidden' name='action' value='import' />" ;
+	print "<input type='hidden' name='temporary' value='1' />" ;
+	print "<input type='hidden' name='openpage' value='1' />" ;
+
+	$author_numbers = get_request ( 'merges' , array() ) ;
+
+	$commands = merge_authors_qs_commands ( $wil, $work_qid, $author_numbers ) ;
+
+	print "<div>Quickstatements V1 commands for merging author name strings with author items on this work:<div>" ;
+
+	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea></div>" ;
+	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
+
+	print "</form></div><div>" ;
+
+	print_footer() ;
+	exit ( 0 ) ;
+}
+
+
+$article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
 
 // Load items
 $to_load = array() ;
 $to_load[] = $work_qid ;
 
-foreach ( $article_entry->authors AS $auth) $to_load[] = $auth ;
+foreach ( $article_entry->authors AS $auth_list ) {
+	foreach ( $auth_list AS $auth ) {
+		$to_load[] = $auth ;
+	}
+}
 foreach ( $article_entry->published_in AS $pub ) $to_load[] = $pub ;
 foreach ( $article_entry->topics AS $topic ) $to_load[] = $topic ;
 
@@ -77,32 +103,48 @@ if ( count($article_entry->topics) > 0 ) {
 }
 print "</div>" ;
 
+$merge_candidates = $article_entry->merge_candidates($wil);
+
 // Author list
-$name_counter = array() ;
-$author_qid_counter = array() ;
 print "<h2>Authors</h2>" ;
+print "<form method='post' class='form' target='_blank'>
+<input type='hidden' name='action' value='add' />
+<input type='hidden' name='id' value='$work_qid' />" ;
 
 print('<ul>');
 $formatted_authors = array();
-foreach ( $article_entry->author_names AS $num => $a ) {
-	$formatted_authors[$num] = "[$num]<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
-}
-foreach ( $article_entry->authors AS $num => $qt ) {
-	$i2 = $wil->getItem ( $qt ) ;
-	$label = $i2->getLabel() ;
-	$display_num = $num ;
-	if (isset($formatted_authors[$num])) {
-		$display_num = "$num-$qt";
+foreach ( $article_entry->author_names AS $num => $a_list ) {
+	$formatted_authors[$num] = [];
+	foreach ( $a_list AS $a ) {
+		$formatted_authors[$num][] = "<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
 	}
-	$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+}
+foreach ( $article_entry->authors AS $num => $qt_list ) {
+	if (! isset($formatted_authors[$num])) {
+		$formatted_authors[$num] = [];
+	}
+	foreach ( $qt_list AS $qt ) {
+		$i2 = $wil->getItem ( $qt ) ;
+		$label = $i2->getLabel() ;
+		$formatted_authors[$num][] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+	}
 }
 
 ksort($formatted_authors);
 
-foreach ( $formatted_authors AS $num => $display_line ) {
-	print "<li>$display_line</li>";
+foreach ( $formatted_authors AS $num => $display_list ) {
+	print "<li>[$num]";
+	if ( $merge_candidates[$num] ) {
+		print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
+	} else if (count($display_list) > 1) {
+		print "<span style='color:red'>Name mismatch:</span>";
+	}
+	print implode ( '|', $display_list) . "</li>";
 }
 print "</ul>" ;
+
+print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to merge these author records' class='btn btn-primary' /></div>" ;
+print "</form>" ;
 
 print_footer() ;
 

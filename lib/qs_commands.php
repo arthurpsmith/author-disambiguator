@@ -226,4 +226,164 @@ function match_authors_qs_commands ( $papers ) {
 	return $commands ;
 }
 
+# Function to merge author claims where duplicates have been entered on a single work
+function merge_authors_qs_commands ($wil, $work_qid, $author_numbers) {
+	$commands = array();
+	$wil->loadItems ( [$work_qid] ) ;
+	$work_item = $wil->getItem ( $work_qid ) ;
+
+	$author_claims = $work_item->getClaims ( 'P50' ) ;
+	$ordered_author_claims = array();
+
+	foreach ( $author_claims AS $c ) {
+		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
+			$tmp = $c->qualifiers->P1545 ;
+			$num = $tmp[0]->datavalue->value ;
+			if ( ! isset($ordered_author_claims[$num]) ) {
+				$ordered_author_claims[$num] = [] ;
+			}
+			$ordered_author_claims[$num][] = $c ;
+		}
+	}
+
+	$author_name_claims = $work_item->getClaims ( 'P2093' ) ;
+	$ordered_author_name_claims = array();
+	foreach ( $author_name_claims AS $c ) {
+		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
+			$tmp = $c->qualifiers->P1545 ;
+			$num = $tmp[0]->datavalue->value ;
+			if ( ! isset($ordered_author_name_claims[$num]) ) {
+				$ordered_author_name_claims[$num] = [] ;
+			}
+			$ordered_author_name_claims[$num][] = $c ;
+		}
+	}
+
+	foreach ( $author_numbers AS $num ) {
+		$author_claims = [];
+		if (isset($ordered_author_claims[$num])) {
+			$author_claims = $ordered_author_claims[$num];
+		}
+		$author_name_claims = [];
+		if (isset($ordered_author_name_claims[$num])) {
+			$author_name_claims = $ordered_author_name_claims[$num];
+		}
+		$commands = array_merge($commands,
+			single_index_merge($work_item, $author_claims,
+				$author_name_claims));
+	}
+
+	return $commands;
+}
+
+function single_index_merge($work_item, $author_claims, $author_name_claims) {
+	$commands = array();
+	$old_commands = array();
+	$work_qid = $work_item->getQ();
+	if (count($author_claims) > 0) {
+		$save_qid = "";
+		$save_quals = NULL;
+		$save_refs = NULL;
+		$new_quals = [];
+		$new_refs = [];
+		foreach ( $author_claims AS $i => $c ) {
+			if ($i == 0) {
+				$save_qid = $work_item->getTarget($c);
+				$save_quals = $work_item->statementQualifiersToQS($c) ;
+				$save_refs = $work_item->statementReferencesToQS($c) ;
+			} else {
+				$commands[] = "-STATEMENT\t" . $c->id ;
+			}
+			$new_quals = array_merge($new_quals, $work_item->statementQualifiersToQS($c) );
+			$new_refs = array_merge($new_refs, $work_item->statementReferencesToQS($c) );
+		}
+		foreach ( $author_name_claims AS $c ) {
+			$commands[] = "-STATEMENT\t" . $c->id ;
+			$new_quals = array_merge($new_quals, $work_item->statementQualifiersToQS($c) );
+			$new_refs = array_merge($new_refs, $work_item->statementReferencesToQS($c) );
+			$author_name = $c->mainsnak->datavalue->value ;
+			$new_quals[] = "P1932\t\"$author_name\"" ;
+		}
+		$qualifiers = array_unique($new_quals);
+		$references = array_unique($new_refs, SORT_REGULAR);
+		$add = "$work_qid\tP50\t$save_qid" ;
+		if (count($qualifiers) > 0) {
+			$add = $add . "\t" . implode("\t", $qualifiers) ;
+		}
+		if ( count($references) > 0 ) {
+			foreach ( $references AS $ref ) {
+				$commands[] = $add . "\t" . implode("\t", $ref) ;
+			}
+		} else {
+			$commands[] = $add ;
+		}
+		$add_save = "$work_qid\tP50\t$save_qid" ;
+		if (count($save_quals) > 0) {
+			$add_save = $add_save . "\t" . implode("\t", $save_quals) ;
+		}
+		if ( count($save_refs) > 0 ) {
+			foreach ( $save_refs AS $ref ) {
+				$old_commands[] = $add_save . "\t" . implode("\t", $ref) ;
+			}
+		} else {
+			$old_commands[] = $add_save ;
+		}
+		$commands = array_diff($commands, $old_commands);
+	} else {
+		$max_len = 0;
+		$max_claim = NULL;
+		foreach ( $author_name_claims AS $claim ) {
+			$author_name = $claim->mainsnak->datavalue->value ;
+			$len = strlen($author_name);
+			if ($len > $max_len) {
+				$max_len = $len;
+				$max_claim = $claim;
+			}
+		}
+		$save_name = "";
+		$save_quals = NULL;
+		$save_refs = NULL;
+		$new_quals = [];
+		$new_refs = [];
+		foreach ( $author_name_claims AS $c ) {
+			if ($c->id == $max_claim->id) {
+				$save_name = $c->mainsnak->datavalue->value ;
+				$save_quals = $work_item->statementQualifiersToQS($c);
+				$save_refs = $work_item->statementReferencesToQS($c);
+			} else {
+				$commands[] = "-STATEMENT\t" . $c->id ;
+			}
+			$new_quals = array_merge($new_quals, $work_item->statementQualifiersToQS($c) );
+                        $new_refs = array_merge($new_refs, $work_item->statementReferencesToQS($c) );
+
+		}
+		$qualifiers = array_unique($new_quals);
+		$references = array_unique($new_refs, SORT_REGULAR);
+		$add = "$work_qid\tP2093\t\"$save_name\"" ;
+		if (count($qualifiers) > 0) {
+			$add = $add . "\t" . implode("\t", $qualifiers) ;
+		}
+		if ( count($references) > 0 ) {
+			foreach ( $references AS $ref ) {
+				$commands[] = $add . "\t" . implode("\t", $ref) ;
+			}
+		} else {
+			$commands[] = $add ;
+		}
+		$add_save = "$work_qid\tP2093\t\"$save_name\"" ;
+		if (count($save_quals) > 0) {
+			$add_save = $add_save . "\t" . implode("\t", $save_quals) ;
+		}
+		if ( count($save_refs) > 0 ) {
+			foreach ( $save_refs AS $ref ) {
+				$old_commands[] = $add_save . "\t" . implode("\t", $ref) ;
+			}
+		} else {
+			$old_commands[] = $add_save ;
+		}
+		$commands = array_diff($commands, $old_commands);
+	}
+	return $commands;
+}
+
 ?>
