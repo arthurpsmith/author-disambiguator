@@ -132,9 +132,11 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 
 ksort($formatted_authors);
 
+$merge_count = 0;
 foreach ( $formatted_authors AS $num => $display_list ) {
 	print "<li>[$num]";
 	if ( $merge_candidates[$num] ) {
+		$merge_count += 1;
 		print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
 	} else if (count($display_list) > 1) {
 		print "<span style='color:red'>Name mismatch:</span>";
@@ -143,7 +145,9 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 }
 print "</ul>" ;
 
-print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to merge these author records' class='btn btn-primary' /></div>" ;
+if ($merge_count > 0) {
+	print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to merge these author records' class='btn btn-primary' /></div>" ;
+}
 print "</form>" ;
 
 print_footer() ;
