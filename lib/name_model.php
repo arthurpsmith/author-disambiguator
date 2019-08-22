@@ -19,8 +19,8 @@ class NameModel {
 		if ($ascii_name != $name) {
 			$this->ascii_nm = new NameModel($ascii_name);
 		}
-// Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' 
-		$name_parts = preg_split('/((?<=\.)\s*|\s+)/', $name);
+// Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' but not if there's a '-' character after
+		$name_parts = preg_split('/((?<=\.)\s*|\s+)(?!-)/', $name);
 		$name_prefixes = array();
 		$first_name = '';
 // Pull out prefix(es) and first name:
@@ -123,6 +123,34 @@ class NameModel {
 		return implode(' ', $name_parts);
 	}
 
+	public function initials_no_dot() {
+		$name_parts = array();
+		$first = $this->first_name;
+		$name_parts[] = str_replace('.', '', $first);
+		foreach ($this->middle_names AS $middle_name) {
+			$name_parts[] = str_replace('.', '', $middle_name);
+		}
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
+	public function add_missing_dot() {
+		$name_parts = array();
+		$first = $this->first_name ;
+		if (strlen($first) == 1) {
+			$first = $first . '.' ;
+		}
+		$name_parts[] = $first ;
+		foreach ($this->middle_names AS $middle_name) {
+			if (strlen($middle_name) == 1) {
+				$middle_name = $middle_name . '.' ;
+			}
+			$name_parts[] = $middle_name ;
+		}
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
 	public function name_with_squashed_initials() {
 		$name_parts = array();
 		$name_parts[] = NameModel::to_initial($this->first_name) ;
@@ -176,6 +204,8 @@ class NameModel {
 		$search_strings[$this->first_last_suffixes()] = 1;
 		$search_strings[$this->name_with_middle_initials()] = 1;
 		$search_strings[$this->name_with_middle_first_letters()] = 1;
+		$search_strings[$this->initials_no_dot()] = 1;
+		$search_strings[$this->add_missing_dot()] = 1;
 		if ($this->all_initials()) {
 			$search_strings[$this->name_with_squashed_initials()] = 1;
 		}
