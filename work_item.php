@@ -60,6 +60,10 @@ $to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
 
 $work_item = $wil->getItem ( $work_qid ) ;
+
+# Regenerate article entry directly from item:
+$article_entry = new WikidataArticleEntry2( $work_item );
+
 if ( !isset($work_item) )  {
 	print "<h2>Warning: $work_qid not found!</h2>" ;
 	print_footer() ;
