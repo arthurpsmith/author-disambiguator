@@ -147,7 +147,10 @@ function move_authors_qs_commands ( $wil, $papers, $author_q, $new_author_q ) {
 	$author_item = $wil->getItem ( $author_q ) ;
 	foreach ( $papers AS $paperq ) {
 		$i = $wil->getItem ( $paperq ) ;
-		if ( !isset($i) ) continue ;
+		if ( !isset($i) ) {
+			print "Can't find $paperq";
+			continue ;
+		}
 		$authors = $i->getClaims ( 'P50' ) ;
 		foreach ( $authors AS $a ) {
 			$q = $i->getTarget ( $a ) ;
