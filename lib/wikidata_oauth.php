@@ -785,7 +785,7 @@ class WD_OAuth {
 
 
 # Function to merge author claims where duplicates have been entered on a single work
-    function merge_authors ($work_qid, $author_numbers, $edit_summary) {
+    function merge_authors ($work_qid, $author_numbers, $remove_claims, $edit_summary) {
 	// Fetch edit token
 	$ch = null;
 	$res = $this->doApiQuery( [
@@ -850,6 +850,10 @@ class WD_OAuth {
 		$commands = array_merge($commands,
 			$this->single_index_merge($work_item, $author_claims,
 				$author_name_claims));
+	}
+# Remove additional claims supplied in args:
+	foreach ( $remove_claims AS $claim_id ) {
+		$commands[] = ['id' => $claim_id, 'remove' => ''] ;
 	}
 
 	$data['claims'] = $commands;
@@ -940,11 +944,11 @@ class WD_OAuth {
 		}
 
 		$changed = false ;
-		if (count($qualifiers) > 0) {
+		if (count($new_quals) > 0) {
 			$changed = true;
 			$save_claim->qualifiers = $new_quals;
 		}
-		if ( count($references) > 0 ) {
+		if ( count($new_refs) > 0 ) {
 			$changed = true;
 			$save_claim->references = $new_refs;
 		}

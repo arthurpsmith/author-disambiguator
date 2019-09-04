@@ -35,21 +35,19 @@ if ( $work_qid == '' ) {
 
 $wil = new WikidataItemList ;
 
-if ( $action == 'add' ) {
+if ( $action == 'merge' ) {
 	$author_numbers = get_request ( 'merges' , array() ) ;
+	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $oauth->merge_authors( $work_qid, $author_numbers, "Author Disambiguator merge authors for $work_qid" ) ;
+	$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
 
 	if ($result) {
 		print "Merging successful!";
 	} else {
 		print "Something went wrong?";
 	}
-
-	print_footer() ;
-	exit ( 0 ) ;
+	flush();
 }
-
 
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
 
@@ -120,33 +118,45 @@ $merge_candidates = $article_entry->merge_candidates($wil);
 
 // Author list
 print "<h2>Authors</h2>" ;
-print "<form method='post' class='form' target='_blank'>
-<input type='hidden' name='action' value='add' />
+print "<form method='post' class='form'>
+<input type='hidden' name='action' value='merge' />
 <input type='hidden' name='id' value='$work_qid' />" ;
 
-print('<ul>');
+?>
+
+<div>
+<a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
+<a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",false);return false'>Uncheck all</a>
+</div>
+
+<?PHP
+
 $formatted_authors = array();
 foreach ( $article_entry->author_names AS $num => $a_list ) {
 	$formatted_authors[$num] = [];
-	foreach ( $a_list AS $a ) {
-		$formatted_authors[$num][] = "<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
+	foreach ( $a_list AS $id => $a ) {
+		$formatted_authors[$num][$id] = "<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
 	}
 }
 foreach ( $article_entry->authors AS $num => $qt_list ) {
 	if (! isset($formatted_authors[$num])) {
 		$formatted_authors[$num] = [];
 	}
-	foreach ( $qt_list AS $qt ) {
+	foreach ( $qt_list AS $id => $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
 		$label = $i2->getLabel() ;
-		$formatted_authors[$num][] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		$formatted_authors[$num][$id] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 	}
 }
 
 ksort($formatted_authors);
 
+print('<ol>');
 $merge_count = 0;
 foreach ( $formatted_authors AS $num => $display_list ) {
+	if ($num == 'unordered') {
+		continue ;
+	}
 	print "<li>[$num]";
 	if ( $merge_candidates[$num] ) {
 		$merge_count += 1;
@@ -154,12 +164,22 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 	} else if (count($display_list) > 1) {
 		print "<span style='color:red'>Name mismatch:</span>";
 	}
-	print implode ( '|', $display_list) . "</li>";
+	print implode ( '|', $display_list) . "</li>\n";
 }
-print "</ul>" ;
+print "</ol>\n" ;
+
+if (isset($formatted_authors['unordered']) ) {
+	print "<h3>Unordered authors - select those to be removed in merge</h3>" ;
+	$merge_count += 1;
+	print "<ul>";
+	foreach ( $formatted_authors['unordered'] AS $cid => $formatted_auth ) {
+		print "<li> <input type='checkbox' name='remove_claims[$cid]' value='$cid' checked/> $formatted_auth</li>" ;
+	}
+	print "</ul>";
+}
 
 if ($merge_count > 0) {
-	print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to merge these author records' class='btn btn-primary' /></div>" ;
+	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
 }
 print "</form>" ;
 
