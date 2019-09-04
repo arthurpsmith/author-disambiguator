@@ -253,6 +253,15 @@ class NameModel {
 		return array_keys($search_strings);
 	}
 
+	public function fuzzy_ignore_nonascii() {
+		$search_strings = array_fill_keys($this->fuzzy_search_strings(), 1);
+		foreach (array_keys($search_strings) as $string) {
+			$new_str = preg_replace('/[^A-Za-z]/', '', $string);
+			$search_strings[strtoupper($new_str)] = 1 ;
+		}
+		return array_keys($search_strings);
+	}
+
 	public static function is_initial($name_part) {
 		if (strlen($name_part) > 3) return false ;
 		if ($name_part[strlen($name_part)-1] == '.') return true ; // Ends in .
