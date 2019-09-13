@@ -115,6 +115,7 @@ if ( count($article_entry->topics) > 0 ) {
 print "</div>" ;
 
 $merge_candidates = $article_entry->merge_candidates($wil);
+$repeated_ids = $article_entry->repeated_ids();
 
 // Author list
 print "<h2>Authors</h2>" ;
@@ -146,6 +147,15 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 		$i2 = $wil->getItem ( $qt ) ;
 		$label = $i2->getLabel() ;
 		$formatted_authors[$num][$id] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		if (isset($repeated_ids[$qt])) {
+			$rpt_nums = $repeated_ids[$qt];
+			$formatted_authors[$num][$id] .= " also ";
+			foreach ($rpt_nums as $rptnum ) {
+				if ($rptnum != $num) {
+					$formatted_authors[$num][$id] .= "#" . $rptnum ;
+				}
+			}
+		}
 	}
 }
 
