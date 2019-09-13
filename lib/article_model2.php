@@ -127,6 +127,23 @@ class WikidataArticleEntry2 {
 		}
 		return $evaluation_by_index;
 	}
+
+	public function repeated_ids () {
+		$author_ids_used = [] ;
+		foreach ( $this->authors AS $num => $auth_list ) {
+			foreach ( $auth_list AS $auth_qid ) {
+				if (! isset($author_ids_used[$auth_qid])) {
+					$author_ids_used[$auth_qid] = [];
+				}
+				if ( ! in_array($num, $author_ids_used[$auth_qid]) ) {
+					$author_ids_used[$auth_qid][] = $num ;
+				}
+			}
+		}
+		return array_filter($author_ids_used, function($a) {
+				return count($a) > 1 ;
+			} );
+	}
 }
 
 function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wil) {
@@ -155,15 +172,21 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 			}
 		}
 		if ($name_count > 0) {
-			$name = $wil->getItem($qid)->getLabel();
+			$author_item = $wil->getItem($qid);
+			$name = $author_item->getLabel();
 			$nm = new NameModel($name);
 			$names = $nm->fuzzy_ignore_nonascii();
 			if ( isset($all_stated_as[$qid]) ) {
 				$names = array_merge($names, $all_stated_as[$qid]);
 			}
+			$search_strings = array_fill_keys($names, 1) ;
+			$aliases = $author_item->getAllAliases();
+			array_walk_recursive($aliases, function($a)
+				use (&$search_strings) {
+					$search_strings[$a] = 1; } ) ;
 			foreach ($author_names as $a) {
 				$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $a));
-				if ( ! (in_array ( $a , $names ) || in_array( $ta, $names) ) ) {
+				if ( ! (isset($search_strings[$a]) || isset($search_strings[$ta]) ) ) {
 					$eval = FALSE;
 					break;
 				}
