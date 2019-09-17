@@ -11,7 +11,6 @@ $wbsearch_checked = $wbsearch ? 'checked' : '' ;
 $filter = get_request ( 'filter', '' ) ;
 $filter_authors = get_request ( 'filter_authors', '') ;
 $filter_authors_checked = $filter_authors ? 'checked' : '' ;
-$filter_authors_checked = $filter_authors ? 'checked' : '' ;
 $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 500 ;
 $limit_options = [10, 50, 200, 500] ;
