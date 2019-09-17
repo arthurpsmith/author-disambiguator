@@ -15,9 +15,13 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
-		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
-		if ($ascii_name != $name) {
-			$this->ascii_nm = new NameModel($ascii_name);
+		try {
+			$ascii_name = mb_convert_encoding($name, 'ASCII', 'UTF-8');
+			if ($ascii_name != $name) {
+				$this->ascii_nm = new NameModel($ascii_name);
+			}
+		} catch (Exception $e) {
+			# If there's a problem just leave this out
 		}
 // Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' but not if there's a '-' character after
 		$name_parts = preg_split('/((?<=\.)\s*|\s+)(?!-)/', $name);

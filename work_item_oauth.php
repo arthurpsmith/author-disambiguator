@@ -7,6 +7,8 @@ $oauth = new WD_OAuth('author-disambiguator', '/var/www/html/oauth.ini');
 
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
+$renumber = get_request ( 'renumber' , 0 ) ;
+$renumber_checked = $renumber ? 'checked' : '' ;
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect('https://localhost/author-disambiguator/work_item_oauth.php');
@@ -25,6 +27,7 @@ print "<hr>";
 print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
+<label><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author links for work' />
 </form>" ;
 
@@ -36,17 +39,25 @@ if ( $work_qid == '' ) {
 $wil = new WikidataItemList ;
 
 if ( $action == 'merge' ) {
+	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$author_numbers = get_request ( 'merges' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
-
-	if ($result) {
-		print "Merging successful!";
+	if (count($renumbering) > 0) {
+		$result = $oauth->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
+		if ($result) {
+			print "Renumbering successful!";
+		} else {
+			print "Something went wrong?";
+		}
 	} else {
-		print "Something went wrong?";
+		$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
+		if ($result) {
+			print "Merging successful!";
+		} else {
+			print "Something went wrong?";
+		}
 	}
-	flush();
 }
 
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
@@ -167,29 +178,47 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 	if ($num == 'unordered') {
 		continue ;
 	}
-	print "<li>[$num]";
+	print "<li>";
 	if ( $merge_candidates[$num] ) {
 		$merge_count += 1;
-		print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
+		if (! $renumber) {
+			print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
+		}
 	} else if (count($display_list) > 1) {
-		print "<span style='color:red'>Name mismatch:</span>";
+		print "<span style='color:red'>Name/id mismatch:</span>";
 	}
-	print implode ( '|', $display_list) . "</li>\n";
+	if ($renumber) {
+		foreach ( $display_list AS $cid => $display_name ) {
+			print "<input size='1' name='ordinals[$cid]' value='$num'/>$display_name";
+		}
+	} else {
+		print "[$num]";
+		print implode ( '|', $display_list) ;
+	}
+	print "</li>\n";
 }
 print "</ol>\n" ;
 
 if (isset($formatted_authors['unordered']) ) {
-	print "<h3>Unordered authors - select those to be removed in merge</h3>" ;
+	print "<h3>Unordered authors - set author number or check to remove</h3>" ;
 	$merge_count += 1;
 	print "<ul>";
 	foreach ( $formatted_authors['unordered'] AS $cid => $formatted_auth ) {
-		print "<li> <input type='checkbox' name='remove_claims[$cid]' value='$cid' checked/> $formatted_auth</li>" ;
+		print "<li> ";
+		print "<input type='checkbox' name='remove_claims[$cid]' value='$cid' />";
+		if ($renumber) {
+			print "<input size='1' name='ordinals[$cid]' value=''/>";
+		}
+		print "$formatted_auth</li>";
 	}
 	print "</ul>";
 }
 
 if ($merge_count > 0) {
 	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
+}
+if ($renumber) {
+	print "<div style='margin:20px'><input type='submit' name='renumber' value='Renumber authors' class='btn btn-primary' /> </div>";
 }
 print "</form>" ;
 

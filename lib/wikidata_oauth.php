@@ -1013,6 +1013,89 @@ class WD_OAuth {
 		}
 		return $ret;
 	}
+
+# Function to renumber (set series ordinal) for author claims per user request
+	function renumber_authors( $work_qid, $renumbering, $remove_claims, $edit_summary ) {
+	// Fetch edit token
+		$ch = null;
+		$res = $this->doApiQuery( [
+			'format' => 'json',
+			'action' => 'query' ,
+			'meta' => 'tokens'
+		], $ch );
+		if ( !isset( $res->query->tokens->csrftoken ) ) {
+			$this->error = 'Bad API response [createItemFromPage]: <pre>' . htmlspecialchars( var_export( $res, 1 ) ) . '</pre>';
+			return false ;
+		}
+		$token = $res->query->tokens->csrftoken;
+
+	// Fetch work
+		$work_item = $this->doApiQuery( [
+			'format' => 'json',
+			'action' => 'wbgetentities' ,
+			'ids' => $work_qid,
+			'redirects' => 'no'
+		], $ch )->entities->$work_qid;
+
+		$baserev = $work_item->lastrevid;
+
+		$commands = array();
+		$author_claims = isset($work_item->claims->P50) ? $work_item->claims->P50 : [] ;
+		foreach ( $author_claims AS $c ) {
+			$new_cmd = $this->renumber_claim($c, $renumbering);
+			if ($new_cmd != NULL) {
+				$commands[] = $new_cmd;
+			}
+		}
+		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
+		foreach ( $author_name_claims AS $c ) {
+			$new_cmd = $this->renumber_claim($c, $renumbering);
+			if ($new_cmd != NULL) {
+				$commands[] = $new_cmd;
+			}
+		}
+# Remove additional claims supplied in args:
+
+		foreach ( $remove_claims AS $claim_id ) {
+			$commands[] = ['id' => $claim_id, 'remove' => ''] ;
+		}
+
+		$data['claims'] = $commands;
+		$params = [
+			'format' => 'json',
+			'action' => 'wbeditentity',
+			'id' => $work_qid ,
+			'data' => json_encode ( $data ) ,
+			'token' => $token
+		] ;
+		if ( isset ( $baserev ) and $baserev != '' ) $params['baserevid'] = $baserev ;
+		if ( isset($edit_summary) and $edit_summary != '' ) $params['summary'] = $edit_summary ;
+
+		$res = $this->doApiQuery( $params , $ch );
+		if ( isset ( $res->error ) ) return false ;
+
+		return true;
+	}
+
+	function renumber_claim($c, $renumbering) {
+		if ( ! isset($renumbering[$c->id] ) ) return NULL;
+		$new_num = $renumbering[$c->id];
+		if ($new_num == '') return NULL;
+		$new_qualifier_entry = [['snaktype' => 'value', 'property' => 'P1545', 'datavalue' => ['value'=> $new_num, 'type' => 'string'], 'datatype' => 'string']] ;
+		if ( isset($c->qualifiers) ) {
+			if ( isset($c->qualifiers->P1545) ) {
+				$num_qualifiers = $c->qualifiers->P1545 ;
+				$old_num = $num_qualifiers[0]->datavalue->value ;
+				if ($old_num == $new_num) return NULL;
+				$c->qualifiers->P1545 = $new_qualifier_entry;
+			} else {
+				$c->qualifiers['P1545'] = $new_qualifier_entry;
+			}
+		} else {
+			$c->qualifiers = ['P1545' => $new_qualifier_entry];
+		}
+		return $c;
+	}
 }
 
 ?>
