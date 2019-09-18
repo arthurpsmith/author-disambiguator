@@ -16,7 +16,7 @@ class NameModel {
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
 		try {
-			$ascii_name = mb_convert_encoding($name, 'ASCII', 'UTF-8');
+			$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
 			if ($ascii_name != $name) {
 				$this->ascii_nm = new NameModel($ascii_name);
 			}
