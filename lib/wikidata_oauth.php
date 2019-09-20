@@ -1084,13 +1084,10 @@ class WD_OAuth {
 		$new_qualifier_entry = [['snaktype' => 'value', 'property' => 'P1545', 'datavalue' => ['value'=> $new_num, 'type' => 'string'], 'datatype' => 'string']] ;
 		if ( isset($c->qualifiers) ) {
 			if ( isset($c->qualifiers->P1545) ) {
-				$num_qualifiers = $c->qualifiers->P1545 ;
-				$old_num = $num_qualifiers[0]->datavalue->value ;
+				$old_num = $c->qualifiers->P1545[0]->datavalue->value ;
 				if ($old_num == $new_num) return NULL;
-				$c->qualifiers->P1545 = $new_qualifier_entry;
-			} else {
-				$c->qualifiers['P1545'] = $new_qualifier_entry;
 			}
+			$c->qualifiers->P1545 = $new_qualifier_entry;
 		} else {
 			$c->qualifiers = ['P1545' => $new_qualifier_entry];
 		}
