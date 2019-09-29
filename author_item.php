@@ -196,7 +196,7 @@ foreach ( $author_qid_counter AS $qt => $cnt ) {
 	if ( $cnt == 1 ) break ;
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
-	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
+	print "<li><a href='author_item.php?limit=500&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=500&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
 }
 print "</ul>" ;
 
@@ -205,7 +205,7 @@ print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a> (<a href='index.php?limit=50&name=" . urlencode($a) . "&filter=wdt%3AP50+wd%3A$author_qid'>$cnt&times;</a>)</li>" ;
+	print "<li><a href='index.php?limit=500&name=" . urlencode($a) . "'>$a</a> (<a href='index.php?limit=500&name=" . urlencode($a) . "&filter=wdt%3AP50+wd%3A$author_qid'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
