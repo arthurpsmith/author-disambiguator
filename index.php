@@ -367,7 +367,7 @@ print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
 
 arsort ( $name_counter , SORT_NUMERIC ) ;
-print "<h2>Common names in these papers</h2>" ;
+print "<h2>Common author name strings in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
