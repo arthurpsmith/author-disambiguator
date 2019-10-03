@@ -816,12 +816,14 @@ class WD_OAuth {
 
 	foreach ( $author_claims AS $c ) {
 		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
-			$tmp = $c->qualifiers->P1545 ;
-			$num = $tmp[0]->datavalue->value ;
-			if ( ! isset($ordered_author_claims[$num]) ) {
-				$ordered_author_claims[$num] = [] ;
+			$ordinals = $c->qualifiers->P1545 ;
+			foreach ($ordinals AS $tmp) {
+				$num = $tmp->datavalue->value ;
+				if ( ! isset($ordered_author_claims[$num]) ) {
+					$ordered_author_claims[$num] = [] ;
+				}
+				$ordered_author_claims[$num][] = $c ;
 			}
-			$ordered_author_claims[$num][] = $c ;
 		}
 	}
 
@@ -829,12 +831,14 @@ class WD_OAuth {
 	$ordered_author_name_claims = array();
 	foreach ( $author_name_claims AS $c ) {
 		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
-			$tmp = $c->qualifiers->P1545 ;
-			$num = $tmp[0]->datavalue->value ;
-			if ( ! isset($ordered_author_name_claims[$num]) ) {
-				$ordered_author_name_claims[$num] = [] ;
+			$ordinals = $c->qualifiers->P1545 ;
+			foreach ($ordinals AS $tmp) {
+				$num = $tmp->datavalue->value ;
+				if ( ! isset($ordered_author_name_claims[$num]) ) {
+					$ordered_author_name_claims[$num] = [] ;
+				}
+				$ordered_author_name_claims[$num][] = $c ;
 			}
-			$ordered_author_name_claims[$num][] = $c ;
 		}
 	}
 
@@ -1084,8 +1088,11 @@ class WD_OAuth {
 		$new_qualifier_entry = [['snaktype' => 'value', 'property' => 'P1545', 'datavalue' => ['value'=> $new_num, 'type' => 'string'], 'datatype' => 'string']] ;
 		if ( isset($c->qualifiers) ) {
 			if ( isset($c->qualifiers->P1545) ) {
-				$old_num = $c->qualifiers->P1545[0]->datavalue->value ;
-				if ($old_num == $new_num) return NULL;
+				$ordinals = $c->qualifiers->P1545 ;
+				foreach ($ordinals AS $tmp) {
+					$old_num = $tmp->datavalue->value ;
+					if ($old_num == $new_num) return NULL;
+				}
 			}
 			$c->qualifiers->P1545 = $new_qualifier_entry;
 		} else {

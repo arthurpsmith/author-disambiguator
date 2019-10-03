@@ -125,8 +125,26 @@ if ( count($article_entry->topics) > 0 ) {
 }
 print "</div>" ;
 
-$merge_candidates = $article_entry->merge_candidates($wil);
+# Fetch 'stated as' values for all identified authors:
+$author_qid_map = array();
+foreach ( $article_entry->authors as $author_qid_list ) {
+	foreach ($author_qid_list as $qid) {
+		$author_qid_map[$qid] = 1;
+	}
+}
+$author_qids = array_keys($author_qid_map);
+$stated_as_names = fetch_stated_as_for_authors($author_qids);
+$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
 $repeated_ids = $article_entry->repeated_ids();
+
+# Reload author items in case some missed from SPARQL:
+$to_load = [];
+foreach ( $article_entry->authors AS $num => $qt_list ) {
+	foreach ( $qt_list as $qt ) {
+		$to_load[] = $qt;
+	}
+}
+$wil->loadItems ( $to_load ) ;
 
 // Author list
 print "<h2>Authors</h2>" ;
@@ -156,6 +174,10 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 	}
 	foreach ( $qt_list AS $id => $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
+		if (! isset($i2) ) {
+			print "Warning: item not found for $qt; author $num";
+			continue;
+		}
 		$label = $i2->getLabel() ;
 		$formatted_authors[$num][$id] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		if (isset($repeated_ids[$qt])) {

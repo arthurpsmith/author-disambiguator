@@ -9,6 +9,7 @@ class WikidataArticleEntry2 {
 	public $authors = array() ;
 	public $authors_stated_as = array() ;
 	public $published_in = array() ;
+	public $claims_with_multiple_ordinals = array();
 	public $doi = '' ;
 	public $pmid = '' ;
 	public $topics = array() ;
@@ -28,12 +29,17 @@ class WikidataArticleEntry2 {
 		foreach ( $claims AS $c ) {
 			$author_name = $c->mainsnak->datavalue->value ;
 			if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
-				$tmp = $c->qualifiers->P1545 ;
-				$num = $tmp[0]->datavalue->value ;
-				if ( ! isset($this->author_names[$num]) ) {
-					$this->author_names[$num] = [] ;
+				$ordinal_values = $c->qualifiers->P1545 ;
+				if (count($ordinal_values) > 1) {
+					$this->claims_with_multiple_ordinals[] = $c->id;
 				}
-				$this->author_names[$num][$c->id] = $author_name;
+				foreach ($ordinal_values AS $tmp) {
+					$num = $tmp->datavalue->value ;
+					if ( ! isset($this->author_names[$num]) ) {
+						$this->author_names[$num] = [] ;
+					}
+					$this->author_names[$num][$c->id] = $author_name;
+				}
 			} else {
 				if ( ! isset($this->author_names['unordered']) ) {
 					$this->author_names['unordered'] = [] ;
@@ -47,12 +53,17 @@ class WikidataArticleEntry2 {
 		foreach ( $claims AS $c ) {
 			$author_q = $item->getTarget($c) ;
 			if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
-				$tmp = $c->qualifiers->P1545 ;
-				$num = $tmp[0]->datavalue->value ;
-				if ( ! isset($this->authors[$num]) ) {
-					$this->authors[$num] = [] ;
+				$ordinal_values = $c->qualifiers->P1545 ;
+				if (count($ordinal_values) > 1) {
+					$this->claims_with_multiple_ordinals[] = $c->id;
 				}
-				$this->authors[$num][$c->id] = $author_q ;
+				foreach ($ordinal_values AS $tmp) {
+					$num = $tmp->datavalue->value ;
+					if ( ! isset($this->authors[$num]) ) {
+						$this->authors[$num] = [] ;
+					}
+					$this->authors[$num][$c->id] = $author_q ;
+				}
 			} else {
 				if ( ! isset($this->authors['unordered']) ) {
 					$this->authors['unordered'] = [] ;
@@ -107,8 +118,7 @@ class WikidataArticleEntry2 {
 		return ($adate > $bdate) ? -1 : 1 ;
 	}
 
-	public function merge_candidates ($wil) {
-		$all_stated_as = fetch_stated_as_for_authors($this->authors);
+	public function merge_candidates ($wil, $all_stated_as) {
 		$evaluation_by_index = array();
 		$name_indexes = array_keys($this->author_names);
 		$auth_indexes = array_keys($this->authors);
@@ -208,17 +218,26 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 	return $eval;
 }
 
-function fetch_stated_as_for_authors($authors) {
+function fetch_stated_as_for_authors($author_qids) {
 	$names = array();
-	$author_qid_map = array();
-	foreach ( $authors as $author_qid_list ) {
-		foreach ($author_qid_list as $qid) {
-			$author_qid_map[$qid] = 1;
-		}
+
+	$batch_size = 500 ;
+	$batches = [ [] ] ;
+	foreach ( $author_qids AS $k => $v ) {
+		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
+		$batches[count($batches)-1][$k] = $v ;
 	}
-	$author_qids = array_keys($author_qid_map);
+	foreach ( $batches as $batch ) {
+		$new_names = fetch_stated_for_batch($batch);
+		$names = array_merge($names, $new_names);
+	}
+	return $names;
+}
+
+function fetch_stated_for_batch($author_qids) {
 	$author_qids_for_sparql = 'wd:' . implode ( ' wd:' , $author_qids) ;
-	$sparql = "SELECT DISTINCT ?author_qid ?name { VALUES ?author_qid { $author_qids_for_sparql } .
+
+	$sparql = "SELECT DISTINCT ?author_qid ?name WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
 	?q p:P50 ?auth_statement .
 	?auth_statement ps:P50 ?author_qid ;
                         pq:P1932 ?name .
@@ -329,13 +348,13 @@ function generate_entries_for_batch2( $uri_list ) {
 		$name = $binding->name_string->value ;
 		if ( isset( $binding->ordinal ) ) {
 			$num = $binding->ordinal->value ;
-			if ( isset($article_entry->author_names[$num]) ) {
-				$article_entry->author_names[$num][$claim_id] = $name ;
-			} else {
-				$article_entry->author_names[$num] = [$claim_id => $name] ;
-			}
 		} else {
-			$article_entry->author_names[] = [$claim_id => $name] ;
+			$num = 'unordered';
+		}
+		if ( isset($article_entry->author_names[$num]) ) {
+			$article_entry->author_names[$num][$claim_id] = $name ;
+		} else {
+			$article_entry->author_names[$num] = [$claim_id => $name] ;
 		}
 	}
 
@@ -363,13 +382,13 @@ function generate_entries_for_batch2( $uri_list ) {
 		$author_q = item_id_from_uri($binding->author->value) ;
 		if ( isset( $binding->ordinal ) ) {
 			$num = $binding->ordinal->value ;
-			if ( isset ( $article_entry->authors[$num] ) ) {
-				$article_entry->authors[$num][$claim_id] = $author_q ;
-			} else {
-				$article_entry->authors[$num] = [$claim_id => $author_q] ;
-			}
 		} else {
-			$article_entry->authors[] = [$claim_id => $author_q] ;
+			$num = 'unordered' ;
+		}
+		if ( isset ( $article_entry->authors[$num] ) ) {
+			$article_entry->authors[$num][$claim_id] = $author_q ;
+		} else {
+			$article_entry->authors[$num] = [$claim_id => $author_q] ;
 		}
 		if ( isset( $binding->stated_as ) ) {
 			$article_entry->authors_stated_as[$author_q] = $binding->stated_as->value ;

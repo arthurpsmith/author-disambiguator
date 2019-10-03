@@ -31,12 +31,19 @@ function compress_display_list($list, $highlights, $total_limit, $limit_first, $
 		$int_highlights[] = $hl_value ;
         }
 	foreach ($list AS $index => $item) {
+		if ($index == 'unordered') {
+			$compressed_list[] = $item;
+			continue;
+		}
 		if ($index <= $limit_first) {
 			$compressed_list[] = $item;
 			continue;
 		}
 		$in_highlight = 0;
 		foreach ($int_highlights as $hl_index) {
+			if ( $hl_index == 'unordered' ) {
+				continue ;
+			}
 			if (($index >= $hl_index - $limit_nbr) && ($index <= $hl_index + $limit_nbr)) {
 				$compressed_list[] = $item ;
 				$in_highlight = 1;
