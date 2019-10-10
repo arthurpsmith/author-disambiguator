@@ -16,13 +16,10 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
-		try {
-			$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
-			if ($ascii_name != $name) {
-				$this->ascii_nm = new NameModel($ascii_name);
-			}
-		} catch (Exception $e) {
-			# If there's a problem just leave this out
+		$utf8_name = mb_convert_encoding($name, 'UTF-8', 'UTF-8'); 
+		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $utf8_name);
+		if (($ascii_name) && ($ascii_name != $name)) {
+			$this->ascii_nm = new NameModel($ascii_name);
 		}
 		if (strpos($name, '-') !== false) {
 			$nodash_name = str_replace('-', ' ', $name);
