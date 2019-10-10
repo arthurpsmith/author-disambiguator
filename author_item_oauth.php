@@ -73,6 +73,7 @@ if ( $action == 'remove' ) {
 }
 
 if ($action == 'merge') {
+	$edit_claims = new EditClaims($oauth);
 	$papers = get_request ( 'papers' , array() ) ;
 	$article_items = generate_article_entries2( $papers );
 	$to_load = array() ;
@@ -110,13 +111,13 @@ if ($action == 'merge') {
 				$author_numbers[] = $num ;
 			}
 		}
-		$result = $oauth->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for $work_qid" ) ;
+		$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for $work_qid" ) ;
 		print "<li>$work_qid: ";
 		if ($result) {
 			print "merges done";
-			sleep(1);
 		} else {
 			print "update failed!?";
+			print_r($edit_claims->error);
 		}
 		print "</li>\n";
 	}

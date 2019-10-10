@@ -43,40 +43,43 @@ if ( $work_qid == '' ) {
 $wil = new WikidataItemList ;
 
 if ( $action == 'merge' ) {
+	$edit_claims = new EditClaims($oauth);
 	$author_numbers = get_request ( 'merges' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
+	$result = $edit_claims->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
 	if ($result) {
 		print "Merging successful!";
 	} else {
 		print "Something went wrong? ";
-		print_r($oauth->error);
+		print_r($edit_claims->error);
 	}
 }
 
 if ($action == 'renumber') {
+	$edit_claims = new EditClaims($oauth);
 	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $oauth->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
+	$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
 	if ($result) {
 		print "Renumbering successful!";
 	} else {
 		print "Something went wrong? ";
-		print_r($oauth->error);
+		print_r($edit_claims->error);
 	}
 }
 
 if ( $action == 'match' ) {
+	$edit_claims = new EditClaims($oauth);
 	$matches = get_request ( 'match_author' , array() ) ;
 
-	$result = $oauth->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for $work_qid" ) ;
+	$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for $work_qid" ) ;
 	if ($result) {
 		print "Matching successful!";
 	} else {
 		print "Something went wrong? ";
-		print_r($oauth->error);
+		print_r($edit_claims->error);
 	}
 }
 

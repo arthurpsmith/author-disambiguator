@@ -10,6 +10,7 @@ setlocale(LC_CTYPE, 'en_US.UTF-8'); // Required for iconv to work
 require_once ( __DIR__ . '/../magnustools/common.php' ) ;
 require_once ( __DIR__ . '/../magnustools/wikidata.php' ) ;
 require_once ( __DIR__ . '/../lib/wikidata_claims.php' ) ;
+require_once ( __DIR__ . '/../lib/edit_claims.php' ) ;
 require_once ( __DIR__ . '/../lib/article_model.php' ) ;
 require_once ( __DIR__ . '/../lib/article_model2.php' ) ;
 require_once ( __DIR__ . '/../lib/cluster.php' ) ;
