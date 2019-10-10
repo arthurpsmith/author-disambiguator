@@ -8,7 +8,10 @@ $oauth = new WD_OAuth('author-disambiguator', '/var/www/html/oauth.ini');
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
 $renumber = get_request ( 'renumber' , 0 ) ;
+$match  = get_request ( 'match' , 0 ) ;
+$renumber = $match ? 0: $renumber ; # Supercede renumbering if match selected
 $renumber_checked = $renumber ? 'checked' : '' ;
+$match_checked = $match ? 'checked' : '' ;
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect('https://localhost/author-disambiguator/work_item_oauth.php');
@@ -27,7 +30,8 @@ print "<hr>";
 print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
-<label><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
+<label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
+<label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author links for work' />
 </form>" ;
 
@@ -39,24 +43,40 @@ if ( $work_qid == '' ) {
 $wil = new WikidataItemList ;
 
 if ( $action == 'merge' ) {
-	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$author_numbers = get_request ( 'merges' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	if (count($renumbering) > 0) {
-		$result = $oauth->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
-		if ($result) {
-			print "Renumbering successful!";
-		} else {
-			print "Something went wrong?";
-		}
+	$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
+	if ($result) {
+		print "Merging successful!";
 	} else {
-		$result = $oauth->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
-		if ($result) {
-			print "Merging successful!";
-		} else {
-			print "Something went wrong?";
-		}
+		print "Something went wrong? ";
+		print_r($oauth->error);
+	}
+}
+
+if ($action == 'renumber') {
+	$renumbering = get_request ( 'ordinals' , array() ) ;
+	$remove_claims = get_request ( 'remove_claims' , array() ) ;
+
+	$result = $oauth->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
+	if ($result) {
+		print "Renumbering successful!";
+	} else {
+		print "Something went wrong? ";
+		print_r($oauth->error);
+	}
+}
+
+if ( $action == 'match' ) {
+	$matches = get_request ( 'match_author' , array() ) ;
+
+	$result = $oauth->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for $work_qid" ) ;
+	if ($result) {
+		print "Matching successful!";
+	} else {
+		print "Something went wrong? ";
+		print_r($oauth->error);
 	}
 }
 
@@ -133,8 +153,26 @@ foreach ( $article_entry->authors as $author_qid_list ) {
 	}
 }
 $author_qids = array_keys($author_qid_map);
-$stated_as_names = fetch_stated_as_for_authors($author_qids);
-$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
+if ($match) {
+	$related_authors = fetch_related_authors($work_qid, $author_qids);
+	$stated_as_names = fetch_stated_as_for_authors($related_authors);
+	$wil->loadItems ( $related_authors ) ;
+	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
+	$items_authors = array();
+	foreach ($match_candidates AS $author_qids) {
+		$items_authors = array_merge($items_authors, $author_qids);
+	}
+	$match_candidate_data = AuthorData::authorDataFromItems( $items_authors, $wil ) ;
+	$to_load = array();
+	foreach ($match_candidate_data AS $author_data) {
+		foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
+	}
+	$to_load = array_unique($to_load);
+	$wil->loadItems ( $to_load ) ;
+} else {
+	$stated_as_names = fetch_stated_as_for_authors($author_qids);
+	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
+}
 $repeated_ids = $article_entry->repeated_ids();
 
 # Reload author items in case some missed from SPARQL:
@@ -148,9 +186,15 @@ $wil->loadItems ( $to_load ) ;
 
 // Author list
 print "<h2>Authors</h2>" ;
-print "<form method='post' class='form'>
-<input type='hidden' name='action' value='merge' />
-<input type='hidden' name='id' value='$work_qid' />" ;
+print "<form method='post' class='form'>" ;
+if ($renumber) {
+    print "<input type='hidden' name='action' value='renumber' />";
+} else if ($match) {
+    print "<input type='hidden' name='action' value='match' />";
+} else {
+    print "<input type='hidden' name='action' value='merge' />";
+}
+print "<input type='hidden' name='id' value='$work_qid' />" ;
 
 ?>
 
@@ -194,20 +238,33 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 
 ksort($formatted_authors);
 
-print('<ol>');
+print('<table class="table table-striped table-condensed">');
+if ($match) {
+	print('<tr><th>Row</th><th>Author</th><th>Potential match?</th><th>Description</th><th>Works</th><th>Employer(s)</th></tr>');
+}
 $merge_count = 0;
+$row_count = 0;
 foreach ( $formatted_authors AS $num => $display_list ) {
 	if ($num == 'unordered') {
 		continue ;
 	}
-	print "<li>";
-	if ( $merge_candidates[$num] ) {
-		$merge_count += 1;
-		if (! $renumber) {
-			print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
+        $row_count ++;
+	if ($match) {
+		$rows_for_matches = 1;
+		if (isset($match_candidates[$num])) {
+			$rows_for_matches = count($match_candidates[$num]);
 		}
-	} else if (count($display_list) > 1) {
-		print "<span style='color:red'>Name/id mismatch:</span>";
+		print "<tr><td rowspan='$rows_for_matches'>$row_count</td><td rowspan='$rows_for_matches'>";
+        } else {
+		print "<tr><td>$row_count</td><td>";
+		if ( $merge_candidates[$num] ) {
+			$merge_count += 1;
+			if (! $renumber) {
+				print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
+			}
+		} else if (count($display_list) > 1) {
+			print "<span style='color:red'>Name/id mismatch:</span>";
+		}
 	}
 	if ($renumber) {
 		foreach ( $display_list AS $cid => $display_name ) {
@@ -215,11 +272,36 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 		}
 	} else {
 		print "[$num]";
-		print implode ( '|', $display_list) ;
+		print implode ( '|', $display_list) . '</td><td>';
+		if ($match) {
+			$match_rows = array() ;
+			if (isset($match_candidates[$num])) {
+				foreach ($match_candidates[$num] AS $match_qid) {
+					$i = $wil->getItem ( $match_qid ) ;
+					if ( !isset($i) ) continue ;
+					$author_data = $match_candidate_data[$match_qid];
+					$row_data = array();
+					$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
+					$row_data[] = $i->getDesc();
+					$row_data[] = $author_data->article_count ;
+					$employers = array();
+					foreach ( $author_data->employer_qids AS $emp_qid ) {
+						$emp_item = $wil->getItem ( $emp_qid ) ;
+						if ( !isset($emp_item) ) continue ;
+						$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+					}
+					$row_data[] = implode("|", $employers) ;
+					$match_rows[] = '' . implode('</td><td>', $row_data);
+				}
+			} else {
+				$match_rows[] = '</td><td></td><td></td><td>';
+			}
+			print implode( '</td></tr><tr><td>', $match_rows);
+		}
 	}
-	print "</li>\n";
+	print "</td></tr>\n";
 }
-print "</ol>\n" ;
+print "</table>\n" ;
 
 if (isset($formatted_authors['unordered']) ) {
 	print "<h3>Unordered authors - set author number or check to remove</h3>" ;
@@ -236,11 +318,13 @@ if (isset($formatted_authors['unordered']) ) {
 	print "</ul>";
 }
 
-if ($merge_count > 0) {
-	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
-}
 if ($renumber) {
 	print "<div style='margin:20px'><input type='submit' name='renumber' value='Renumber authors' class='btn btn-primary' /> </div>";
+} else if ($merge_count > 0) {
+	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
+}
+if ($match) {
+	print "<div style='margin:20px'><input type='submit' name='match' value='Match selected authors' class='btn btn-primary' /> </div>";
 }
 print "</form>" ;
 

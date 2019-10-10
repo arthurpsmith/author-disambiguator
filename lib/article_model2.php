@@ -154,6 +154,48 @@ class WikidataArticleEntry2 {
 				return count($a) > 1 ;
 			} );
 	}
+
+	public function match_candidates($wil, $qid_list, $all_stated_as) {
+		$names_to_qids = array();
+		foreach ($qid_list AS $qid) {
+			$stated_as_names = isset($all_stated_as[$qid]) ? $all_stated_as[$qid] : [] ;
+			$names = all_names_for_author($wil, $qid, $stated_as_names) ;
+			foreach ($names AS $name) {
+				if (! isset($names_to_qids[$name]) ) {
+					$names_to_qids[$name] = [];
+				}
+				$names_to_qids[$name][] = $qid;
+			}
+		}
+		$matches = array();
+
+		foreach ($this->author_names AS $num => $name_list) {
+			foreach ($name_list AS $name) {
+				if ( isset($names_to_qids[$name]) ) {
+					if (! isset($matches[$num]) ) {
+						$matches[$num] = [];
+					}
+					$matches[$num] = array_merge($matches[$num], $names_to_qids[$name]);
+				}
+			}
+		}
+
+		return $matches;
+	}
+}
+
+function all_names_for_author($wil, $qid, $stated_as_names) {
+	$author_item = $wil->getItem($qid);
+	$name = $author_item->getLabel();
+	$nm = new NameModel($name);
+	$names = $nm->fuzzy_ignore_nonascii();
+	$names = array_merge($names, $stated_as_names);
+	$search_strings = array_fill_keys($names, 1) ;
+	$aliases = $author_item->getAllAliases(); # multi-dimensional...
+	array_walk_recursive($aliases, function($a)
+		use (&$search_strings) {
+			$search_strings[$a] = 1; } ) ;
+	return array_keys($search_strings);
 }
 
 function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wil) {
@@ -182,18 +224,9 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 			}
 		}
 		if ($name_count > 0) {
-			$author_item = $wil->getItem($qid);
-			$name = $author_item->getLabel();
-			$nm = new NameModel($name);
-			$names = $nm->fuzzy_ignore_nonascii();
-			if ( isset($all_stated_as[$qid]) ) {
-				$names = array_merge($names, $all_stated_as[$qid]);
-			}
+			$stated_as_names = isset($all_stated_as[$qid]) ? $all_stated_as[$qid] : [] ;
+			$names = all_names_for_author($wil, $qid, $stated_as_names) ;
 			$search_strings = array_fill_keys($names, 1) ;
-			$aliases = $author_item->getAllAliases();
-			array_walk_recursive($aliases, function($a)
-				use (&$search_strings) {
-					$search_strings[$a] = 1; } ) ;
 			foreach ($author_names as $a) {
 				$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $a));
 				if ( ! (isset($search_strings[$a]) || isset($search_strings[$ta]) ) ) {
@@ -221,7 +254,7 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 function fetch_stated_as_for_authors($author_qids) {
 	$names = array();
 
-	$batch_size = 500 ;
+	$batch_size = 100 ;
 	$batches = [ [] ] ;
 	foreach ( $author_qids AS $k => $v ) {
 		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
@@ -244,9 +277,9 @@ function fetch_stated_for_batch($author_qids) {
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
 	$bindings = $query_result->results->bindings ;
+	$names = array();
 	foreach ( $bindings AS $binding ) {
 		$author_qid = item_id_from_uri($binding->author_qid->value) ;
-		if (isset($input_names[$author_qid]) && count($input_names[$author_qid]) > 0) continue;
 		$names[$author_qid][] = $binding->name->value ;
 	}
 	return $names;
@@ -408,5 +441,52 @@ function generate_entries_for_batch2( $uri_list ) {
 
 	return $keyed_article_entries;
 }
+
+function extract_coauthors_from_sparql_query($sparql) {
+	$coauthors = array();
+	$query_result = getSPARQL( $sparql ) ;
+	if (! isset($query_result->results) ) {
+		print "WARNING: no results from SPARQL query '$sparql'";
+		return $coauthors;
+	}
+	$bindings = $query_result->results->bindings ;
+	foreach ( $bindings AS $binding ) {
+		$coauthor_qid = item_id_from_uri($binding->coauthor_qid->value) ;
+		$coauthors[$coauthor_qid] = 1;
+	}
+	return $coauthors;
+}
+
+function fetch_related_authors($work_qid, $author_qids) {
+	$work_qid_for_sparql = 'wd:' . $work_qid ;
+
+	$coauthors = array();
+	$batch_size = 20 ;
+	$batches = [ [] ] ;
+	foreach ( $author_qids AS $v ) {
+		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
+		$batches[count($batches)-1][] = $v ;
+	}
+	foreach ( $batches as $batch ) {
+		$author_qids_for_sparql = 'wd:' . implode ( ' wd:' , $batch) ;
+		$sparql = "SELECT DISTINCT ?coauthor_qid WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
+	?q wdt:P50 ?author_qid ;
+           wdt:P50 ?coauthor_qid .
+}" ;
+		$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+	}
+	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE {
+        ?q2 wdt:P2860 $work_qid_for_sparql ;
+            wdt:P50 ?coauthor_qid .
+}" ;
+	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
+	$work_qid_for_sparql wdt:P2860 ?q2 .
+        ?q2 wdt:P50 ?coauthor_qid .
+}" ;
+	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+	return array_keys($coauthors);
+}
+
 
 ?>

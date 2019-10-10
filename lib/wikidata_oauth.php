@@ -872,7 +872,10 @@ class WD_OAuth {
 	if ( isset($edit_summary) and $edit_summary != '' ) $params['summary'] = $edit_summary ;
 
 	$res = $this->doApiQuery( $params , $ch );
-	if ( isset ( $res->error ) ) return false ;
+	if ( isset ( $res->error ) ) {
+		$this->error = $res->error->code;
+		return false ;
+	}
 
 	return true;
     }
@@ -1076,7 +1079,10 @@ class WD_OAuth {
 		if ( isset($edit_summary) and $edit_summary != '' ) $params['summary'] = $edit_summary ;
 
 		$res = $this->doApiQuery( $params , $ch );
-		if ( isset ( $res->error ) ) return false ;
+		if ( isset ( $res->error ) ) {
+			$this->error = $res->error->code;
+			return false ;
+		}
 
 		return true;
 	}
@@ -1099,6 +1105,107 @@ class WD_OAuth {
 			$c->qualifiers = ['P1545' => $new_qualifier_entry];
 		}
 		return $c;
+	}
+
+	function match_authors( $work_qid, $matches, $edit_summary ) {
+	// Fetch edit token
+		$ch = null;
+		$res = $this->doApiQuery( [
+			'format' => 'json',
+			'action' => 'query' ,
+			'meta' => 'tokens'
+		], $ch );
+		if ( !isset( $res->query->tokens->csrftoken ) ) {
+			$this->error = 'Bad API response [createItemFromPage]: <pre>' . htmlspecialchars( var_export( $res, 1 ) ) . '</pre>';
+			return false ;
+		}
+		$token = $res->query->tokens->csrftoken;
+
+	// Fetch work
+		$work_item = $this->doApiQuery( [
+			'format' => 'json',
+			'action' => 'wbgetentities' ,
+			'ids' => $work_qid,
+			'redirects' => 'no'
+		], $ch )->entities->$work_qid;
+
+		$baserev = $work_item->lastrevid;
+
+		$auth_qid_by_ordinal = array();
+		$ordinal_used = array();
+		foreach ($matches AS $match) {
+			$parts = array();
+			$author_qid = NULL;
+			if (preg_match('/^(Q\d+):(\d+)/', $match, $parts)) {
+				$author_qid = $parts[1];
+				$num = $parts[2];
+			} else {
+				$this->error = "ERROR: bad input data '$match'" ;
+				return false;
+			}
+			if (isset($ordinal_used[$num])) {
+				$this->error = "ERROR: duplicate ordinal '$num'" ;
+				return false;
+			} else {
+				$ordinal_used[$num] = 1;
+				$auth_qid_by_ordinal[$num] = $author_qid;
+			}
+		}
+		$commands = array();
+		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
+		foreach ( $author_name_claims AS $c ) {
+			if ( isset($c->qualifiers) ) {
+				if ( isset($c->qualifiers->P1545) ) {
+					$ordinals = $c->qualifiers->P1545 ;
+					foreach ($ordinals AS $tmp) {
+						$num = $tmp->datavalue->value ;
+						if (isset($auth_qid_by_ordinal[$num])) {
+							$new_cmds = $this->change_name_to_author_claim($c, $num, $auth_qid_by_ordinal[$num]);
+							$commands = array_merge($commands, $new_cmds);
+						}
+					}
+				}
+			}
+		}
+
+		$data['claims'] = $commands;
+		$params = [
+			'format' => 'json',
+			'action' => 'wbeditentity',
+			'id' => $work_qid ,
+			'data' => json_encode ( $data ) ,
+			'token' => $token
+		] ;
+		if ( isset ( $baserev ) and $baserev != '' ) $params['baserevid'] = $baserev ;
+		if ( isset($edit_summary) and $edit_summary != '' ) $params['summary'] = $edit_summary ;
+
+		$res = $this->doApiQuery( $params , $ch );
+		if ( isset ( $res->error ) ) {
+			$this->error = "Error code: " . $res->error->code ;
+			return false ;
+		}
+
+		return true;
+	}
+
+	function change_name_to_author_claim($c, $num, $author_qid) {
+		$commands = array();
+		$numeric_id = 0;
+		$parts = array();
+		if (preg_match('/^Q(\d+)$/', $author_qid, $parts)) {
+			$numeric_id = intval($parts[1]);
+		}
+		
+		$quals = isset($c->qualifiers) ? (array) $c->qualifiers : [] ;
+		$refs = isset($c->references) ? $c->references : [] ;
+		$author_name = $c->mainsnak->datavalue->value ;
+		$new_quals = $this->merge_qualifiers($quals, ['P1932' => [['snaktype' => 'value', 'property' => 'P1932', 'datavalue' => ['value'=> $author_name, 'type' => 'string'], 'datatype' => 'string']]]) ;
+		$new_claim = ['mainsnak' => ['snaktype' => 'value', 'property' => 'P50', 'datatype' => 'wikibase-item', 'datavalue' => ['value' => ['entity-type' => 'item', 'id' => $author_qid, 'numeric-id' => $numeric_id],  'type' => 'wikibase-entityid']], 'type' => 'statement', 'rank' => 'normal'];
+		$new_claim['qualifiers'] = $new_quals;
+		$new_claim['references'] = $refs;
+		$commands[] = $new_claim ;
+		$commands[] = ['id' => $c->id, 'remove' => ''] ;
+		return $commands;
 	}
 }
 
