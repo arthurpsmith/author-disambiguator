@@ -71,8 +71,11 @@ class AuthorData {
 	}
 
 	private static function _extract_item_map($query_result, $item_label, $value_label) {
-		$bindings = $query_result->results->bindings ;
 		$item_map = array() ;
+		if (! isset($query_result->results) ) {
+			return $item_map;
+		}
+		$bindings = $query_result->results->bindings ;
 		foreach ( $bindings AS $binding ) {
 			$item_uri = $binding->$item_label->value ;
 			$value_uri = $binding->$value_label->value ;
@@ -85,8 +88,11 @@ class AuthorData {
 	}
 
 	private static function _extract_string_map($query_result, $item_label, $value_label) {
-		$bindings = $query_result->results->bindings ;
 		$item_map = array() ;
+		if (! isset($query_result->results) ) {
+			return $item_map;
+		}
+		$bindings = $query_result->results->bindings ;
 		foreach ( $bindings AS $binding ) {
 			$item_uri = $binding->$item_label->value ;
 			$value = $binding->$value_label->value ;
