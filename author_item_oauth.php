@@ -42,14 +42,10 @@ $wil = new WikidataItemList ;
 
 $delete_statements = array() ;
 if ( $action == 'remove' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
-	print "<input type='hidden' name='action' value='import' />" ;
-	print "<input type='hidden' name='temporary' value='1' />" ;
-	print "<input type='hidden' name='openpage' value='1' />" ;
+	$edit_claims = new EditClaims($oauth);
 
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$new_author_q = trim ( get_request ( 'new_author_q' , '' ) ) ;
-
 	$papers = get_request ( 'papers' , array() ) ;
 
 	$to_load = array() ;
@@ -57,17 +53,26 @@ if ( $action == 'remove' ) {
 	foreach ( $papers AS $q ) $to_load[] = $q ;
 	$wil->loadItems ( $to_load ) ;
 
-	if ( $author_match == 'none' ) {
-		$commands = revert_authors_qs_commands ( $wil, $papers, $author_qid ) ;
-	} else {
-		$commands = move_authors_qs_commands ( $wil, $papers, $author_qid, $new_author_q) ;
-	}
+	$author_item = $wil->getItem($author_qid);
 
-	print "Quickstatements V1 commands for replacing author items on these papers:" ;
-	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
-	print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' />" ;
-	print "</form>" ;
-	
+	print "Processing requests....\n";
+	print "<ul>";
+	foreach ($papers AS $work_qid) {
+		print "<li>$work_qid: ";
+		if ( $author_match == 'none' ) {
+			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for $work_qid" ) ;
+		} else {
+			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author for $work_qid" ) ;
+		}
+		if ($result) {
+			print "revert completed";
+		} else {
+			print "update failed!?";
+			print_r($edit_claims->error);
+		}
+		print "</li>\n";
+	}
+	print "</ul>";
 	print_footer() ;
 	exit ( 0 ) ;
 }
@@ -312,7 +317,7 @@ if ($merge) {
 } else {
 	print "<div><input type='radio' name='author_match' value='manual' /><span style='display:inline-block; width:200px'><input type='text' name='new_author_q' placeholder='Qxxx' /></span>Correct Q number of author item for selected works.</div>" ;
 	print "<div><input type='radio' name='author_match' value='none' checked /> NO replacement author: revert to author name strings</div>" ;
-	print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to REMOVE selected works from this author' class='btn btn-primary' /></div>" ;
+	print "<div style='margin:20px'><input type='submit' name='doit' value='REMOVE selected works from this author' class='btn btn-primary' /></div>" ;
 }
 print "</form>";
 

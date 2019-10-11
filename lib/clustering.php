@@ -140,8 +140,59 @@ function article_matches_cluster( $cluster, $article_item, $names_to_ignore ) {
 	return $match;
 }
 
-function cluster_articles ( $article_items, $names_to_ignore ) {
-	$clusters = array() ;
+function cluster_articles ( $article_items, $names_to_ignore, $precise ) {
+	if ( $precise) {
+		$clusters = precise_cluster( $article_items, $names_to_ignore );
+	} else {
+		$clusters = rough_cluster( $article_items, $names_to_ignore ) ;
+        }
+	return map_qids_to_articles($clusters, $article_items);
+}
+
+function precise_cluster ( $article_items, $names ) {
+	$clusters = array();
+
+	$articles_by_qid = array() ;
+	foreach ( $article_items AS $article ) {
+		$articles_by_qid[$article->q] = $article ;
+	}
+
+	foreach ($article_items as $article) {
+		foreach ( $article->author_names AS $num => $a ) {
+			if ( in_array ( $a , $names ) ) {
+				$neighbor_names = neighboring_author_strings($article, $num);
+				$article_num = $article->q . ':' . $num ;
+				if (! isset($clusters[$neighbor_names])) {
+					$clusters[$neighbor_names] = new Cluster([], []) ;
+				}
+				$cluster = $clusters[$neighbor_names] ;
+				$cluster->addArticleItem($article) ;
+				$cluster->article_authnums[] = $article_num ;
+			}
+		}
+	}
+
+	uasort ( $clusters, function ($a, $b) {
+			return count($b->article_authnums) - count($a->article_authnums) ;
+		}
+	);
+
+	foreach ($clusters as $key => $cluster) {
+		$article_list = array_keys($cluster->articles);
+		if (count($article_list) == 1) {
+			if (! isset($clusters['Misc']) ) {
+				$clusters['Misc'] = new Cluster([], []);
+			}
+			$clusters['Misc']->addArticleItem($articles_by_qid[$article_list[0]]);
+			$clusters['Misc']->article_autnums[] = $cluster->article_authnums[0];
+			unset($clusters[$key]);
+		}
+	}
+	return $clusters;
+}
+
+function rough_cluster ( $article_items, $names_to_ignore ) {
+	$clusters = array();
 	$min_score = 30 ;
 
 	$articles_by_qid = array() ;
@@ -208,7 +259,7 @@ function cluster_articles ( $article_items, $names_to_ignore ) {
 		$clusters['Misc'] = $cluster ;
 	}
 
-	return map_qids_to_articles($clusters, $article_items);
+	return $clusters;
 }
 
 function neighboring_author_strings ( $article, $num, $preceding = 1, $following = 1 ) {

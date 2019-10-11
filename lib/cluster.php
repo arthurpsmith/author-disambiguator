@@ -10,7 +10,7 @@ class Cluster {
 	public $journal_qids = array() ;
 	public $topic_qids = array() ;
 	public $potential_author_qids = array() ;
-	public $article_list = array() ;
+	public $article_authnums = array() ;
 
 	public function __construct ( $author_list, $article_list ) {
 		$this->addAuthorList( $author_list );

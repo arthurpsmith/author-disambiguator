@@ -11,11 +11,28 @@ class EditClaims {
 		$this->oauth = $oauth;
 	}
 
-	function string_value_of_claim($c) {
-		return $c->mainsnak->datavalue->value ;
+	function string_value_from_snak($snak) {
+		return $snak->datavalue->value;
 	}
 
-	function create_string_qualifier($property, $string) {
+	function string_value_of_claim($c) {
+		return $this->string_value_from_snak($c->mainsnak);
+	}
+
+	function item_value_of_claim($c) {
+		return $c->mainsnak->datavalue->value->id ;
+	}
+
+	function numeric_id_from_qid($qid) {
+		$parts = array();
+		if (preg_match('/^Q(\d+)$/', $qid, $parts)) {
+			return intval($parts[1]);
+		} else {
+			return NULL;
+		}
+	}
+
+	function create_string_snak($property, $string) {
 		$dv = new stdClass();
 		$dv->value = $string ;
 		$dv->type = 'string' ;
@@ -27,13 +44,16 @@ class EditClaims {
 		return $snak;
 	}
 
+	function create_new_string_claim($property, $string) {
+		$claim = new stdClass();
+		$claim->mainsnak = $this->create_string_snak($property, $string);
+		$claim->type = 'statement';
+		$claim->rank = 'normal';
+		return $claim;
+	}
+
 	function create_new_item_claim($property, $qid) {
-		$parts = array();
-		if (preg_match('/^Q(\d+)$/', $qid, $parts)) {
-			$numeric_id = intval($parts[1]);
-		} else {
-			return NULL; // Error in supplied info?
-		}
+		$numeric_id = $this->numeric_id_from_qid($qid);
 		$value = new stdClass();
 		$value->{'entity-type'} = 'item';
 		$value->id = $qid;
@@ -51,6 +71,13 @@ class EditClaims {
 		$claim->type = 'statement';
 		$claim->rank = 'normal';
 		return $claim;
+	}
+
+	function set_item_value_of_claim($c, $qid) {
+		$numeric_id = $this->numeric_id_from_qid($qid);
+		$value = $c->mainsnak->datavalue->value;
+		$value->id = $qid;
+		$value->{'numeric-id'} = $numeric_id;
 	}
 
 # Function to merge author claims where duplicates have been entered on a single work
@@ -76,7 +103,7 @@ class EditClaims {
 		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
 			$ordinals = $c->qualifiers->P1545 ;
 			foreach ($ordinals AS $tmp) {
-				$num = $tmp->datavalue->value ;
+				$num = $this->string_value_from_snak($tmp);
 				if ( ! isset($ordered_author_claims[$num]) ) {
 					$ordered_author_claims[$num] = [] ;
 				}
@@ -91,7 +118,7 @@ class EditClaims {
 		if ( isset($c->qualifiers) and isset($c->qualifiers->P1545) ) {
 			$ordinals = $c->qualifiers->P1545 ;
 			foreach ($ordinals AS $tmp) {
-				$num = $tmp->datavalue->value ;
+				$num = $this->string_value_from_snak($tmp);
 				if ( ! isset($ordered_author_name_claims[$num]) ) {
 					$ordered_author_name_claims[$num] = [] ;
 				}
@@ -158,7 +185,7 @@ class EditClaims {
 			$new_quals = $this->merge_qualifiers($new_quals, $quals);
 			$new_refs = $this->merge_references($new_refs, $refs);
 			$author_name = $this->string_value_of_claim($c);
-			$new_quals = $this->merge_qualifiers($new_quals, ['P1932' => [$this->create_string_qualifier('P1932', $author_name)]]);
+			$new_quals = $this->merge_qualifiers($new_quals, ['P1932' => [$this->create_string_snak('P1932', $author_name)]]);
 			$commands[] = ['id' => $c->id, 'remove' => ''] ;
 		}
 		
@@ -316,12 +343,12 @@ class EditClaims {
 		if ( ! isset($renumbering[$c->id] ) ) return NULL;
 		$new_num = $renumbering[$c->id];
 		if ($new_num == '') return NULL;
-		$new_qualifier_entry = $this->create_string_qualifier('P1545', $new_num);
+		$new_qualifier_entry = $this->create_string_snak('P1545', $new_num);
 		if ( isset($c->qualifiers) ) {
 			if ( isset($c->qualifiers->P1545) ) {
 				$ordinals = $c->qualifiers->P1545 ;
 				foreach ($ordinals AS $tmp) {
-					$old_num = $tmp->datavalue->value ;
+					$old_num = $this->string_value_from_snak($tmp);
 					if ($old_num == $new_num) return NULL;
 				}
 			}
@@ -370,7 +397,7 @@ class EditClaims {
 				if ( isset($c->qualifiers->P1545) ) {
 					$ordinals = $c->qualifiers->P1545 ;
 					foreach ($ordinals AS $tmp) {
-						$num = $tmp->datavalue->value ;
+						$num = $this->string_value_from_snak($tmp);
 						if (isset($auth_qid_by_ordinal[$num])) {
 							$new_cmds = $this->change_name_to_author_claim($c, $num, $auth_qid_by_ordinal[$num]);
 							$commands = array_merge($commands, $new_cmds);
@@ -391,22 +418,137 @@ class EditClaims {
 
 	function change_name_to_author_claim($c, $num, $author_qid) {
 		$commands = array();
-		$numeric_id = 0;
-		$parts = array();
-		if (preg_match('/^Q(\d+)$/', $author_qid, $parts)) {
-			$numeric_id = intval($parts[1]);
-		}
 		
 		$quals = isset($c->qualifiers) ? (array) $c->qualifiers : [] ;
 		$refs = isset($c->references) ? $c->references : [] ;
 		$author_name = $this->string_value_of_claim($c);
-		$new_quals = $this->merge_qualifiers($quals, ['P1932' => [$this->create_string_qualifier('P1932', $author_name)]]);
+		$new_quals = $this->merge_qualifiers($quals, ['P1932' => [$this->create_string_snak('P1932', $author_name)]]);
 		$new_claim = $this->create_new_item_claim('P50', $author_qid);
 		$new_claim->qualifiers = $new_quals;
 		$new_claim->references = $refs;
 		$commands[] = $new_claim ;
 		$commands[] = ['id' => $c->id, 'remove' => ''] ;
 		return $commands;
+	}
+
+	function move_author( $work_qid, $old_qid, $new_qid,  $edit_summary ) {
+		$prep = $this->oauth->prepare_edit_token('move_author') ;
+		if ($prep == NULL) return false;
+	// Fetch edit token
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+	// Fetch work
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$commands = array();
+		$author_claims = isset($work_item->claims->P50) ? $work_item->claims->P50 : [] ;
+		foreach ( $author_claims AS $c ) {
+			$author_qid = $this->item_value_of_claim($c);
+			if ($author_qid != $old_qid) continue;
+			$this->set_item_value_of_claim($c, $new_qid);
+			$commands[] = $c;
+		}
+
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+		return true;
+	}
+
+	// Revert author name to author name strings (when assigned to wrong author item):
+	function revert_author( $work_qid, $author_item, $edit_summary ) {
+		$prep = $this->oauth->prepare_edit_token('revert_author') ;
+		if ($prep == NULL) return false;
+	// Fetch edit token
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+	// Fetch work
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$old_qid = $author_item->getQ();
+
+		$commands = array();
+		$author_claims = isset($work_item->claims->P50) ? $work_item->claims->P50 : [] ;
+		foreach ( $author_claims AS $c ) {
+			$author_qid = $this->item_value_of_claim($c);
+			if ($author_qid != $old_qid) continue;
+			$new_cmd = $this->author_to_name($author_item, $c);
+			if ($new_cmd == NULL) {
+				$this->error = "Name claim cannot be created";
+				return false;
+			}
+			$commands[] = $new_cmd ;
+			$commands[] = ['id' => $c->id, 'remove' => ''] ;
+		}
+
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+		return true;
+	}
+
+	function author_to_name($author_item, $c) {
+		$name = NULL;
+		$quals = isset($c->qualifiers) ? $c->qualifiers : NULL;
+		$refs = isset($c->references) ? $c->references : [] ;
+		if ( $quals != NULL && isset($quals->P1932) ) {
+			$name = $this->string_value_from_snak($quals->P1932[0]);
+			unset($quals->P1932);
+		} else {
+			$name = $author_item->getLabel() ;
+		}
+		if (($name == NULL) || ($name == '')) {
+			return NULL;
+		}
+		$new_claim = $this->create_new_string_claim('P2093', $name);
+		$new_claim->qualifiers = $quals;
+		$new_claim->references = $refs;
+		return $new_claim;
+	}
+
+	function replace_name_with_author($work_qid, $auth_num, $qid, $edit_summary) {
+		$prep = $this->oauth->prepare_edit_token('replace_name_with_author') ;
+		if ($prep == NULL) return false;
+	// Fetch edit token
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+	// Fetch work
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
+		$commands = [];
+		foreach ( $author_name_claims AS $c ) {
+			if ( isset($c->qualifiers) ) {
+				if ( isset($c->qualifiers->P1545) ) {
+					$ordinals = $c->qualifiers->P1545 ;
+					foreach ($ordinals AS $tmp) {
+						$num = $this->string_value_from_snak($tmp);
+						if ($num == $auth_num) {
+							$commands = $this->change_name_to_author_claim($c, $num, $qid) ;
+						}
+					}
+				}
+			}
+		}
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+		return true;
 	}
 }
 
