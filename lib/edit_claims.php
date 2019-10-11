@@ -17,14 +17,40 @@ class EditClaims {
 
 	function create_string_qualifier($property, $string) {
 		$dv = new stdClass();
-		$dv->value = $string
-		$dv->type = 'string';
+		$dv->value = $string ;
+		$dv->type = 'string' ;
 		$snak = new stdClass();
 		$snak->snaktype = 'value';
 		$snak->property = $property;
 		$snak->datatype = 'string';
 		$snak->datavalue = $dv;
 		return $snak;
+	}
+
+	function create_new_item_claim($property, $qid) {
+		$parts = array();
+		if (preg_match('/^Q(\d+)$/', $qid, $parts)) {
+			$numeric_id = intval($parts[1]);
+		} else {
+			return NULL; // Error in supplied info?
+		}
+		$value = new stdClass();
+		$value->{'entity-type'} = 'item';
+		$value->id = $qid;
+		$value->{'numeric-id'} = $numeric_id;
+		$dv = new stdClass();
+		$dv->value = $value;
+		$dv->type = 'wikibase-entityid';
+		$snak = new stdClass();
+		$snak->snaktype = 'value';
+		$snak->property = $property;
+		$snak->datatype = 'wikibase-item';
+		$snak->datavalue = $dv;
+		$claim = new stdClass();
+		$claim->mainsnak = $snak;
+		$claim->type = 'statement';
+		$claim->rank = 'normal';
+		return $claim;
 	}
 
 # Function to merge author claims where duplicates have been entered on a single work
@@ -375,9 +401,9 @@ class EditClaims {
 		$refs = isset($c->references) ? $c->references : [] ;
 		$author_name = $this->string_value_of_claim($c);
 		$new_quals = $this->merge_qualifiers($quals, ['P1932' => [$this->create_string_qualifier('P1932', $author_name)]]);
-		$new_claim = ['mainsnak' => ['snaktype' => 'value', 'property' => 'P50', 'datatype' => 'wikibase-item', 'datavalue' => ['value' => ['entity-type' => 'item', 'id' => $author_qid, 'numeric-id' => $numeric_id],  'type' => 'wikibase-entityid']], 'type' => 'statement', 'rank' => 'normal'];
-		$new_claim['qualifiers'] = $new_quals;
-		$new_claim['references'] = $refs;
+		$new_claim = $this->create_new_item_claim('P50', $author_qid);
+		$new_claim->qualifiers = $new_quals;
+		$new_claim->references = $refs;
 		$commands[] = $new_claim ;
 		$commands[] = ['id' => $c->id, 'remove' => ''] ;
 		return $commands;
