@@ -184,7 +184,7 @@ function precise_cluster ( $article_items, $names ) {
 				$clusters['Misc'] = new Cluster([], []);
 			}
 			$clusters['Misc']->addArticleItem($articles_by_qid[$article_list[0]]);
-			$clusters['Misc']->article_autnums[] = $cluster->article_authnums[0];
+			$clusters['Misc']->article_authnums[] = $cluster->article_authnums[0];
 			unset($clusters[$key]);
 		}
 	}

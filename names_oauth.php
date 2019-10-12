@@ -271,13 +271,30 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<th>Authors (<span style='color:green'>identified</span>)</th>" ;
 	print "<th>Published In</th><th>Identifier(s)</th>" ;
 	print "<th>Topic</th><th>Published Date</th><th>Match?</th></tr>" ;
+
+	$selected_nums = array();
+	if ($precise) {
+		foreach ($cluster->article_authnums AS $article_num) {
+			$matches = array();
+			if (preg_match('/^(Q\d+):(\d+)/', $article_num, $matches)) {
+				$qid = $matches[1];
+				$num = $matches[2];
+				$selected_nums[$qid] = $num;
+			}
+		}
+	}
 	foreach ( $cluster->article_list AS $article ) {
 		$q = $article->q ;
+		$selected_num = -1;
+		if ($precise) {
+			$selected_num = $selected_nums[$q];
+		}
 
 		$formatted_authors = array();
 		$highlighted_authors = array();
 		foreach ( $article->author_names AS $num => $a ) {
-			if ( in_array ( $a , $names ) ) {
+			if ( ($precise && ($num == $selected_num) ) ||
+			  ( (! $precise ) && in_array ( $a , $names ) ) ) {
 				$formatted_authors[$num] = "[$num]" .
 			"<input type='checkbox' name='papers[$q:$num]' value='$q:$num' " .
 			($is_first_group?'checked':'') . " /><b>$a</b>" ;
