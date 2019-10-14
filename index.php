@@ -193,6 +193,9 @@ foreach ($clusters AS $label => $cluster ) {
 #print "<pre>" ; print_r ( $clusters ) ; print "</pre>" ;
 // Publications
 $name_counter = array() ;
+$author_qid_counter = array() ;
+$venue_counter = array() ;
+$topic_counter = array() ;
 print "<h2>Potential publications</h2>" ;
 print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
@@ -252,6 +255,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			$i2 = $wil->getItem ( $qt ) ;
 			if ( !isset($i2) ) continue ;
 			$label = $i2->getLabel() ;
+			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
 			$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		ksort($formatted_authors);
@@ -260,7 +264,9 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$published_in = array() ;
 		foreach ( $article->published_in AS $qt ) {
 			$i2 = $wil->getItem ( $qt ) ;
-			if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			if ( !isset($i2) ) continue;
+			$venue_counter[$qt] = isset($venue_counter[$qt]) ? $venue_counter[$qt]+1 : 1 ;
+			$published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		}
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -284,6 +290,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			foreach ( $article->topics AS $qt ) {
 				$i2 = $wil->getItem($qt) ;
 				if ( !isset($i2) ) continue ;
+				$topic_counter[$qt] = isset($topic_counter[$qt]) ? $topic_counter[$qt]+1 : 1 ;
 				$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 			}
 			print implode ( '; ' , $topics ) ;
@@ -367,12 +374,42 @@ print "<div style='margin:20px'><input type='submit' name='doit' value='Quicksta
 print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
 
+arsort ( $author_qid_counter, SORT_NUMERIC ) ;
+print "<h2>Author items in these papers</h2>" ;
+print "<ul>" ;
+foreach ( $author_qid_counter AS $qt => $cnt ) {
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP50+wd%3A$qt'>$cnt&times;</a>)</li>";
+}
+print "</ul>" ;
+
 arsort ( $name_counter , SORT_NUMERIC ) ;
 print "<h2>Common author name strings in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
 	print "<li><a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "&filter=wdt%3AP2093+%22" . urlencode($name) . "%22'>$cnt&times;</a>)</li>" ;
+}
+print "</ul>" ;
+
+arsort ( $venue_counter , SORT_NUMERIC ) ;
+print "<h2>Publishing venues for these papers</h2>" ;
+print "<ul>" ;
+foreach ( $venue_counter AS $qt => $cnt ) {
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP1433+wd%3A$qt'>$cnt&times;</a>)</li>" ;
+}
+print "</ul>" ;
+
+arsort ( $topic_counter , SORT_NUMERIC ) ;
+print "<h2>Topics for these papers</h2>" ;
+print "<ul>" ;
+foreach ( $topic_counter AS $qt => $cnt ) {
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP921+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
