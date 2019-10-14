@@ -186,6 +186,8 @@ print "<input type='hidden' name='id' value='$author_qid' />" ;
 // Publications
 $name_counter = array() ;
 $author_qid_counter = array() ;
+$venue_counter = array() ;
+$topic_counter = array() ;
 print "<h2>Listed Publications</h2>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; query again or adjust the limit parameter if you need to see more papers from this author.</div>" ;
@@ -270,7 +272,9 @@ foreach ( $article_items AS $article ) {
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
 		$i2 = $wil->getItem ( $qt ) ;
-		if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+		if ( !isset($i2) ) continue ;
+		$venue_counter[$qt] = isset($venue_counter[$qt]) ? $venue_counter[$qt]+1 : 1 ;
+		$published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -301,6 +305,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$i2 = $wil->getItem($qt) ;
 			if ( !isset($i2) ) continue ;
+			$topic_counter[$qt] = isset($topic_counter[$qt]) ? $topic_counter[$qt]+1 : 1 ;
 			$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
@@ -326,7 +331,6 @@ arsort ( $author_qid_counter, SORT_NUMERIC ) ;
 print "<h2>Common author items in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
-	if ( $cnt == 1 ) break ;
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
 	print "<li><a href='?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
@@ -341,6 +345,27 @@ foreach ( $name_counter AS $a => $cnt ) {
 	print "<li><a href='names_oauth.php?limit=50&name=" . urlencode($a) . "'>$a</a> (<a href='names_oauth.php?limit=50&name=" . urlencode($a) . "&filter=wdt%3AP50+wd%3A$author_qid'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
+
+arsort ( $venue_counter , SORT_NUMERIC ) ;
+print "<h2>Publishing venues for these papers</h2>" ;
+print "<ul>" ;
+foreach ( $venue_counter AS $qt => $cnt ) {
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . " ($cnt&times;)</li>" ;
+}
+print "</ul>" ;
+
+arsort ( $topic_counter , SORT_NUMERIC ) ;
+print "<h2>Topics for these papers</h2>" ;
+print "<ul>" ;
+foreach ( $topic_counter AS $qt => $cnt ) {
+	$i2 = $wil->getItem($qt) ;
+	$label = $i2->getLabel() ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . " ($cnt&times;)</li>" ;
+}
+print "</ul>" ;
+
 
 print_footer() ;
 
