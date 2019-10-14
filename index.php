@@ -372,7 +372,7 @@ print "<h2>Common author name strings in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> ($cnt&times;)</li>" ;
+	print "<li><a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "&filter=wdt%3AP2093+%22" . urlencode($name) . "%22'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
