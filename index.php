@@ -178,7 +178,7 @@ foreach ( $article_items AS $article ) {
 $to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
 
-$clusters = cluster_articles ( $article_items, $names ) ;
+$clusters = cluster_articles ( $article_items, $names, 0 ) ;
 
 $potential_authors_by_cluster_label = array();
 foreach ($clusters AS $label => $cluster ) {
