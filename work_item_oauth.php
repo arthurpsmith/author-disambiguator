@@ -22,9 +22,9 @@ print get_common_header ( '' , 'Author Disambiguator' ) ;
 
 if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;
+	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
-	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 }
 print "<hr>";
 
