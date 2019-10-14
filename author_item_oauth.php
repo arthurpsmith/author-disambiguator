@@ -13,7 +13,7 @@ $merge = get_request ( 'merge' , 0 ) ;
 $merge_checked = $merge ? 'checked' : '' ;
 
 if ($action == 'authorize') {
-	$oauth->doAuthorizationRedirect('https://localhost/author-disambiguator/author_item_oauth.php');
+	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'author_item_oauth.php');
 	exit(0);
 }
 

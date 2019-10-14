@@ -14,7 +14,7 @@ $renumber_checked = $renumber ? 'checked' : '' ;
 $match_checked = $match ? 'checked' : '' ;
 
 if ($action == 'authorize') {
-	$oauth->doAuthorizationRedirect('https://localhost/author-disambiguator/work_item_oauth.php');
+	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'work_item_oauth.php');
 	exit(0);
 }
 

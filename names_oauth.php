@@ -8,7 +8,7 @@ $oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
 $action = get_request ( 'action' , '' ) ;
 
 if ($action == 'authorize') {
-	$oauth->doAuthorizationRedirect('https://localhost/author-disambiguator/names_oauth.php');
+	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'names_oauth.php');
 	exit(0);
 }
 
