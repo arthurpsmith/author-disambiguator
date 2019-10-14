@@ -24,6 +24,7 @@ if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
+	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 }
 print "<hr>";
 
@@ -212,7 +213,7 @@ $formatted_authors = array();
 foreach ( $article_entry->author_names AS $num => $a_list ) {
 	$formatted_authors[$num] = [];
 	foreach ( $a_list AS $id => $a ) {
-		$formatted_authors[$num][$id] = "<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
+		$formatted_authors[$num][$id] = "<a href='names_oauth.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
 	}
 }
 foreach ( $article_entry->authors AS $num => $qt_list ) {
@@ -226,7 +227,7 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 			continue;
 		}
 		$label = $i2->getLabel() ;
-		$formatted_authors[$num][$id] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		$formatted_authors[$num][$id] = "<a href='author_item_oauth.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		if (isset($repeated_ids[$qt])) {
 			$rpt_nums = $repeated_ids[$qt];
 			$formatted_authors[$num][$id] .= " also ";
@@ -284,7 +285,7 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 					if ( !isset($i) ) continue ;
 					$author_data = $match_candidate_data[$match_qid];
 					$row_data = array();
-					$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
+					$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
 					$row_data[] = $i->getDesc();
 					$row_data[] = $author_data->article_count ;
 					$employers = array();

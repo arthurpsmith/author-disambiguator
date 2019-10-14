@@ -8,6 +8,8 @@ $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 5000 ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
+print "<div style='font-size:9pt'>(<a href='author_item_oauth.php?id=$author_qid&limit=$article_limit'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
+print "<hr>";
 
 print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 

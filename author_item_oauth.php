@@ -23,6 +23,7 @@ if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
+	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 }
 print "<hr>";
 
@@ -226,7 +227,7 @@ foreach ( $article_items AS $article ) {
 	foreach ( $article->author_names AS $num => $a_list ) {
 		$formatted_authors[$num] = [];
 		foreach ( $a_list AS $id => $a ) {
-			$formatted_authors[$num][$id] = "<a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
+			$formatted_authors[$num][$id] = "<a href='names_oauth.php?limit=50&name=" . urlencode($a) . "'>$a</a>" ;
 			$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 		}
 	}
@@ -244,7 +245,7 @@ foreach ( $article_items AS $article ) {
 			$highlighted_authors[] = $num ;
 		} else {
 			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
-			$formatted_authors[$num][$id] = "<a href='author_item.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+			$formatted_authors[$num][$id] = "<a href='?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
 		}
 	    }
 	}
@@ -284,7 +285,7 @@ foreach ( $article_items AS $article ) {
 		print "<td><input type='checkbox' name='papers[$q]' value='$q'/></td>" ;
 	}
 	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
-	print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item.php?id=$q'>[Full author list]</a></td>" ;
+	print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item_oauth.php?id=$q'>[Full author list]</a></td>" ;
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
@@ -328,7 +329,7 @@ foreach ( $author_qid_counter AS $qt => $cnt ) {
 	if ( $cnt == 1 ) break ;
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
-	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
+	print "<li><a href='?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
 }
 print "</ul>" ;
 
@@ -337,7 +338,7 @@ print "<h2>Common names in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	print "<li><a href='index.php?limit=50&name=" . urlencode($a) . "'>$a</a> (<a href='index.php?limit=50&name=" . urlencode($a) . "&filter=wdt%3AP50+wd%3A$author_qid'>$cnt&times;</a>)</li>" ;
+	print "<li><a href='names_oauth.php?limit=50&name=" . urlencode($a) . "'>$a</a> (<a href='names_oauth.php?limit=50&name=" . urlencode($a) . "&filter=wdt%3AP50+wd%3A$author_qid'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 

@@ -34,6 +34,7 @@ print get_common_header ( '' , 'Author Disambiguator' ) ;
 
 if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;
+	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
 }
@@ -253,7 +254,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	foreach ( $potential_authors AS $potential_qid ) {
 		$author_data = $potential_author_data[$potential_qid] ;
 		$potential_item = $wil->getItem ( $potential_qid ) ;
-		print "Matched potential author: <a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
+		print "Matched potential author: <a href='author_item_oauth.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
 		print " - author of $author_data->article_count items<br/>" ;
 	}
 	if (count($potential_authors) > 1) {
@@ -314,7 +315,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			$i2 = $wil->getItem ( $qt ) ;
 			if ( !isset($i2) ) continue ;
 			$label = $i2->getLabel() ;
-			$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
+			$formatted_authors[$display_num] = "[$display_num]<a href='author_item_oauth.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		ksort($formatted_authors);
 		$authors_list = implode ( ', ' , compress_display_list($formatted_authors, $highlighted_authors, 20, 10, 2)) ;
@@ -327,8 +328,8 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
 		print "<tr>" ;
-		print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
-		print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item.php?id=$q'>[Full author list]</a></td>" ;
+		print "<td style='width:20%;font-size:10pt'><a href='work_item_oauth.php?id=$q'>$article->title</a></td>" ;
+		print "<td style='width:50%;font-size:9pt'>$authors_list</td>" ;
 		print "<td style='font-size:9pt'>$published_in_list</td>" ;
                 print "<td style='font-size:9pt'>" ;
 		if ( $article->doi != '' ) {
@@ -358,7 +359,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		foreach ( $potential_author_data AS $author_data ) {
 			if (author_matches_article( $article, $author_data, $names )) {
 				$potential_item = $wil->getItem ( $author_data->qid ) ;
-				print "<a href='author_item.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
+				print "<a href='author_item_oauth.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
 				print " ($author_data->qid; $author_data->article_count items)<br/>" ;
 			}
 		}
@@ -381,7 +382,7 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	if ( !isset($i) ) continue ;
 	print "<tr>" ;
 	print "<td><input type='radio' name='author_match' value='$q' /></td>" ;
-	print "<td><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a></td>" ;
+	print "<td><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a></td>" ;
 	print "<td>" . $i->getDesc() . "</td>" ;
 	print "<td>$author_data->article_count</td>" ;
 	print "<td>" ;
