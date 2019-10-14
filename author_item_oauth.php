@@ -284,8 +284,8 @@ foreach ( $article_items AS $article ) {
 	} else {
 		print "<td><input type='checkbox' name='papers[$q]' value='$q'/></td>" ;
 	}
-	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
-	print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item_oauth.php?id=$q'>[Full author list]</a></td>" ;
+	print "<td style='width:20%;font-size:10pt'><a href='work_item_oauth.php?id=$q'>$article->title</a></td>" ;
+	print "<td style='width:50%;font-size:9pt'>$authors_list</td>";
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
