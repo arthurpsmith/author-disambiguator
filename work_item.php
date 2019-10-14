@@ -109,7 +109,16 @@ if ( count($article_entry->topics) > 0 ) {
 }
 print "</div>" ;
 
-$merge_candidates = $article_entry->merge_candidates($wil);
+# Fetch 'stated as' values for all identified authors:
+$author_qid_map = array();
+foreach ( $article_entry->authors as $author_qid_list ) {
+	foreach ($author_qid_list as $qid) {
+		$author_qid_map[$qid] = 1;
+	}
+}
+$author_qids = array_keys($author_qid_map);
+$stated_as_names = fetch_stated_as_for_authors($author_qids);
+$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
 
 // Author list
 print "<h2>Authors</h2>" ;
