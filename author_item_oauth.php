@@ -11,6 +11,7 @@ $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 5000 ;
 $merge = get_request ( 'merge' , 0 ) ;
 $merge_checked = $merge ? 'checked' : '' ;
+$filter = get_request ( 'filter', '' ) ;
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'author_item_oauth.php');
@@ -32,6 +33,8 @@ Author Wikidata ID:
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <label><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
 
 if ( $author_qid == '' ) {
@@ -133,7 +136,8 @@ if ($action == 'merge') {
 }
 
 
-$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid } LIMIT $article_limit" ;
+$filter_in_context = ((! isset($filter)) || ($filter == '')) ? '.' : "; $filter . ";
+$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid $filter_in_context } LIMIT $article_limit" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 
@@ -333,7 +337,7 @@ print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
-	print "<li><a href='?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
+	print "<li><a href='?limit=50&id=$qt' style='color:green'>$label</a> (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3AP50+wd%3A$qt'>$cnt&times;</a>) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
 }
 print "</ul>" ;
 
@@ -352,7 +356,7 @@ print "<ul>" ;
 foreach ( $venue_counter AS $qt => $cnt ) {
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
-	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . " ($cnt&times;)</li>" ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3AP1433+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
@@ -362,7 +366,7 @@ print "<ul>" ;
 foreach ( $topic_counter AS $qt => $cnt ) {
 	$i2 = $wil->getItem($qt) ;
 	$label = $i2->getLabel() ;
-	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . " ($cnt&times;)</li>" ;
+	print "<li>" . wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3AP921+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
