@@ -177,6 +177,8 @@ print "<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author
 print " [<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid/missing'>missing</a>]" ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
+print ' | ' ;
+print "<a target='_blank' href='https://tools.wmflabs.org/sqid/#/view?id=$author_qid'>SQID</a>" ;
 print '</div>' ;
 
 print "<form method='post' class='form' target='_blank' action='?'>" ;
