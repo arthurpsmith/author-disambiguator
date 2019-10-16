@@ -119,6 +119,8 @@ print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>" ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$work_qid'>Reasonator</a>" ;
+print ' | ' ;
+print "<a target='_blank' href='https://tools.wmflabs.org/sqid/#/view?id=$work_qid'>SQID</a>" ;
 print '</div><div>' ;
 print "Published: " .  $article_entry->formattedPublicationDate () . "; " ;
 if ( $article_entry->doi != '' ) {
