@@ -6,6 +6,7 @@ $action = get_request ( 'action' , '' ) ;
 $author_qid = get_request( 'id', '' ) ;
 $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 5000 ;
+$filter = get_request ( 'filter', '' ) ;
 
 print get_common_header ( '' , 'Author Disambiguator' ) ;
 print "<div style='font-size:9pt'>(<a href='author_item_oauth.php?id=$author_qid&limit=$article_limit'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
@@ -15,6 +16,8 @@ print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
 
 if ( $author_qid == '' ) {
@@ -56,7 +59,8 @@ if ( $action == 'remove' ) {
 }
 
 
-$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid } LIMIT $article_limit" ;
+$filter_in_context = ((! isset($filter)) || ($filter == '')) ? '.' : "; $filter . ";
+$sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid $filter_in_context } LIMIT $article_limit" ;
 $items_papers = getSPARQLitems ( $sparql ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 
