@@ -36,13 +36,30 @@ class AuthorData {
 		if ( count($x) > 0 ) {
 			$this->rgprofile = $x[0] ;
 		}
+
+		$org_qid_list = array();
 		if ( $author_item->hasClaims('P108') ) { // employer
 			$claims = $author_item->getClaims('P108') ;
 			foreach ( $claims AS $c ) {
 				$q = $author_item->getTarget ( $c ) ;
-				$this->employer_qids[] = $q ;
+				$org_qid_list[$q] = 1 ;
 			}
 		}
+		if ( $author_item->hasClaims('P1416') ) { // affiliation
+			$claims = $author_item->getClaims('P1416') ;
+			foreach ( $claims AS $c ) {
+				$q = $author_item->getTarget ( $c ) ;
+				$org_qid_list[$q] = 1 ;
+			}
+		}
+		if ( $author_item->hasClaims('P69') ) { // educated at
+			$claims = $author_item->getClaims('P69') ;
+			foreach ( $claims AS $c ) {
+				$q = $author_item->getTarget ( $c ) ;
+				$org_qid_list[$q] = 1 ;
+			}
+		}
+		$this->employer_qids = array_keys($org_qid_list);
 	}
 
 	public function add_coauthors ( $coauthors ) {
