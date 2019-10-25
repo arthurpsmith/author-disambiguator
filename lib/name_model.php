@@ -303,16 +303,16 @@ class NameModel {
 		$sparql = "SELECT DISTINCT ?name WHERE {
   hint:Query hint:optimizer \"None\" .
   VALUES ?search_string { $search_strings }
-{  SERVICE wikibase:mwapi {
+  BIND(LCASE(REPLACE(?search_string, '\"', '')) AS ?lc_string)
+  SERVICE wikibase:mwapi {
     bd:serviceParam wikibase:api \"Search\";
                     wikibase:endpoint \"www.wikidata.org\";
-                    mwapi:srsearch ?search_string.
-    ?page_title wikibase:apiOutput mwapi:title.
+                    mwapi:srsearch ?search_string .
+    ?page_title wikibase:apiOutput mwapi:title .
   }
-}
   BIND(IRI(CONCAT(STR(wd:), ?page_title)) AS ?item)
   ?item wdt:P2093 ?name .
-  FILTER CONTAINS(LCASE(?name), LCASE(REPLACE(?search_string, '\"', ''))).
+  FILTER CONTAINS(LCASE(?name), ?lc_string) .
 }" ;
 		$query_result = getSPARQL( $sparql ) ;
 		$bindings = $query_result->results->bindings ;
@@ -322,17 +322,17 @@ class NameModel {
 		$sparql = "SELECT DISTINCT ?name WHERE {
   hint:Query hint:optimizer \"None\" .
   VALUES ?search_string { $search_strings }
-{  SERVICE wikibase:mwapi {
+  BIND(LCASE(REPLACE(?search_string, '\"', '')) AS ?lc_string)
+  SERVICE wikibase:mwapi {
     bd:serviceParam wikibase:api \"Search\";
                     wikibase:endpoint \"www.wikidata.org\";
-                    mwapi:srsearch ?search_string.
-    ?page_title wikibase:apiOutput mwapi:title.
+                    mwapi:srsearch ?search_string .
+    ?page_title wikibase:apiOutput mwapi:title .
   }
-}
   BIND(IRI(CONCAT(STR(wd:), ?page_title)) AS ?item)
   ?item p:P50 ?statement .
   ?statement pq:P1932 ?name .
-  FILTER CONTAINS(LCASE(?name), LCASE(REPLACE(?search_string, '\"', ''))).
+  FILTER CONTAINS(LCASE(?name), ?lc_string) .
 }" ;
 		$query_result = getSPARQL( $sparql ) ;
 		$bindings = $query_result->results->bindings ;
