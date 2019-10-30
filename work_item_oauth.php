@@ -48,7 +48,7 @@ if ( $action == 'merge' ) {
 	$author_numbers = get_request ( 'merges' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $edit_claims->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" ) ;
+	$result = $edit_claims->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for $work_qid" . edit_groups_string() ) ;
 	if ($result) {
 		print "Merging successful!";
 	} else {
@@ -62,7 +62,7 @@ if ($action == 'renumber') {
 	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" ) ;
+	$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for $work_qid" . edit_groups_string() ) ;
 	if ($result) {
 		print "Renumbering successful!";
 	} else {
@@ -75,7 +75,7 @@ if ( $action == 'match' ) {
 	$edit_claims = new EditClaims($oauth);
 	$matches = get_request ( 'match_author' , array() ) ;
 
-	$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for $work_qid" ) ;
+	$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for $work_qid" . edit_groups_string() ) ;
 	if ($result) {
 		print "Matching successful!";
 	} else {
@@ -164,11 +164,11 @@ if ($match) {
 	$stated_as_names = fetch_stated_as_for_authors($related_authors);
 	$wil->loadItems ( $related_authors ) ;
 	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
-	$items_authors = array();
+	$items_authors = $author_qids;
 	foreach ($match_candidates AS $author_qids) {
 		$items_authors = array_merge($items_authors, $author_qids);
 	}
-	$match_candidate_data = AuthorData::authorDataFromItems( $items_authors, $wil ) ;
+	$match_candidate_data = AuthorData::authorDataFromItems( $items_authors, $wil, false ) ;
 	$to_load = array();
 	foreach ($match_candidate_data AS $author_data) {
 		foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
@@ -280,23 +280,43 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 		print "[$num]";
 		print implode ( '|', $display_list) . '</td><td>';
 		if ($match) {
+			$qid_list = array();
 			$match_rows = array() ;
+			$has_match = 0;
 			if (isset($match_candidates[$num])) {
-				foreach ($match_candidates[$num] AS $match_qid) {
+				$has_match = 1;
+				$qid_list = $match_candidates[$num];
+			} else if (isset($article_entry->authors[$num])) {
+				$qid_list = $article_entry->authors[$num];
+			}
+			if (count($qid_list) > 0) {
+				foreach ($qid_list AS $match_qid) {
 					$i = $wil->getItem ( $match_qid ) ;
 					if ( !isset($i) ) continue ;
-					$author_data = $match_candidate_data[$match_qid];
-					$row_data = array();
-					$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
-					$row_data[] = $i->getDesc();
-					$row_data[] = $author_data->article_count ;
-					$employers = array();
-					foreach ( $author_data->employer_qids AS $emp_qid ) {
-						$emp_item = $wil->getItem ( $emp_qid ) ;
-						if ( !isset($emp_item) ) continue ;
-						$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+					$author_data = NULL;
+					if (isset($match_candidate_data[$match_qid])) {
+						$author_data = $match_candidate_data[$match_qid];
 					}
-					$row_data[] = implode("|", $employers) ;
+					$row_data = array();
+					if ($has_match == 1) {
+						$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
+					} else {
+						$row_data[] = '';
+					}
+					$row_data[] = $i->getDesc();
+					if ($author_data != NULL) {
+						$row_data[] = $author_data->article_count ;
+						$employers = array();
+						foreach ( $author_data->employer_qids AS $emp_qid ) {
+							$emp_item = $wil->getItem ( $emp_qid ) ;
+							if ( !isset($emp_item) ) continue ;
+							$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+						}
+						$row_data[] = implode("|", $employers) ;
+					} else {
+						$row_data[] = '';
+						$row_data[] = '';
+					}
 					$match_rows[] = '' . implode('</td><td>', $row_data);
 				}
 			} else {

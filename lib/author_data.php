@@ -2,6 +2,7 @@
 
 class AuthorData {
 	public $qid ;
+	public $complete = false;
 	public $article_count = 0;
 	public $coauthors = array() ;
 	public $coauthor_names = array() ;
@@ -120,11 +121,15 @@ class AuthorData {
 		return $item_map ;
 	}
 
-	public static function articlesForAuthors($author_items) {
+	public static function articleCountsForAuthors($author_items) {
 		$query_list = self::_article_id_query_list( $author_items ) ;
-		$sparql = "SELECT ?q ?article WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q }" ;
-		$potential_author_articles = getSPARQL( $sparql ) ;
-		return self::_extract_item_map( $potential_author_articles, 'q', 'article' ) ;
+		$sparql = "SELECT ?q (count(?article) as ?count) WHERE {
+          SELECT ?q ?article WHERE {
+                    VALUES ?q { $query_list } .
+            ?article wdt:P50 ?q . }
+ } group by ?q" ;
+		$article_counts = getSPARQL( $sparql ) ;
+		return self::_extract_string_map( $article_counts, 'q', 'count' ) ;
 	}
 
 	public static function coauthorsForAuthors($author_items) {
@@ -155,7 +160,7 @@ class AuthorData {
 		return self::_extract_item_map( $topics, 'q', 'topic' ) ;
 	}
 
-	public static function authorDataFromItems( $author_items, $wil ) {
+	public static function authorDataFromItems( $author_items, $wil, $complete) {
 		$author_data = array() ;
 		$direct_author_items = array();
 		foreach ($author_items AS $qid) {
@@ -165,20 +170,24 @@ class AuthorData {
 			}
 
 			$author_data_entry = new AuthorData($item) ;
+			$author_data_entry->complete = $complete ;
 			$author_data[$author_data_entry->qid] = $author_data_entry ;
 			$direct_author_items[] = $author_data_entry->qid;
 		}
-		$author_papers = self::articlesForAuthors( $direct_author_items ) ;
-		foreach ($author_papers AS $qid => $article_qids ) {
-			$author_data[$qid]->article_count = count($article_qids) ;
+
+		$author_paper_counts = self::articleCountsForAuthors( $direct_author_items );
+		foreach ($author_paper_counts AS $qid => $count) {
+			$author_data[$qid]->article_count = intval($count[0]) ;
 		}
-		$coauthors = self::coauthorsForAuthors( $direct_author_items ) ;
-		foreach ( $coauthors AS $qid => $coauthor_qids ) {
-			$author_data[$qid]->add_coauthors($coauthor_qids) ;
-		}
-		$coauthor_names = self::coauthorNamesForAuthors( $direct_author_items ) ;
-		foreach ( $coauthor_names AS $qid => $names ) {
-			$author_data[$qid]->add_coauthor_names($names) ;
+		if ($complete) {
+			$coauthors = self::coauthorsForAuthors( $direct_author_items ) ;
+			foreach ( $coauthors AS $qid => $coauthor_qids ) {
+				$author_data[$qid]->add_coauthors($coauthor_qids) ;
+			}
+			$coauthor_names = self::coauthorNamesForAuthors( $direct_author_items ) ;
+			foreach ( $coauthor_names AS $qid => $names ) {
+				$author_data[$qid]->add_coauthor_names($names) ;
+			}
 		}
 		$journals = self::journalsForAuthors( $direct_author_items ) ;
 		foreach ( $journals AS $qid => $journal_qids) {

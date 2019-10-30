@@ -107,7 +107,7 @@ if ( $action == 'add' ) {
 		}
 		$work_done[$work_qid] = $author_num;
 		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
-		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author for $work_qid");
+		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author for $work_qid" . edit_groups_string());
 		if ($result) {
 			print "Author added to work";
 		} else {
@@ -195,7 +195,7 @@ $to_load = array() ;
 foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
-$potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil ) ;
+$potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil, true ) ;
 $to_load = array() ;
 foreach ($potential_author_data AS $author_data) {
 	foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
