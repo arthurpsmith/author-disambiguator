@@ -45,6 +45,7 @@ if ( $author_qid == '' ) {
 $wil = new WikidataItemList ;
 
 $delete_statements = array() ;
+$eg_string = edit_groups_string() ;
 if ( $action == 'remove' ) {
 	$edit_claims = new EditClaims($oauth);
 
@@ -64,9 +65,9 @@ if ( $action == 'remove' ) {
 	foreach ($papers AS $work_qid) {
 		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
 		if ( $author_match == 'none' ) {
-			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for $work_qid" . edit_groups_string() ) ;
+			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$work_qid]] $eg_string" ) ;
 		} else {
-			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author for $work_qid" . edit_groups_string() ) ;
+			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author for [[$work_qid]] $eg_string" ) ;
 		}
 		if ($result) {
 			print "revert completed";
@@ -120,7 +121,7 @@ if ($action == 'merge') {
 				$author_numbers[] = $num ;
 			}
 		}
-		$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for $work_qid" . edit_groups_string() ) ;
+		$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
 		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
 		if ($result) {
 			print "merges done";

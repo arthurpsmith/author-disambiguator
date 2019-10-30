@@ -55,6 +55,7 @@ if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) 
 	}
 }
 
+$eg_string = edit_groups_string() ;
 if ( $action == 'add' ) {
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	if ( $author_match == 'new' ) {
@@ -107,7 +108,7 @@ if ( $action == 'add' ) {
 		}
 		$work_done[$work_qid] = $author_num;
 		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
-		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author for $work_qid" . edit_groups_string());
+		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author for [[$work_qid]] $eg_string");
 		if ($result) {
 			print "Author added to work";
 		} else {

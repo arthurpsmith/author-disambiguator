@@ -60,8 +60,8 @@ function compress_display_list($list, $highlights, $total_limit, $limit_first, $
 
 // Generate the string the EditGroups app expects for this application
 function edit_groups_string ( ) {
-    $random_letters = uniqid();
-    return " ([[:toollabs:editgroups/b/AD/$random_letters|details]])";
+    $random_letters = substr(uniqid(), -6); # Last 6 letters of uniqid
+    return "([[:toollabs:editgroups/b/AD/$random_letters|details]])";
 }
 
 ?>
