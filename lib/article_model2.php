@@ -254,7 +254,7 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 function fetch_stated_as_for_authors($author_qids) {
 	$names = array();
 
-	$batch_size = 100 ;
+	$batch_size = 250 ;
 	$batches = [ [] ] ;
 	foreach ( $author_qids AS $k => $v ) {
 		if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
@@ -271,7 +271,6 @@ function fetch_stated_for_batch($author_qids) {
 	$author_qids_for_sparql = 'wd:' . implode ( ' wd:' , $author_qids) ;
 
 	$sparql = "SELECT DISTINCT ?author_qid ?name WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
-	?q p:P50 ?auth_statement .
 	?auth_statement ps:P50 ?author_qid ;
                         pq:P1932 ?name .
 }" ;
