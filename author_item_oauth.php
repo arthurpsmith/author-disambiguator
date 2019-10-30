@@ -65,9 +65,9 @@ if ( $action == 'remove' ) {
 	foreach ($papers AS $work_qid) {
 		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
 		if ( $author_match == 'none' ) {
-			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$work_qid]] $eg_string" ) ;
+			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$author_qid]] $eg_string" ) ;
 		} else {
-			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author for [[$work_qid]] $eg_string" ) ;
+			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author from [[$author_qid]] to [[$new_author_q]] $eg_string" ) ;
 		}
 		if ($result) {
 			print "revert completed";
