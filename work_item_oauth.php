@@ -9,9 +9,11 @@ $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
 $renumber = get_request ( 'renumber' , 0 ) ;
 $match  = get_request ( 'match' , 0 ) ;
+$use_stated_as = get_request ( 'use_stated_as', 0 );
 $renumber = $match ? 0: $renumber ; # Supercede renumbering if match selected
 $renumber_checked = $renumber ? 'checked' : '' ;
 $match_checked = $match ? 'checked' : '' ;
+$use_stated_as_checked = $use_stated_as ? 'checked' : '' ;
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'work_item_oauth.php');
@@ -33,6 +35,7 @@ Work Wikidata ID:
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
 <label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
 <label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
+<label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author links for work' />
 </form>" ;
 
@@ -162,8 +165,11 @@ foreach ( $article_entry->authors as $author_qid_list ) {
 $author_qids = array_keys($author_qid_map);
 if ($match) {
 	$related_authors = fetch_related_authors($work_qid, $author_qids);
-	$stated_as_names = fetch_stated_as_for_authors($related_authors);
 	$wil->loadItems ( $related_authors ) ;
+	$stated_as_names = array();
+	if ($use_stated_as) {
+		$stated_as_names = fetch_stated_as_for_authors($related_authors);
+	}
 	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
 	$items_authors = $author_qids;
 	foreach ($match_candidates AS $author_qids) {
