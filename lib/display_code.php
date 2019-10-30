@@ -57,4 +57,11 @@ function compress_display_list($list, $highlights, $total_limit, $limit_first, $
 	return $compressed_list ;
 }
 
+
+// Generate the string the EditGroups app expects for this application
+function edit_groups_string ( ) {
+    $random_letters = uniqid();
+    return " ([[:toollabs:editgroups/b/AD/$random_letters|details]])";
+}
+
 ?>
