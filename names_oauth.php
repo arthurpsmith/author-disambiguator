@@ -107,7 +107,7 @@ if ( $action == 'add' ) {
 			continue;
 		}
 		$work_done[$work_qid] = $author_num;
-		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
+		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
 		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author [[$author_q]] $eg_string");
 		if ($result) {
 			print "Author added to work";

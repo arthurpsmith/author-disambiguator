@@ -63,7 +63,7 @@ if ( $action == 'remove' ) {
 	print "Processing requests....\n";
 	print "<ul>";
 	foreach ($papers AS $work_qid) {
-		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
+		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
 		if ( $author_match == 'none' ) {
 			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$author_qid]] $eg_string" ) ;
 		} else {
@@ -122,7 +122,7 @@ if ($action == 'merge') {
 			}
 		}
 		$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
-		print "<li>" . wikidata_link($work_qid, $work_qid, '') . ": ";
+		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
 		if ($result) {
 			print "merges done";
 		} else {
