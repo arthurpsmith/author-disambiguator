@@ -30,7 +30,7 @@ $use_name_strings_checked = $use_name_strings ? 'checked' : '' ;
 $name_strings = get_request ( 'name_strings' , '') ;
 $input_names = preg_split('/[\r\n]+/', $name_strings);
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;

@@ -64,4 +64,26 @@ function edit_groups_string ( ) {
     return "([[:toollabs:editgroups/b/AD/$random_letters|details]])";
 }
 
+function disambig_header ($use_oauth_menu) {
+	$title = 'Author Disambiguator';
+	if ( !headers_sent() ) {
+		header('Content-type: text/html; charset=UTF-8');
+		header('Cache-Control: no-cache, must-revalidate');
+	}
+	$dir = __DIR__ . '/../resources/html' ;
+	$f1 = file_get_contents ( "$dir/index_bs4.html" ) ;
+	$f2 = "";
+	if ( $use_oauth_menu ) {
+		$f2 = file_get_contents( "$dir/menubar_oauth.html" );
+	} else {
+		$f2 = file_get_contents ( "$dir/menubar_bs4.html" ) ;
+	}
+	$f3 = '<div id="main_content" class="container"><div class="row"><div class="col-sm-12" style="margin-bottom:20px;margin-top:10px;">' ;
+	$s = $f1 . $f2 . $f3 ;
+	$s = str_replace ( '</head>' , "<title>$title</title></head>" , $s ) ;
+
+	$s = str_replace ( '$$TITLE$$' , $title , $s ) ;
+	return $s ;
+}
+
 ?>

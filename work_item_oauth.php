@@ -20,7 +20,7 @@ if ($action == 'authorize') {
 	exit(0);
 }
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
 	print "Wikimedia user account: " . $oauth->userinfo->name ;

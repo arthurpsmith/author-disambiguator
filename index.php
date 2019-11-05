@@ -20,7 +20,8 @@ $use_name_strings_checked = $use_name_strings ? 'checked' : '' ;
 $name_strings = get_request ( 'name_strings' , '') ;
 $input_names = preg_split('/[\r\n]+/', $name_strings);
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( False );
+
 print "<div style='font-size:9pt'>(<a href='names_oauth.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
 print "<hr>";
 

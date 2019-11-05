@@ -5,7 +5,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( False );
 print "<div style='font-size:9pt'>(<a href='work_item_oauth.php?id=$work_qid'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
 print "<hr>";
 

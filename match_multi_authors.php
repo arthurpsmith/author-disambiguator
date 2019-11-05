@@ -14,7 +14,7 @@ foreach ($name_strings AS $q => $name_list) {
 	$input_names[$q] = preg_split('/[\r\n]+/', $name_list);
 }
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( False );
 
 print "<h3>Multi-author match</h3>";
 
