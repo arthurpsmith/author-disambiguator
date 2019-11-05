@@ -257,6 +257,7 @@ if ($match) {
 }
 $merge_count = 0;
 $row_count = 0;
+$match_count = 0;
 foreach ( $formatted_authors AS $num => $display_list ) {
 	if ($num == 'unordered') {
 		continue ;
@@ -292,6 +293,7 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 			$has_match = 0;
 			if (isset($match_candidates[$num])) {
 				$has_match = 1;
+				$match_count += 1;
 				$qid_list = $match_candidates[$num];
 			} else if (isset($article_entry->authors[$num])) {
 				$qid_list = $article_entry->authors[$num];
@@ -357,7 +359,11 @@ if ($renumber) {
 	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
 }
 if ($match) {
-	print "<div style='margin:20px'><input type='submit' name='match' value='Match selected authors' class='btn btn-primary' /> </div>";
+	if ($match_count > 0) {
+		print "<div style='margin:20px'><input type='submit' name='match' value='Match selected authors' class='btn btn-primary' /> </div>";
+	} else {
+		print "<div>No matches found</div>";
+	}
 }
 print "</form>" ;
 
