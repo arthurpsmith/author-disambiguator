@@ -57,11 +57,16 @@ function compress_display_list($list, $highlights, $total_limit, $limit_first, $
 	return $compressed_list ;
 }
 
+function generate_batch_id () {
+	return substr(uniqid(), -6); # Last 6 letters of uniqid
+}
 
 // Generate the string the EditGroups app expects for this application
-function edit_groups_string ( ) {
-    $random_letters = substr(uniqid(), -6); # Last 6 letters of uniqid
-    return "([[:toollabs:editgroups/b/AD/$random_letters|details]])";
+function edit_groups_string ( $batch_id = '' ) {
+    if ($batch_id == '') {
+	$batch_id = generate_batch_id();
+    }
+    return "([[:toollabs:editgroups/b/AD/$batch_id|details]])";
 }
 
 function disambig_header ($use_oauth_menu) {
