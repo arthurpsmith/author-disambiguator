@@ -352,6 +352,7 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 		$emp_item = $wil->getItem ( $emp_qid ) ;
 		if ( !isset($emp_item) ) continue ;
 		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "<br/>" ;
+		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/organization/" . $emp_qid->getQ() . "/missing' target='_blank'>missing</a>]<br/>" ;
 	}
 	print "</td></tr>" ;
 }
