@@ -18,7 +18,7 @@ class WD_OAuth {
 	var $delay_after_edit_s = 1 ;
 	var $delay_after_upload_s = 1 ;
 	
-	function __construct ( $tool, $ini_file ) {
+	function __construct ( $tool, $ini_file, $token_key='', $token_secret='' ) {
 		$this->tool = $tool ;
 		$this->ini_file = $ini_file ;
 
@@ -29,11 +29,15 @@ class WD_OAuth {
 		}
 
 		$this->loadIniFile() ;
-		$this->setupSession() ;
-		$this->loadToken() ;
-
-		if ( isset( $_GET['oauth_verifier'] ) && $_GET['oauth_verifier'] ) {
-			$this->fetchAccessToken();
+		if ($token_key == '') {
+			$this->setupSession() ;
+			$this->loadToken() ;
+			if ( isset( $_GET['oauth_verifier'] ) && $_GET['oauth_verifier'] ) {
+				$this->fetchAccessToken();
+			}
+		} else {
+			$this->gTokenKey = $token_key;
+			$this->gTokenSecret = $token_secret;
 		}
 	}
 
