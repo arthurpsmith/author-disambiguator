@@ -13,6 +13,74 @@ if ($action == 'authorize') {
 }
 
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
+
+if ( $action == 'add' ) {
+	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
+	if ( $author_match == 'new' ) {
+		print disambig_header( True );
+		print "<form method='post' class='form form-inline' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+		print "<input type='hidden' name='action' value='import' />" ;
+		print "<input type='hidden' name='temporary' value='1' />" ;
+		print "<input type='hidden' name='openpage' value='1' />" ;
+		$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
+		$viaf_author = trim ( get_request ( 'viaf_author' , '' ) ) ;
+		$researchgate_author = trim ( get_request ( 'researchgate_author' , '' ) ) ;
+		print "</div></div><div>Quickstatements V1 commands for creating new author item:" ;
+		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author ) ;
+		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
+		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
+		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
+		print "</form></div><div>" ;
+		print_footer() ;
+		exit ( 0 ) ;
+	}
+	$author_q = $author_match ;
+        if ( $author_match == 'manual' ) {
+           $author_q = trim ( get_request ( 'q_author' , '' ) );
+        }
+	if ( $author_q == '' ) {
+		print disambig_header( True );
+		print "Sorry, can't find author" ;
+		print_footer() ;
+		exit ( 0 ) ;
+	}
+	if (! $oauth->isAuthOK()) {
+		print disambig_header( True );
+		print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
+		print_footer() ;
+		exit ( 0 ) ;
+	}
+	$batch_id = generate_batch_id() ;
+
+	$papers = get_request ( 'papers' , array() ) ;
+
+	$dbtools = new DatabaseTools();
+	$db_conn = $dbtools->openToolDB('authors');
+	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL)";
+	$db_conn->query($dbquery);
+// Should probably check for errors!
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'replace_name', ?, 'READY', NULL, NULL)");
+	$seq = 0;
+	foreach ( $papers AS $author_match ) {
+		$seq += 1;
+		$data = "$author_q:$author_match";
+		$add_command->bind_param('is', $seq, $data);
+		$add_command->execute();
+	}
+	$add_command->close();
+	$db_conn->close();
+
+	$env_cmds = "BATCH_ID=$batch_id";
+	$env_cmds .= " TOKEN_KEY=" . $oauth->gTokenKey;
+	$env_cmds .= " TOKEN_SECRET=" . $oauth->gTokenSecret;
+	exec("$env_cmds nohup /usr/bin/php run_background.php >> bg.log 2>&1 &");
+
+	sleep(1);
+	header("Location: batches_oauth.php?id=$batch_id");
+
+	exit ( 0 ) ;
+}
+
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;
 $fuzzy_checked = $fuzzy ? 'checked' : '' ;
 $wbsearch = get_request ( 'wbsearch' , 0 ) * 1 ;
@@ -53,74 +121,6 @@ if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) 
 	if ( $wbsearch ) {
 		$names = $nm->names_from_wbsearch( $names );
 	}
-}
-
-$eg_string = edit_groups_string() ;
-if ( $action == 'add' ) {
-	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
-	if ( $author_match == 'new' ) {
-		print "<form method='post' class='form form-inline' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
-		print "<input type='hidden' name='action' value='import' />" ;
-		print "<input type='hidden' name='temporary' value='1' />" ;
-		print "<input type='hidden' name='openpage' value='1' />" ;
-		$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
-		$viaf_author = trim ( get_request ( 'viaf_author' , '' ) ) ;
-		$researchgate_author = trim ( get_request ( 'researchgate_author' , '' ) ) ;
-		print "</div></div><div>Quickstatements V1 commands for creating new author item:" ;
-		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author ) ;
-		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
-		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
-		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
-		print "</form></div><div>" ;
-		print_footer() ;
-		exit ( 0 ) ;
-	}
-	$author_q = $author_match ;
-        if ( $author_match == 'manual' ) {
-           $author_q = trim ( get_request ( 'q_author' , '' ) );
-        }
-	if ( $author_q == '' ) {
-		print "Sorry, can't find author" ;
-		print_footer() ;
-		exit ( 0 ) ;
-	}
-
-	$papers = get_request ( 'papers' , array() ) ;
-	$edit_claims = new EditClaims($oauth);
-
-	$work_done = array();
-	print "Processing requests....\n";
-	print "<ul>";
-	foreach ( $papers AS $author_match ) {
-		$work_qid = '';
-		$author_num = -1;
-		$matches = array();
-		if (preg_match('/^(Q\d+):(\d+)/', $author_match, $matches)) {
-			$work_qid = $matches[1];
-			$author_num = $matches[2];
-		} else {
-			print("WARNING: Failed to match '$author_match'<br/>");
-			continue ;
-		}
-		if (isset($work_done[$work_qid])) {
-			print("WARNING: Author already matched for '$work_qid' - skipping author #$author_num<br/>");
-			continue;
-		}
-		$work_done[$work_qid] = $author_num;
-		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
-		$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author [[$author_q]] $eg_string");
-		if ($result) {
-			print "Author added to work";
-		} else {
-			print "update failed!?";
-			print_r($edit_claims->error);
-		}
-		print "</li>\n";
-	}
-	print "</ul>";
-
-	print_footer() ;
-	exit ( 0 ) ;
 }
 
 print "<form method='get' class='form form-inline'>

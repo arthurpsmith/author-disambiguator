@@ -5,36 +5,21 @@ require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
 $pid = getmypid();
 
-$batch_id = NULL;
-$token_key = NULL;
-$token_secret = NULL;
-// Expected input:
-// batch_id: ID
-// token_key: key
-// token_secret: secret
-$line = trim(fgets(STDIN));
-$input_matches = array();
-
-if (preg_match('/^batch_id:\s*(\S+)$/', $line, $input_matches)) {
-	$batch_id = $input_matches[1];
-} else {
-	print("$pid - Expected input line not found - Exiting...\n");
+$batch_id = getenv('BATCH_ID');
+if (! $batch_id) {
+	print("$pid - BATCH_ID environment variable missing - exiting...\n");
 	exit(1);
 }
 
-$line = trim(fgets(STDIN));
-if (preg_match('/^token_key:\s*(\S+)$/', $line, $input_matches)) {
-	$token_key = $input_matches[1];
-} else {
-	print("$pid - Expected input line not found - Exiting...\n");
+$token_key = getenv('TOKEN_KEY');
+if (! $token_key) {
+	print("$pid - TOKEN_KEY environment variable missing - exiting...\n");
 	exit(1);
 }
 
-$line = trim(fgets(STDIN));
-if (preg_match('/^token_secret:\s*(\S+)/', $line, $input_matches)) {
-	$token_secret = $input_matches[1];
-} else {
-	print("$pid - Expected input line not found - Exiting...\n");
+$token_secret = getenv('TOKEN_SECRET');
+if (! $token_key) {
+	print("$pid - TOKEN_SECRET environment variable missing - exiting...\n");
 	exit(1);
 }
 
