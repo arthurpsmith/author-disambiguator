@@ -14,6 +14,54 @@ if ($action == 'authorize') {
 	exit(0);
 }
 
+if ($action == 'stop') {
+	$pid = get_request ( 'pid', '' ) ;
+	$pidval = intval($pid);
+	if ($pidval > 0) {
+		posix_kill($pidval, 15);
+		sleep(1);
+		header("Location: ?id=$batch_id");
+		exit(0);
+	}
+}
+
+$dbtools = new DatabaseTools();
+$db_conn = $dbtools->openToolDB('authors');
+
+if ($action == 'restart') {
+	$restart_id = get_request( 'batch_id', '' ) ;
+	$query_id = $db_conn->real_escape_string($restart_id);
+	$dbquery = "SELECT b.process_id, b.batch_id from batches b WHERE b.batch_id = '$query_id'";
+	$results = $db_conn->query($dbquery);
+	$row = $results->fetch_row();
+	$pid = $row[0];
+	$restart_id = $row[1]; # Confirm it from the db...
+	if (($pid != NULL) && (posix_getpgid($pid))) {
+		# Already running - do nothing
+	} else if (($restart_id != '') && ($oauth->isAuthOK())) {
+		$env_cmds = "BATCH_ID=$restart_id";
+		$env_cmds .= " TOKEN_KEY=" . $oauth->gTokenKey;
+		$env_cmds .= " TOKEN_SECRET=" . $oauth->gTokenSecret;
+		exec("$env_cmds nohup /usr/bin/php run_background.php >> bg.log 2>&1 &");
+
+		sleep(1);
+	}
+	header("Location: ?id=$batch_id");
+	$db_conn->close();
+	exit(0);
+}
+
+if ($action == 'delete') {
+	$delete_id = get_request( 'batch_id', '' ) ;
+	if ($oauth->isAuthOK()) {
+		$owner = $oauth->userinfo->name;
+		$query_id = $db_conn->real_escape_string($delete_id);
+		$query_owner = $db_conn->real_escape_string($owner);
+		$dbquery = "DELETE from batches WHERE batch_id = '$query_id' AND owner = '$query_owner'";
+		$db_conn->query($dbquery);
+	}
+}
+
 print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
@@ -25,11 +73,6 @@ if ($oauth->isAuthOK()) {
 print "<hr>";
 
 $owner = $oauth->userinfo->name;
-$dbtools = new DatabaseTools();
-$db_conn = $dbtools->openToolDB('authors');
-
-// Test exec:
-// $pid = exec("ls -lR > /dev/null 2>&1 & echo $!");
 
 if ( $batch_id  == '') {
 	$dbquery = "SELECT b.batch_id, b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where owner = '$owner' group by b.batch_id, b.start, cmd.status order by start desc";
@@ -52,22 +95,32 @@ if ( $batch_id  == '') {
 	}
 	$results->close();
 
-	print "<table class='table table-striped table-condensed'><tr><th>Batch ID</th><th>Start time</th><th>Counts</th><th>Still processing?</th></tr>";
+	print "<table class='table table-striped table-condensed'><tr><th>Batch ID</th><th>Start time</th><th>Counts</th><th>Still processing?</th><th></th></tr>";
 	foreach ($batch_list AS $batch_data) {
 		$id = $batch_data['id'];
 		print "<tr><td><a href='?id=$id'>$id</a></td>";
 		print "<td>" . $batch_data['date'] . "</td>";
 		$display_counts = array();
+		$has_ready = 0;
 		foreach ($counts[$id] AS $status => $count) {
 			$display_counts[] = "$status($count)";
+			if ($status == 'READY' OR $status == 'RUNNING') {
+				$has_ready = 1 ;
+			}
 		}
 		print "<td>" . implode($display_counts, ", ") . "</td>";
 
 		$pid = $batch_data['pid'];
 		if (($pid != NULL) && (posix_getpgid($pid))) {
 			print "<td>Yes</td>";
+			print "<td><a href='?action=stop&pid=$pid'>Stop batch?</a></td>";
 		} else {
 			print "<td>No</td>";
+			if ($has_ready == 1) {
+				print "<td><a href='?action=restart&batch_id=$id'>Restart batch?</a></td>";
+			} else {
+				print "<td><a href='?action=delete&batch_id=$id'>Delete batch?</a></td>";
+			}
 		}
 		
 		print "</tr>";
@@ -82,7 +135,8 @@ if ( $batch_id  == '') {
 	$results->close();
 	print "<h3>Batch $batch_id started $start_time</h3>\n";
 	if (($pid != NULL) && (posix_getpgid($pid))) {
-		print("Still processing...");
+		print("Still processing... ");
+		print("<a href='?id=$batch_id&action=stop&pid=$pid'>Stop batch?</a>");
 		print('<script type="text/javascript">
 $(document).ready ( function () {
 	setTimeout(function() { window.location.reload() }, 3000);

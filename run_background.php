@@ -38,7 +38,7 @@ $db_conn = $dbtools->openToolDB('authors');
 $dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
 $db_conn->query($dbquery);
 
-$cmd_query = "SELECT ordinal, action, data FROM commands WHERE batch_id = '$batch_id' AND status = 'READY' ORDER BY ordinal";
+$cmd_query = "SELECT ordinal, action, data FROM commands WHERE batch_id = '$batch_id' AND (status = 'READY' OR status = 'RUNNING') ORDER BY ordinal";
 $results = $db_conn->query($cmd_query);
 
 $actions_to_run = array();
