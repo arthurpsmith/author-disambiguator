@@ -79,7 +79,7 @@ foreach ($actions_to_run AS $action_data) {
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	if ($error != NULL) {
-		$finished_cmd = "UPDATE commands SET status = 'ERROR', msg = '$error' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
+		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	}
 	$db_conn->query($finished_cmd);
 }

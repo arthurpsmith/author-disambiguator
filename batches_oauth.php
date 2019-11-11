@@ -51,6 +51,17 @@ if ($action == 'restart') {
 	exit(0);
 }
 
+if ($action == 'reset') {
+	$reset_id = get_request( 'batch_id', '' ) ;
+	$query_id = $db_conn->real_escape_string($reset_id);
+	$dbquery = "UPDATE commands SET status = 'READY', message = NULL WHERE status = 'ERROR' and batch_id = '$query_id'";
+	$db_conn->query($dbquery);
+
+	header("Location: ?id=$batch_id");
+	$db_conn->close();
+	exit(0);
+}
+
 if ($action == 'delete') {
 	$delete_id = get_request( 'batch_id', '' ) ;
 	if ($oauth->isAuthOK()) {
@@ -102,10 +113,13 @@ if ( $batch_id  == '') {
 		print "<td>" . $batch_data['date'] . "</td>";
 		$display_counts = array();
 		$has_ready = 0;
+		$has_error = 0;
 		foreach ($counts[$id] AS $status => $count) {
 			$display_counts[] = "$status($count)";
 			if ($status == 'READY' OR $status == 'RUNNING') {
 				$has_ready = 1 ;
+			} else if ($status == 'ERROR') {
+				$has_error = 1;
 			}
 		}
 		print "<td>" . implode($display_counts, ", ") . "</td>";
@@ -118,6 +132,8 @@ if ( $batch_id  == '') {
 			print "<td>No</td>";
 			if ($has_ready == 1) {
 				print "<td><a href='?action=restart&batch_id=$id'>Restart batch?</a></td>";
+			} else if ($has_error == 1) {
+				print "<td><a href='?action=reset&batch_id=$id'>Reset errors?</a></td>";
 			} else {
 				print "<td><a href='?action=delete&batch_id=$id'>Delete batch?</a></td>";
 			}
