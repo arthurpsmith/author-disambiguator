@@ -33,7 +33,7 @@ if ($oauth->isAuthOK()) {
 
 $eg_string = edit_groups_string($batch_id) ;
 
-$dbtools = new DatabaseTools();
+$dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 $dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
 $db_conn->query($dbquery);

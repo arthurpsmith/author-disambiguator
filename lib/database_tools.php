@@ -6,14 +6,11 @@ class DatabaseTools {
 	private $mysql_host ;
 	private $mysql_port ;
 
-	public function __construct ( ) {
-                $this->getDBpassword() ;
+	public function __construct ( $passwd_file ) {
+                $this->getDBpassword( $passwd_file ) ;
 	}
 
 	public function openToolDB($dbname) {
-		if (! isset($this->mysql_user) ) {
-			$this->getDBpassword();
-		}
 		$dbname = $this->mysql_user . '__' . $dbname;
 		$db = @new mysqli($this->mysql_host, $this->mysql_user, $this->mysql_password , $dbname, $this->mysql_port);
 
@@ -21,8 +18,7 @@ class DatabaseTools {
 		return $db ;
 	}
 
-	private function getDBpassword() {
-		$passwordfile = __DIR__ . '../../replica.my.cnf' ;
+	private function getDBpassword($passwordfile) {
 		$config = parse_ini_file( $passwordfile );
 		if ( isset( $config['user'] ) ) {
 			$this->mysql_user = $config['user'];

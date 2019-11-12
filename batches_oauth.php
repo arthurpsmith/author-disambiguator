@@ -25,7 +25,7 @@ if ($action == 'stop') {
 	}
 }
 
-$dbtools = new DatabaseTools();
+$dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 
 if ($action == 'restart') {

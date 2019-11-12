@@ -54,7 +54,7 @@ if ( $action == 'add' ) {
 
 	$papers = get_request ( 'papers' , array() ) ;
 
-	$dbtools = new DatabaseTools();
+	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
 	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL)";
 	$db_conn->query($dbquery);
