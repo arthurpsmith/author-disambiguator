@@ -162,6 +162,24 @@ $(document).ready ( function () {
 		print("Batch run ended");
 	}
 
+	$qids_by_ordinal = array();
+	$qid_set = array();
+	$dbquery = "SELECT ordinal, data from commands where batch_id = '$batch_id'";
+	$results = $db_conn->query($dbquery);
+	while ($row = $results->fetch_row()) {
+		$ordinal = $row[0];
+		$qids_by_ordinal[$ordinal] = array();
+		$data = $row[1];
+		$parts = preg_split('/:/', $data);
+		foreach ($parts AS $data_part) {
+			if (preg_match('/^Q\d+/', $data_part)) {
+				$qids_by_ordinal[$ordinal][] = $data_part;
+				$qid_set[$data_part] = 1;
+			}
+		}
+	}
+	$qid_labels = AuthorData::labelsForItems(array_keys($qid_set));
+
 	$dbquery = "SELECT ordinal, action, status, message, run from commands where batch_id = '$batch_id' order by ordinal";
 	$results = $db_conn->query($dbquery);
 
@@ -169,6 +187,13 @@ $(document).ready ( function () {
 	while ($row = $results->fetch_row()) {
 		$ordinal = $row[0];
 		$action = $row[1];
+		$qid_links = array();
+		$qids = $qids_by_ordinal[$ordinal];
+		foreach ($qids AS $qid) {
+			$label = $qid_labels[$qid][0];
+			$qid_links[] = wikidata_link($qid, $label, ''); 
+		}
+		$action = $action . " for " . implode($qid_links, ", ");
 		$status = $row[2];
 		$message = $row[3];
 		$run_timestamp = $row[4];

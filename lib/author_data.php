@@ -203,6 +203,35 @@ class AuthorData {
 		);
 		return $author_data ;
 	}
+
+	// Utility to quickly get labels for a list of items
+	public static function labelsForItems( $items ) {
+		$id_uris = array_map(function($id) { return "wd:$id"; }, $items);
+
+		$batch_size = 500 ;
+		$batches = [ [] ] ;
+		foreach ( $id_uris AS $k => $v ) {
+			if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
+			$batches[count($batches)-1][$k] = $v ;
+		}
+
+		$labels = array();
+		foreach ( $batches as $batch ) {
+			$new_labels = self::_labels_for_batch($batch);
+			$labels = array_merge($labels, $new_labels);
+		}
+		return $labels;
+	}
+
+	private static function _labels_for_batch ( $uri_list ) {
+		$id_uris = implode(' ', $uri_list);
+		$sparql = "SELECT ?q ?qLabel WHERE {
+  VALUES ?q { $id_uris } .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
+}" ;
+		$query_result = getSPARQL( $sparql ) ;
+		return self::_extract_string_map( $query_result , 'q', 'qLabel' ) ;
+	}
 }
 
 ?>
