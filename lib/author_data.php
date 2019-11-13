@@ -165,6 +165,7 @@ class AuthorData {
 		$direct_author_items = array();
 		foreach ($author_items AS $qid) {
 			$item = $wil->getItem( $qid ) ;
+			if (! isset($item) ) continue;
      			if (property_exists($item->j, 'redirects')) {
 				continue; // Skip redirected author items!
 			}
