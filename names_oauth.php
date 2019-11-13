@@ -50,7 +50,7 @@ if ( $action == 'add' ) {
 		print_footer() ;
 		exit ( 0 ) ;
 	}
-	$batch_id = generate_batch_id() ;
+	$batch_id = Batch::generate_batch_id() ;
 
 	$papers = get_request ( 'papers' , array() ) ;
 
@@ -68,16 +68,17 @@ if ( $action == 'add' ) {
 		$add_command->execute();
 	}
 	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+
 	$db_conn->close();
 
-	$env_cmds = "BATCH_ID=$batch_id";
-	$env_cmds .= " TOKEN_KEY=" . $oauth->gTokenKey;
-	$env_cmds .= " TOKEN_SECRET=" . $oauth->gTokenSecret;
-	exec("$env_cmds nohup /usr/bin/php run_background.php >> bg.log 2>&1 &");
-
-	sleep(1);
+	if ($seq > 0) { // Don't bother to start if no commands to run
+		$batch->start($oauth);
+		sleep(1);
+	}
 	header("Location: batches_oauth.php?id=$batch_id");
-
 	exit ( 0 ) ;
 }
 
