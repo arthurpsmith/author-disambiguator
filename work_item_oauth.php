@@ -236,7 +236,7 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 			continue;
 		}
 		$label = $i2->getLabel() ;
-		$formatted_authors[$num][$id] = "<a href='author_item_oauth.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		$formatted_authors[$num][$id] = "<a href='author_item_oauth.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/author/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		if (isset($repeated_ids[$qt])) {
 			$rpt_nums = $repeated_ids[$qt];
 			$formatted_authors[$num][$id] .= " also ";
