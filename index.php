@@ -347,12 +347,11 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	if ( $author_data->rgprofile != '' ) {
 		print "ResearchGate Profile: <a target='_blank' href='https://www.researchgate.net/profile/$author_data->rgprofile'>$author_data->rgprofile</a><br/>" ;
 	}
-	print "</td><td>" ;
+	print "</td><td style='font-size:9pt'>" ;
 	foreach ( $author_data->employer_qids AS $emp_qid ) {
 		$emp_item = $wil->getItem ( $emp_qid ) ;
 		if ( !isset($emp_item) ) continue ;
-		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "<br/>" ;
-		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/organization/" . $emp_qid->getQ() . "/missing' target='_blank'>missing</a>]<br/>" ;
+		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/organization/$emp_qid/missing' target='_blank'>missing</a>]<br/>" ;
 	}
 	print "</td></tr>" ;
 }
