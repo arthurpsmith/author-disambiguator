@@ -493,7 +493,7 @@ class WD_OAuth {
 		# maxlag
 		if ( isset($ret->error) and isset($ret->error->code) and $ret->error->code == 'maxlag' ) {
 			$lag = $maxlag ;
-			sleep ( $lag ) ;
+			sleep ( 60*$lag ) ; # Give it plenty of time before retrying 
 			$ch = null ;
 			$ret = $this->doApiQuery( $post, $ch , '' , $iterations_left-1 , $last_maxlag ) ;
 		}
