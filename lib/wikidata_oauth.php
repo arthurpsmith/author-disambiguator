@@ -400,7 +400,7 @@ class WD_OAuth {
 	 * @param object $ch Curl handle
 	 * @return array API results
 	 */
-	function doApiQuery( $post, &$ch = null , $mode = '' , $iterations_left = 5 , $last_maxlag = -1 ) {
+	function doApiQuery( $post, &$ch = null , $mode = '' , $iterations_left = 12 , $last_maxlag = -1 ) {
 		if ( $iterations_left <= 0 ) return ; // Avoid infinite recursion when Wikidata Is Too Damn Slow Again
 
 		global $maxlag ;
