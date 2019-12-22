@@ -123,7 +123,7 @@ if ( $batch_id  == '') {
 		print("<a href='?id=$batch_id&action=stop&batch_id=$batch_id'>Stop batch?</a>");
 		print('<script type="text/javascript">
 $(document).ready ( function () {
-	setTimeout(function() { window.location.reload() }, 3000);
+	setTimeout(function() { window.location.reload() }, 30000);
 } ) ;
 </script>');
 	} else {
