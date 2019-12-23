@@ -158,7 +158,7 @@ $(document).ready ( function () {
 		$qid_links = array();
 		$qids = $qids_by_ordinal[$ordinal];
 		foreach ($qids AS $qid) {
-			$label = $qid_labels[$qid][0];
+			$label = isset( $qid_labels[$qid] ) ? $qid_labels[$qid][0] : $qid;
 			$qid_links[] = wikidata_link($qid, $label, ''); 
 		}
 		$action = $action . " for " . implode($qid_links, ", ");
