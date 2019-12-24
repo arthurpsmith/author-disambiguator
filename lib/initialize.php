@@ -21,6 +21,7 @@ require_once ( __DIR__ . '/../lib/name_model.php' ) ;
 require_once ( __DIR__ . '/../lib/display_code.php' ) ;
 require_once ( __DIR__ . '/../lib/database_tools.php' ) ;
 require_once ( __DIR__ . '/../lib/batch.php' ) ;
+require_once ( __DIR__ . '/../lib/rate_limit.php' );
 require_once ( __DIR__ . '/../local_config.php' ) ;
 
 ?>

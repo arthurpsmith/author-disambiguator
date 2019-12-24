@@ -2,6 +2,19 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+if (limit_requests( $db_conn, 30 ) ) {
+	$db_conn->close();
+
+	print disambig_header( False );
+	print "<h1>Too many requests</h1>";
+	print "Please wait before making another request of this service; note that use of the OAuth option is not rate-limited.";
+	print_footer() ;
+	exit ( 0 ) ;
+}
+$db_conn->close();
+
 $action = get_request ( 'action' , '' ) ;
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 $fuzzy = get_request ( 'fuzzy' , 0 ) * 1 ;

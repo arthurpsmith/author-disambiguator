@@ -21,3 +21,5 @@ create table commands(
      REFERENCES batches(batch_id)
      ON DELETE CASCADE
 );
+
+create table rate_limit_table(last_time BIGINT);
