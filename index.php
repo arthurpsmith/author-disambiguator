@@ -2,9 +2,16 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
+$request_delay = 30;
+$article_limit = get_request ( 'limit', '' ) ;
+if ($article_limit == '' ) $article_limit = 50 ;
+if ($article_limit > 100) {
+	$request_delay = 300; # Severely throttle large requests
+}
+
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
-if (limit_requests( $db_conn, 30 ) ) {
+if (limit_requests( $db_conn, $request_delay ) ) {
 	$db_conn->close();
 
 	print disambig_header( False );
@@ -24,9 +31,7 @@ $wbsearch_checked = $wbsearch ? 'checked' : '' ;
 $filter = get_request ( 'filter', '' ) ;
 $filter_authors = get_request ( 'filter_authors', '') ;
 $filter_authors_checked = $filter_authors ? 'checked' : '' ;
-$article_limit = get_request ( 'limit', '' ) ;
-if ($article_limit == '' ) $article_limit = 500 ;
-$limit_options = [10, 50, 200, 500] ;
+$limit_options = [10, 20, 50, 100, 200, 500] ;
 
 $use_name_strings = get_request ( 'use_name_strings' , 0 ) * 1 ;
 $use_name_strings_checked = $use_name_strings ? 'checked' : '' ;
