@@ -7,7 +7,7 @@ $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, 30 ) ) {
 	$db_conn->close();
 
-	$oauth_url = str_replace('/work_item.php', '/author-disambiguator/work_item_oauth.php', $_SERVER['REQUEST_URI']);
+	$oauth_url = str_replace('/work_item.php', '/work_item_oauth.php', $_SERVER['REQUEST_URI']);
 
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
