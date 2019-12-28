@@ -1,5 +1,19 @@
 <?PHP
 
+# Block specific user agents...
+
+if (isset($_SERVER['HTTP_USER_AGENT'])) {
+	$ua = $_SERVER['HTTP_USER_AGENT'];
+	$blocklist = ['Mb2345Browser', 'LieBaoFast', 'MicroMessenger'];
+	foreach ($blocklist AS $blocked_ua) {
+		if (strpos($ua, $blocked_ua) !== false) {
+			http_response_code(403);
+			print "Your user-agent is blocked from this service due to abuse. File a github issue if you think this was in error.";
+			exit(0);
+		}
+	}
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', 'On');
 ini_set('memory_limit','1500M');
