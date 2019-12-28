@@ -14,9 +14,11 @@ $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, $request_delay ) ) {
 	$db_conn->close();
 
+	$oauth_url = preg_replace('/(\/index.php\??|\/$|\/\?)/', '/author-disambiguator/names_oauth.php?', $_SERVER['REQUEST_URI']);
+
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
-	print "Please wait before making another request of this service; note that use of the OAuth option is not rate-limited.";
+	print "Please wait before making another request of this service; note that use of <a href='$oauth_url'>the OAuth option</a> is not rate-limited.";
 	print_footer() ;
 	exit ( 0 ) ;
 }

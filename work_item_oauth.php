@@ -27,6 +27,8 @@ if ($oauth->isAuthOK()) {
 	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
+	print_footer() ;
+	exit ( 0 ) ;
 }
 print "<hr>";
 
