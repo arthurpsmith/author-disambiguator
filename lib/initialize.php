@@ -4,7 +4,7 @@
 
 if (isset($_SERVER['HTTP_USER_AGENT'])) {
 	$ua = $_SERVER['HTTP_USER_AGENT'];
-	$blocklist = ['Mb2345Browser', 'LieBaoFast', 'MicroMessenger'];
+	$blocklist = ['Mb2345Browser', 'LieBaoFast', 'MicroMessenger', 'UCBrowser'];
 	foreach ($blocklist AS $blocked_ua) {
 		if (strpos($ua, $blocked_ua) !== false) {
 			http_response_code(403);
