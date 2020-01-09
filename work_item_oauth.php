@@ -287,7 +287,7 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 			print "<input size='1' name='ordinals[$cid]' value='$num'/>$display_name";
 		}
 	} else {
-		print "[$num]";
+		print "[$num] ";
 		print implode ( '|', $display_list) . '</td><td>';
 		if ($match) {
 			$qid_list = array();
