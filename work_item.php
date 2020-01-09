@@ -166,7 +166,7 @@ ksort($formatted_authors);
 
 $merge_count = 0;
 foreach ( $formatted_authors AS $num => $display_list ) {
-	print "<li>[$num]";
+	print "<li>[$num] ";
 	if ( $merge_candidates[$num] ) {
 		$merge_count += 1;
 		print "<input type='checkbox' name='merges[$num]' value='$num' checked/>" ;
