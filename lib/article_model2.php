@@ -171,11 +171,17 @@ class WikidataArticleEntry2 {
 
 		foreach ($this->author_names AS $num => $name_list) {
 			foreach ($name_list AS $name) {
-				if ( isset($names_to_qids[$name]) ) {
+				$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $name));
+				if ( isset($names_to_qids[$name]) || isset($names_to_qids[$ta]) ) {
 					if (! isset($matches[$num]) ) {
 						$matches[$num] = [];
 					}
-					$matches[$num] = array_merge($matches[$num], $names_to_qids[$name]);
+					if ( isset($names_to_qids[$name]) ) {
+						$matches[$num] = array_merge($matches[$num], $names_to_qids[$name]);
+					}
+					if ( isset($names_to_qids[$ta]) ) {
+						$matches[$num] = array_merge($matches[$num], $names_to_qids[$ta]);
+					}
 				}
 			}
 		}
