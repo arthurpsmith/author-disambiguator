@@ -184,7 +184,9 @@ class WikidataArticleEntry2 {
 					}
 				}
 			}
-			$matches[$num] = array_unique($matches[$num]);
+			if (isset($matches[$num])) {
+				$matches[$num] = array_unique($matches[$num]);
+			}
 		}
 
 		return $matches;
