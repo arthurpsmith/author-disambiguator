@@ -44,6 +44,7 @@ class NameModel {
 		$surname_pieces = array();
 		while ( count($name_parts) > 0 ) {
 			$part = array_pop($name_parts) ;
+			if ($part == '') continue;
 			if ( preg_match(NameModel::SUFFIX_PATTERN, $part) ) {
 				array_unshift($name_suffixes, $part);
 				continue ;
