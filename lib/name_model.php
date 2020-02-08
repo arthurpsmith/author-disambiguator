@@ -130,6 +130,34 @@ class NameModel {
 		return implode(' ', $name_parts);
 	}
 
+	public function first_initials_rest() {
+		$name_versions = array();
+		$name_parts = array_merge([$this->first_name],
+			$this->middle_names, [$this->last_name]);
+		$count = count($name_parts);
+		for ($i = 1; $i < $count; $i++) {
+			$tmp_names = array();
+			for ($j = 0; $j < $count; $j++) {
+				if ($j < $i ) {
+					$tmp_names[] = $name_parts[$j][0] . '.';
+				} else {
+					$tmp_names[] = $name_parts[$j];
+				}
+			}
+			$name_versions[] = implode(' ', $tmp_names);
+			$tmp_names = array();
+			for ($j = 0; $j < $count; $j++) {
+				if ($j < $i ) {
+					$tmp_names[] = $name_parts[$j][0];
+				} else {
+					$tmp_names[] = $name_parts[$j];
+				}
+			}
+			$name_versions[] = implode(' ', $tmp_names);
+		}
+		return $name_versions;
+	}
+
 	public function initials_no_dot() {
 		$name_parts = array();
 		$first = $this->first_name;
@@ -269,6 +297,9 @@ class NameModel {
 		$search_strings[$this->squashed_forward_name()] = 1;
 		$search_strings[$this->squashed_reversed_name()] = 1;
 		$search_strings[$this->squashed_reversed_hyphen_name()] = 1;
+		foreach ($this->first_initials_rest() as $string) {
+			$search_strings[$string] = 1;
+		}
 		$lcstrings = array_keys($search_strings);
 		foreach ($lcstrings as $string) {
 			$search_strings[strtoupper($string)] = 1 ;
