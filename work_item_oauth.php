@@ -4,6 +4,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
 $oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
+$oauth->interactive = true;
 
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
@@ -60,6 +61,20 @@ if ( $action == 'merge' ) {
 	} else {
 		print "Something went wrong? ";
 		print_r($edit_claims->error);
+		print("\n<div>Failed to update $work_qid</div>\n");
+		print "<form method='post' class='form'>" ;
+		print "<input type='hidden' name='action' value='merge' />";
+		print "<input type='hidden' name='id' value='$work_qid' />" ;
+		foreach ($author_numbers AS $num) {
+    			print "<input type='hidden' name='merges[$num]' value='$num' />\n";
+		}
+		foreach ($remove_claims AS $cid) {
+    			print "<input type='hidden' name='remove_claims[$cid]' value='$cid' />\n";
+		}
+		print "<div style='margin:20px'><input type='submit' name='doit' value='Try again' class='btn btn-primary' /> </div>";
+		print "</form>" ;
+		print_footer() ;
+		exit ( 0 ) ;
 	}
 }
 
@@ -74,6 +89,20 @@ if ($action == 'renumber') {
 	} else {
 		print "Something went wrong? ";
 		print_r($edit_claims->error);
+		print("\n<div>Failed to update $work_qid</div>\n");
+		print "<form method='post' class='form'>" ;
+		print "<input type='hidden' name='action' value='renumber' />";
+		print "<input type='hidden' name='id' value='$work_qid' />" ;
+		foreach ($renumbering AS $cid => $num) {
+    			print "<input type='hidden' name='ordinals[$cid]' value='$num' />\n";
+		}
+		foreach ($remove_claims AS $cid) {
+    			print "<input type='hidden' name='remove_claims[$cid]' value='$cid' />\n";
+		}
+		print "<div style='margin:20px'><input type='submit' name='renumber' value='Try again' class='btn btn-primary' /> </div>";
+		print "</form>" ;
+		print_footer() ;
+		exit ( 0 ) ;
 	}
 }
 
@@ -87,6 +116,17 @@ if ( $action == 'match' ) {
 	} else {
 		print "Something went wrong? ";
 		print_r($edit_claims->error);
+		print("\n<div>Failed trying to set " . count($matches) . " author values for $work_qid</div>\n");
+		print "<form method='post' class='form'>" ;
+		print "<input type='hidden' name='action' value='match' />";
+		print "<input type='hidden' name='id' value='$work_qid' />" ;
+		foreach ($matches AS $match) {
+    			print "<input type='hidden' name='match_author[$match]' value='$match' />";
+		}
+		print "<div style='margin:20px'><input type='submit' name='match' value='Try again' class='btn btn-primary' /> </div>";
+		print "</form>" ;
+		print_footer() ;
+		exit ( 0 ) ;
 	}
 }
 

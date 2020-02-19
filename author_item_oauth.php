@@ -4,6 +4,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
 $oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
+$oauth->interactive = true;
 
 $action = get_request ( 'action' , '' ) ;
 $author_qid = get_request( 'id', '' ) ;
@@ -64,6 +65,7 @@ if ( $action == 'remove' ) {
 
 	print "Processing requests....\n";
 	print "<ul>";
+	$failed_papers = array();
 	foreach ($papers AS $work_qid) {
 		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
 		if ( $author_match == 'none' ) {
@@ -76,10 +78,25 @@ if ( $action == 'remove' ) {
 		} else {
 			print "update failed!?";
 			print_r($edit_claims->error);
+			$failed_papers[] = $work_qid;
 		}
 		print "</li>\n";
 	}
 	print "</ul>";
+	$failed_count = count($failed_papers);
+	if ($failed_count > 0) {
+		print("$failed_count requests did not succeed");
+		print "<form method='post' class='form' action='?'>" ;
+		print "<input type='hidden' name='action' value='remove' />" ;
+		print "<input type='hidden' name='id' value='$author_qid' />" ;
+		print "<input type='hidden' name='author_match' value='$author_match' />" ;
+		print "<input type='hidden' name='new_author_q' value='$new_author_q' />" ;
+		foreach ($failed_papers as $work_qid) {
+			print "<input type='hidden' name='papers[$work_qid]' value='$work_qid' />" ;
+		}
+		print "<div style='margin:20px'><input type='submit' name='doit' value='Try failed updates again' class='btn btn-primary' /></div>" ;
+		print "</form>";
+	}
 	print_footer() ;
 	exit ( 0 ) ;
 }
@@ -111,6 +128,7 @@ if ($action == 'merge') {
 	}
 	$author_qids = array_keys($author_qid_map);
 	$stated_as_names = fetch_stated_as_for_authors($author_qids);
+	$failed_papers = array();
 	print "Processing requests....\n";
 	print "<ul>";
 	foreach ( $article_items AS $article ) {
@@ -130,10 +148,23 @@ if ($action == 'merge') {
 		} else {
 			print "update failed!?";
 			print_r($edit_claims->error);
+			$failed_papers[] = $work_qid;
 		}
 		print "</li>\n";
 	}
 	print "</ul>";
+	$failed_count = count($failed_papers);
+	if ($failed_count > 0) {
+		print("$failed_count merge requests did not succeed");
+		print "<form method='post' class='form' action='?'>" ;
+		print "<input type='hidden' name='action' value='merge' />" ;
+		print "<input type='hidden' name='id' value='$author_qid' />" ;
+		foreach ($failed_papers as $work_qid) {
+			print "<input type='hidden' name='papers[$work_qid]' value='$work_qid' />" ;
+		}
+		print "<div style='margin:20px'><input type='submit' name='doit' value='Retry failed merges' class='btn btn-primary' /></div>" ;
+		print "</form>";
+	}
 	print_footer() ;
 	exit(0);
 }
