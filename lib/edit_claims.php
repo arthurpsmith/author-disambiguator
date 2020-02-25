@@ -530,8 +530,10 @@ class EditClaims {
 		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
 		$commands = [];
 		foreach ( $author_name_claims AS $c ) {
+			$has_ordinal = false;
 			if ( isset($c->qualifiers) ) {
 				if ( isset($c->qualifiers->P1545) ) {
+					$has_ordinal = true;
 					$ordinals = $c->qualifiers->P1545 ;
 					foreach ($ordinals AS $tmp) {
 						$num = $this->string_value_from_snak($tmp);
@@ -540,6 +542,10 @@ class EditClaims {
 						}
 					}
 				}
+			}
+			if (! $has_ordinal) {
+				$this->error = "Unordered authors";
+				return false;
 			}
 		}
 		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
