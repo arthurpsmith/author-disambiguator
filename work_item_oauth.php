@@ -125,9 +125,9 @@ if ( $action == 'match' ) {
 		}
 		print "<div style='margin:20px'><input type='submit' name='match' value='Try again' class='btn btn-primary' /> </div>";
 		print "</form>" ;
-		print_footer() ;
-		exit ( 0 ) ;
 	}
+	print_footer() ;
+	exit ( 0 ) ;
 }
 
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
