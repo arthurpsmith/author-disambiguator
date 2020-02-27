@@ -45,61 +45,50 @@ if ( $author_qid == '' ) {
 	exit ( 0 ) ;
 }
 
-$wil = new WikidataItemList ;
-
-$delete_statements = array() ;
 $eg_string = edit_groups_string() ;
 if ( $action == 'remove' ) {
-	$edit_claims = new EditClaims($oauth);
+	$batch_id = Batch::generate_batch_id() ;
 
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$new_author_q = trim ( get_request ( 'new_author_q' , '' ) ) ;
 	$papers = get_request ( 'papers' , array() ) ;
 
-	$to_load = array() ;
-	$to_load[] = $author_qid ;
-	foreach ( $papers AS $q ) $to_load[] = $q ;
-	$wil->loadItems ( $to_load ) ;
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL)";
+	$db_conn->query($dbquery);
 
-	$author_item = $wil->getItem($author_qid);
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'move_author', ?, 'READY', NULL, NULL)");
+	if ( $author_match == 'none' ) {
+		$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'revert_author', ?, 'READY', NULL, NULL)");
+	}
 
-	print "Processing requests....\n";
-	print "<ul>";
-	$failed_papers = array();
-	foreach ($papers AS $work_qid) {
-		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
+	$seq = 0;
+	foreach ( $papers AS $work_qid ) {
+		$seq += 1;
+		$data = "$author_qid:$work_qid:$new_author_q";
 		if ( $author_match == 'none' ) {
-			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$author_qid]] $eg_string" ) ;
-		} else {
-			$result = $edit_claims->move_author( $work_qid, $author_qid, $new_author_q, "Author Disambiguator change author from [[$author_qid]] to [[$new_author_q]] $eg_string" ) ;
+			$data = "$author_qid:$work_qid";
 		}
-		if ($result) {
-			print "revert completed";
-		} else {
-			print "update failed!?";
-			print_r($edit_claims->error);
-			$failed_papers[] = $work_qid;
-		}
-		print "</li>\n";
+		$add_command->bind_param('is', $seq, $data);
+		$add_command->execute();
 	}
-	print "</ul>";
-	$failed_count = count($failed_papers);
-	if ($failed_count > 0) {
-		print("$failed_count requests did not succeed");
-		print "<form method='post' class='form' action='?'>" ;
-		print "<input type='hidden' name='action' value='remove' />" ;
-		print "<input type='hidden' name='id' value='$author_qid' />" ;
-		print "<input type='hidden' name='author_match' value='$author_match' />" ;
-		print "<input type='hidden' name='new_author_q' value='$new_author_q' />" ;
-		foreach ($failed_papers as $work_qid) {
-			print "<input type='hidden' name='papers[$work_qid]' value='$work_qid' />" ;
-		}
-		print "<div style='margin:20px'><input type='submit' name='doit' value='Try failed updates again' class='btn btn-primary' /></div>" ;
-		print "</form>";
+	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+
+	$db_conn->close();
+
+	if ($seq > 0) { // Don't bother to start if no commands to run
+		$batch->start($oauth);
+		sleep(1);
 	}
-	print_footer() ;
+	header("Location: batches_oauth.php?id=$batch_id");
 	exit ( 0 ) ;
 }
+
+$wil = new WikidataItemList ;
 
 if ($action == 'merge') {
 	$edit_claims = new EditClaims($oauth);

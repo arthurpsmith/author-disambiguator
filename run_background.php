@@ -33,6 +33,8 @@ if ($oauth->isAuthOK()) {
 
 $eg_string = edit_groups_string($batch_id) ;
 
+$wil = new WikidataItemList ;
+
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 $dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
@@ -67,8 +69,40 @@ foreach ($actions_to_run AS $action_data) {
 			$author_q = $cmd_parts[1];
 			$work_qid = $cmd_parts[2];
 			$author_num = $cmd_parts[3];
-			print ("$pid - Replacing name for $work_qid - $author_num with $author_q\n");
+			print ("$batch_id/$pid - Replacing name for $work_qid - $author_num with $author_q\n");
 			$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author [[$author_q]] $eg_string");
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
+	} else if ($action == 'revert_author') {
+		$cmd_parts = array();
+		if (preg_match('/^(Q\d+):(Q\d+)$/', $data, $cmd_parts)) {
+			$author_q = $cmd_parts[1];
+			$work_qid = $cmd_parts[2];
+
+			$wil->loadItems( [$author_q] );
+			$author_item = $wil->getItem ( $author_q ) ;
+
+			print ("$batch_id/$pid - Reverting author for $work_qid - $author_q\n");
+			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$author_q]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
+	} else if ($action == 'move_author') {
+		$cmd_parts = array();
+		if (preg_match('/^(Q\d+):(Q\d+):(Q\d+)$/', $data, $cmd_parts)) {
+			$author_q = $cmd_parts[1];
+			$work_qid = $cmd_parts[2];
+			$new_author_q = $cmd_parts[3];
+
+			print ("$batch_id/$pid - Moving author for $work_qid - $author_q to $new_author_q\n");
+			$result = $edit_claims->move_author( $work_qid, $author_q, $new_author_q, "Author Disambiguator change author from [[$author_q]] to [[$new_author_q]] $eg_string" ) ;
 			if (! $result) {
 				$error = $edit_claims->error;
 			}
