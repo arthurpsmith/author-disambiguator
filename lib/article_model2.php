@@ -191,6 +191,16 @@ class WikidataArticleEntry2 {
 
 		return $matches;
 	}
+
+	public function author_statistics() {
+		$stats = [];
+		$stats['identified_count'] = count($this->authors);
+		$stats['name_count'] = count($this->author_names);
+		$max_auth_num = max(array_keys($this->authors));
+		$max_auth_name_num = max(array_keys($this->author_names));
+		$stats['max_num'] = max([$max_auth_num, $max_auth_name_num]);
+		return $stats;
+	}
 }
 
 function all_names_for_author($wil, $qid, $stated_as_names) {

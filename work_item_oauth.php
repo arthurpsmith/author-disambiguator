@@ -149,14 +149,16 @@ $wil->loadItems ( $to_load ) ;
 
 $work_item = $wil->getItem ( $work_qid ) ;
 
-# Regenerate article entry directly from item:
-$article_entry = new WikidataArticleEntry2( $work_item );
-
 if ( !isset($work_item) )  {
 	print "<h2>Warning: $work_qid not found!</h2>" ;
 	print_footer() ;
 	exit ( 0 ) ;
 }
+
+# Regenerate article entry directly from item:
+$article_entry = new WikidataArticleEntry2( $work_item );
+
+$author_stats = $article_entry->author_statistics();
 
 print "<h2>" . $work_item->getLabel() . "</h2>" ;
 print "<div>" ;
@@ -196,6 +198,20 @@ if ( count($article_entry->topics) > 0 ) {
 	print implode ( '; ' , $topics ) ;
 }
 print "</div>" ;
+
+print "<div><b>Author Statistics:</b> ";
+$idenfied_pct = '';
+$name_pct = '';
+$id_count = $author_stats['identified_count'];
+$name_count = $author_stats['name_count'];
+$max_num = $author_stats['max_num'];
+if ($max_num > 0) {
+	$identified_pct = $id_count*100.0/$max_num;
+	$name_pct = $name_count*100.0/$max_num;
+}
+printf("%d/%d (%.2f%%) identified", $id_count, $max_num, $identified_pct);
+printf(" with %d/%d (%.2f%%) names remaining to match", $name_count, $max_num, $name_pct);
+print "</div>";
 
 # Fetch 'stated as' values for all identified authors:
 $author_qid_map = array();
