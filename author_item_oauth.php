@@ -254,6 +254,15 @@ foreach ( $article_items AS $article ) {
 	}
 	$q = $article->q ;
 
+	$author_stats = $article->author_statistics();
+	$id_count = $author_stats['identified_count'];
+	$max_num = $author_stats['max_num'];
+	$identified_pct = '';
+	if ($max_num > 0) {
+		$identified_pct = $id_count*100.0/$max_num;
+	}
+	$author_id_pct = sprintf("%d/%d (%.2f%%) identified", $id_count, $max_num, $identified_pct);
+
 	$formatted_authors = array();
 	foreach ( $article->author_names AS $num => $a_list ) {
 		$formatted_authors[$num] = [];
@@ -318,7 +327,7 @@ foreach ( $article_items AS $article ) {
 		print "<td><input type='checkbox' name='papers[$q]' value='$q'/></td>" ;
 	}
 	print "<td style='width:20%;font-size:10pt'><a href='work_item_oauth.php?id=$q'>$article->title</a></td>" ;
-	print "<td style='width:50%;font-size:9pt'>$authors_list</td>";
+	print "<td style='width:50%;font-size:9pt'>$authors_list - $author_id_pct</td>";
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
