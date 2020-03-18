@@ -209,7 +209,7 @@ if ($max_num > 0) {
 	$identified_pct = $id_count*100.0/$max_num;
 	$name_pct = $name_count*100.0/$max_num;
 }
-printf("%d/%d (%.2f%%) identified", $id_count, $max_num, $identified_pct);
+printf("%d/%d (%.2f%%) identified,", $id_count, $max_num, $identified_pct);
 printf(" with %d/%d (%.2f%%) names remaining to match", $name_count, $max_num, $name_pct);
 print "</div>";
 
