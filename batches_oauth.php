@@ -9,6 +9,8 @@ $oauth->interactive = false;
 $action = get_request ( 'action' , '' ) ;
 
 $batch_id = get_request ( 'id' , '' ) ;
+$page = intval(get_request ( 'page', '1' ));
+$limit = intval(get_request ( 'limit', '50' ));
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'batches_oauth.php');
@@ -58,10 +60,16 @@ if ($action == 'reset') {
 
 if ($action == 'delete') {
 	$delete_id = get_request( 'batch_id', '' ) ;
+	$delete_list = [$delete_id];
+	if ($delete_id == '') {
+		$delete_list = get_request ( 'deletions' , array() ) ;
+	}
 	if ($oauth->isAuthOK()) {
-		$batch = new Batch($delete_id);
-		$batch->load($db_conn);
-		$batch->delete($oauth->userinfo->name, $db_conn);
+		foreach ($delete_list AS $delete_id) {
+			$batch = new Batch($delete_id);
+			$batch->load($db_conn);
+			$batch->delete($oauth->userinfo->name, $db_conn);
+		}
 	}
 }
 
@@ -78,13 +86,39 @@ print "<hr>";
 $owner = $oauth->userinfo->name;
 
 if ( $batch_id  == '') {
-	$batch_list = Batch::batches_for_owner($db_conn, $owner);
+	$batch_count = Batch::batches_count($db_conn, $owner);
+	$max_page = ($batch_count - 1)/$limit + 1;
+	print "<div>$batch_count total batches</div>";
+	print "<div>";
+	print "<a href='?page=1'>latest</a> | <a href='?page=$max_page'>earliest</a>";
+	$prev_page = $page - 1;
+	$next_page = $page + 1;
+	if ($prev_page > 0) {
+		print " | <a href='?page=$prev_page'>newer</a>";
+	} else {
+		print "| newer";
+	}
+	if ($next_page <= $max_page) {
+		print " | <a href='?page=$next_page'>older</a>";
+	} else {
+		print "| older";
+	}
+	print "</div>";
+	print "<form method='post' class='form'>" ;
+	print "<input type='hidden' name='action' value='delete' />";
+?>
 
-	print "<table class='table table-striped table-condensed'><tr><th>Batch ID</th><th>Start time</th><th>Counts</th><th>Still processing?</th><th></th></tr>";
+<div>
+<a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
+<a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",false);return false'>Uncheck all</a>
+</div>
+
+<?PHP
+	$batch_list = Batch::batches_for_owner($db_conn, $owner, $limit, $page);
+
+	print "<table class='table table-striped table-condensed'><tr><th></th><th>Batch ID</th><th>Start time</th><th>Counts</th><th>Still processing?</th><th></th></tr>";
 	foreach ($batch_list AS $batch) {
 		$id = $batch->batch_id;
-		print "<tr><td><a href='?id=$id'>$id</a></td>";
-		print "<td>" . $batch->start_date . "</td>";
 		$display_counts = array();
 		$has_ready = 0;
 		$has_error = 0;
@@ -96,6 +130,15 @@ if ( $batch_id  == '') {
 				$has_error = 1;
 			}
 		}
+		print "<tr><td>";
+		$delete_count = 0;
+		if (!$has_ready && ! $has_error) {
+			$delete_count += 1;
+			print "<input type='checkbox' name='deletions[$id]' value='$id'/></td>" ;
+		}
+		print "</td>";
+		print "<td><a href='?id=$id'>$id</a></td>";
+		print "<td>" . $batch->start_date . "</td>";
 		print "<td>" . implode($display_counts, ", ") . "</td>";
 
 		if ( $batch->is_running() ) {
@@ -115,6 +158,10 @@ if ( $batch_id  == '') {
 		print "</tr>";
 	}
 	print "</table>";
+	if ($delete_count > 0) {
+		print "<div style='margin:20px'><input type='submit' name='doit' value='Delete selected batches' class='btn btn-primary' /> </div>";
+	}
+	print "</form>" ;
 } else {
 	$batch = new Batch($batch_id);
 	$batch->load($db_conn);

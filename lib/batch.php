@@ -22,13 +22,16 @@ class Batch {
 	public function load($db_conn) {
 		$batch_id = $db_conn->real_escape_string($this->batch_id);
 		$dbquery = "SELECT b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where b.batch_id = '$batch_id' group by b.start, b.process_id, cmd.status order by start desc";
-		$results = $db_conn->query($dbquery);
-		while ($row = $results->fetch_row()) {
+		if ($results = $db_conn->query($dbquery)) {
+		    while ($row = $results->fetch_row()) {
 			$this->start_date = $row[0];
 			$this->pid = $row[1];
 			$this->counts[$row[2]] = $row[3];
+		    }
+		    $results->close();
+		} else {
+		    print("Database error: " . $db_conn->error);
 		}
-		$results->close();
 	}
 
 	public function reset($db_conn) {
@@ -72,12 +75,27 @@ class Batch {
 		return true;
 	}
 
-	public static function batches_for_owner($db_conn, $owner) {
-		$dbquery = "SELECT b.batch_id, b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where owner = '$owner' group by b.batch_id, b.start, b.process_id, cmd.status order by start desc";
+	public static function batches_count($db_conn, $owner) {
+		$dbquery = "SELECT count(b.batch_id) from batches b where b.owner = '$owner'";
+		$batches_count = 0;
+		if ($results = $db_conn->query($dbquery)) {
+			$row = $results->fetch_row();
+			$batches_count = $row[0];
+			$results->close();
+		} else {
+			print("Database error: " . $db_conn->error);
+		}
+		return $batches_count;
+	}
+
+	public static function batches_for_owner($db_conn, $owner, $limit = 50, $page = 1) {
+		$offset = ($page - 1) * $limit;
+
+		$dbquery = "SELECT b.batch_id, b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where owner = '$owner' group by b.batch_id, b.start, b.process_id, cmd.status order by start desc LIMIT $offset,$limit";
 		$batch_data_list = array();
 		$counts = array();
-		$results = $db_conn->query($dbquery);
-		while ($row = $results->fetch_row()) {
+		if ($results = $db_conn->query($dbquery)) {
+		    while ($row = $results->fetch_row()) {
 			$batch_id = $row[0];
 			if (! isset($counts[$batch_id]) ) {
 				$counts[$batch_id] = array();
@@ -89,8 +107,11 @@ class Batch {
 			}
 			$status = $row[3];
 			$counts[$batch_id][$status] = $row[4];
+		    }
+		    $results->close();
+		} else {
+		    print("Database error: " . $db_conn->error);
 		}
-		$results->close();
 		$batch_list = array();
 		foreach ($batch_data_list AS $batch_data) {
 			$batch_id = $batch_data['id'];
