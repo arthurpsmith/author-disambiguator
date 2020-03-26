@@ -114,7 +114,9 @@ if ( $batch_id  == '') {
 </div>
 
 <?PHP
+
 	$batch_list = Batch::batches_for_owner($db_conn, $owner, $limit, $page);
+	$delete_count = 0;
 
 	print "<table class='table table-striped table-condensed'><tr><th></th><th>Batch ID</th><th>Start time</th><th>Counts</th><th>Still processing?</th><th></th></tr>";
 	foreach ($batch_list AS $batch) {
@@ -131,7 +133,6 @@ if ( $batch_id  == '') {
 			}
 		}
 		print "<tr><td>";
-		$delete_count = 0;
 		if (!$has_ready && ! $has_error) {
 			$delete_count += 1;
 			print "<input type='checkbox' name='deletions[$id]' value='$id'/></td>" ;
