@@ -122,6 +122,7 @@ if ( $batch_id  == '') {
 	foreach ($batch_list AS $batch) {
 		$id = $batch->batch_id;
 		$display_counts = array();
+		$is_running = $batch->is_running();
 		$has_ready = 0;
 		$has_error = 0;
 		foreach ($batch->counts AS $status => $count) {
@@ -133,7 +134,7 @@ if ( $batch_id  == '') {
 			}
 		}
 		print "<tr><td>";
-		if (!$has_ready && ! $has_error) {
+		if (!$is_running ) {
 			$delete_count += 1;
 			print "<input type='checkbox' name='deletions[$id]' value='$id'/></td>" ;
 		}
@@ -142,7 +143,7 @@ if ( $batch_id  == '') {
 		print "<td>" . $batch->start_date . "</td>";
 		print "<td>" . implode($display_counts, ", ") . "</td>";
 
-		if ( $batch->is_running() ) {
+		if ( $is_running ) {
 			print "<td>Yes</td>";
 			print "<td><a href='?action=stop&batch_id=$id'>Stop batch?</a></td>";
 		} else {
