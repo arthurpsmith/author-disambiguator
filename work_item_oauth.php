@@ -164,7 +164,7 @@ print "<h2>" . $work_item->getLabel() . "</h2>" ;
 print "<div>" ;
 print wikidata_link($work_qid, "Wikidata Item", '') ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>" "&nbsp;[<a href='https://tools.wmflabs.org/scholia/work/$work_qid/missing' target='_blank'>missing</a>]";
+print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/work/$work_qid/missing' target='_blank'>missing</a>]";
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$work_qid'>Reasonator</a>" ;
 print ' | ' ;
