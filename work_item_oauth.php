@@ -164,7 +164,7 @@ print "<h2>" . $work_item->getLabel() . "</h2>" ;
 print "<div>" ;
 print wikidata_link($work_qid, "Wikidata Item", '') ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>" ;
+print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>" "&nbsp;[<a href='https://tools.wmflabs.org/scholia/work/$work_qid/missing' target='_blank'>missing</a>]";
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$work_qid'>Reasonator</a>" ;
 print ' | ' ;
@@ -209,7 +209,7 @@ if ($max_num > 0) {
 	$identified_pct = $id_count*100.0/$max_num;
 	$name_pct = $name_count*100.0/$max_num;
 }
-printf("%d/%d (%.2f%%) identified", $id_count, $max_num, $identified_pct);
+printf("%d/%d (%.2f%%) identified,", $id_count, $max_num, $identified_pct);
 printf(" with %d/%d (%.2f%%) names remaining to match", $name_count, $max_num, $name_pct);
 print "</div>";
 
