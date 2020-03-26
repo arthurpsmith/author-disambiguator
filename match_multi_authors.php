@@ -7,6 +7,9 @@ $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, 30 ) ) {
 	$db_conn->close();
 
+	# This isn't (yet) supported in oauth, link just to names page:
+	$oauth_url = str_replace('match_multi_authors.php', 'author_item_oauth.php', $_SERVER['REQUEST_URI']);
+
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
 	print "Please wait before making another request of this service; note that use of <a href='$oauth_url'>the OAuth option</a> is not rate-limited.";

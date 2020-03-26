@@ -7,6 +7,13 @@ $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, 30 ) ) {
 	$db_conn->close();
 
+	$oauth_url = str_replace('precise_cluster.php', 'names_oauth.php', $_SERVER['REQUEST_URI']);
+	if (strpos($oauth_url, '?') === false) {
+		$oauth_url .= '?precise=1';
+	} else {
+		$oauth_url .= '&precise=1';
+	}
+
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
 	print "Please wait before making another request of this service; note that use of <a href='$oauth_url'>the OAuth option</a> is not rate-limited.";
