@@ -9,7 +9,7 @@ if (limit_requests( $db_conn, 30 ) ) {
 
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
-	print "Please wait before making another request of this service; note that use of the OAuth option is not rate-limited.";
+	print "Please wait before making another request of this service; note that use of <a href='$oauth_url'>the OAuth option</a> is not rate-limited.";
 	print_footer() ;
 	exit ( 0 ) ;
 }
