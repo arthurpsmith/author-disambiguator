@@ -109,6 +109,38 @@ foreach ($actions_to_run AS $action_data) {
 		} else {
 			$error = 'Bad data';
 		}
+	} else if ($action == 'merge_work') {
+		if (preg_match('/^(Q\d+)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			$article_item = generate_article_entries2( [$work_qid]) [ $work_qid ];
+			$to_load = array() ;
+			$author_qid_map = array();
+			foreach ( $article_item->authors AS $auth_list ) {
+				foreach ( $auth_list AS $auth ) {
+					$to_load[] = $auth ;
+					$author_qid_map[$auth] = 1;
+				}
+			}
+			foreach ( $article_item->published_in AS $pub ) $to_load[] = $pub ;
+			foreach ( $article_item->topics AS $topic ) $to_load[] = $topic ;
+			$to_load = array_unique( $to_load );
+			$wil->loadItems ( $to_load ) ;
+			$author_qids = array_keys($author_qid_map);
+			$stated_as_names = fetch_stated_as_for_authors($author_qids);
+			$merge_candidates = $article_item->merge_candidates($wil, $stated_as_names);
+			$author_numbers = array() ;
+			foreach ( $merge_candidates AS $num => $do_merge ) {
+				if ($do_merge) {
+					$author_numbers[] = $num ;
+				}
+			}
+			$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
 	}
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";

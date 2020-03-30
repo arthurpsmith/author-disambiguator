@@ -91,73 +91,37 @@ if ( $action == 'remove' ) {
 $wil = new WikidataItemList ;
 
 if ($action == 'merge') {
-	$edit_claims = new EditClaims($oauth);
-	$papers = get_request ( 'papers' , array() ) ;
-	$article_items = generate_article_entries2( $papers );
-	$to_load = array() ;
-	foreach ( $article_items AS $article ) {
-		foreach ( $article->authors AS $auth_list ) {
-			foreach ( $auth_list AS $auth ) {
-				$to_load[] = $auth ;
-			}
-		}
-		foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
-		foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
-	}
-	$to_load = array_unique( $to_load );
-	$wil->loadItems ( $to_load ) ;
-# Fetch 'stated as' values for all identified authors on all articles:
-	$author_qid_map = array();
-	foreach ($article_items AS $article) {
-		foreach ( $article->authors as $author_qid_list ) {
-			foreach ($author_qid_list as $qid) {
-				$author_qid_map[$qid] = 1;
-			}
-		}
-	}
-	$author_qids = array_keys($author_qid_map);
-	$stated_as_names = fetch_stated_as_for_authors($author_qids);
-	$failed_papers = array();
-	print "Processing requests....\n";
-	print "<ul>";
-	foreach ( $article_items AS $article ) {
-		$merge_candidates = $article->merge_candidates($wil, $stated_as_names);
-		$work_qid = $article->q;
-# Act as if all valid entries were selected for merge ...
-		$author_numbers = array() ;
-		foreach ( $merge_candidates AS $num => $do_merge ) {
-			if ($do_merge) {
-				$author_numbers[] = $num ;
-			}
-		}
-		$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
-		print "<li><a href='work_item_oauth.php?id=$work_qid'>$work_qid</a> " . wikidata_link($work_qid, '(Wikidata)', '') . ": ";
-		if ($result) {
-			print "merges done";
-		} else {
-			print "update failed!?";
-			print_r($edit_claims->error);
-			$failed_papers[] = $work_qid;
-		}
-		print "</li>\n";
-	}
-	print "</ul>";
-	$failed_count = count($failed_papers);
-	if ($failed_count > 0) {
-		print("$failed_count merge requests did not succeed");
-		print "<form method='post' class='form' action='?'>" ;
-		print "<input type='hidden' name='action' value='merge' />" ;
-		print "<input type='hidden' name='id' value='$author_qid' />" ;
-		foreach ($failed_papers as $work_qid) {
-			print "<input type='hidden' name='papers[$work_qid]' value='$work_qid' />" ;
-		}
-		print "<div style='margin:20px'><input type='submit' name='doit' value='Retry failed merges' class='btn btn-primary' /></div>" ;
-		print "</form>";
-	}
-	print_footer() ;
-	exit(0);
-}
+	$batch_id = Batch::generate_batch_id() ;
 
+	$papers = get_request ( 'papers' , array() ) ;
+
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL)";
+	$db_conn->query($dbquery);
+
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'merge_work', ?, 'READY', NULL, NULL)");
+
+	$seq = 0;
+	foreach ( $papers AS $work_qid ) {
+		$seq += 1;
+		$add_command->bind_param('is', $seq, $work_qid);
+		$add_command->execute();
+	}
+	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+
+	$db_conn->close();
+
+	if ($seq > 0) { // Don't bother to start if no commands to run
+		$batch->start($oauth);
+		sleep(1);
+	}
+	header("Location: batches_oauth.php?id=$batch_id");
+	exit ( 0 ) ;
+}
 
 $filter_in_context = ((! isset($filter)) || ($filter == '')) ? '.' : "; $filter . ";
 $sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid $filter_in_context } LIMIT $article_limit" ;
