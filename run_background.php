@@ -112,6 +112,8 @@ foreach ($actions_to_run AS $action_data) {
 	} else if ($action == 'merge_work') {
 		if (preg_match('/^(Q\d+)$/', $data, $cmd_parts)) {
 			$work_qid = $cmd_parts[1];
+
+			print ("$batch_id/$pid - Merging redundant author entries for $work_qid\n");
 			$article_item = generate_article_entries2( [$work_qid]) [ $work_qid ];
 			$to_load = array() ;
 			$author_qid_map = array();
