@@ -57,7 +57,7 @@ if ( $action == 'add' ) {
 
 	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
-	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL)";
+	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
 	$db_conn->query($dbquery);
 // Should probably check for errors!
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'replace_name', ?, 'READY', NULL, NULL)");
