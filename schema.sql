@@ -1,10 +1,17 @@
 // Database s53905__authors on toolforge:
 
+create table batch_manager(
+  user VARCHAR(100) NOT NULL,
+  manager_pid INT UNSIGNED,
+  PRIMARY KEY(user)
+);
+
 create table batches(
   batch_id VARCHAR(20) NOT NULL,
   owner VARCHAR(200) NOT NULL,
   process_id INT UNSIGNED,
   start TIMESTAMP NOT NULL,
+  queued BOOLEAN NOT NULL DEFAULT 0,
   PRIMARY KEY(batch_id)
 );
 
