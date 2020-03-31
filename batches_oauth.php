@@ -146,6 +146,9 @@ if ( $batch_id  == '') {
 		if ( $is_running ) {
 			print "<td>Yes</td>";
 			print "<td><a href='?action=stop&batch_id=$id'>Stop batch?</a></td>";
+		} else if ($batch->queued) {
+			print "<td>Queued</td>";
+			print "<td><a href='?action=remove_from_queue&batch_id=$id'>Remove from queue?</a></td>";
 		} else {
 			print "<td>No</td>";
 			if ($has_ready == 1) {

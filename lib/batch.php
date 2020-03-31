@@ -4,6 +4,7 @@ class Batch {
 	public $batch_id;
 	public $start_date = '';
 	public $pid = NULL;
+	public $queued = 0;
 	public $counts = array();
 
 	public function __construct ( $batch_id, $params = array() ) {
@@ -17,16 +18,20 @@ class Batch {
 		if (isset($params['counts'])) {
 			$this->counts = $params['counts'];
 		}
+		if (isset($params['queued'])) {
+			$this->queued = $params['queued'];
+		}
 	}
 
 	public function load($db_conn) {
 		$batch_id = $db_conn->real_escape_string($this->batch_id);
-		$dbquery = "SELECT b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where b.batch_id = '$batch_id' group by b.start, b.process_id, cmd.status order by start desc";
+		$dbquery = "SELECT b.start, b.process_id, b.queued, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where b.batch_id = '$batch_id' group by b.start, b.process_id, b.queued, cmd.status order by start desc";
 		if ($results = $db_conn->query($dbquery)) {
 		    while ($row = $results->fetch_row()) {
 			$this->start_date = $row[0];
 			$this->pid = $row[1];
-			$this->counts[$row[2]] = $row[3];
+			$this->queued = $row[2];
+			$this->counts[$row[3]] = $row[4];
 		    }
 		    $results->close();
 		} else {
@@ -55,6 +60,14 @@ class Batch {
 		exec("$env_cmds nohup /usr/bin/php run_background.php >> bg.log 2>&1 &");
 	}
 
+	public function wait_for_batch($oauth) {
+		$id = $this->batch_id;
+		$env_cmds = "BATCH_ID=$id";
+		$env_cmds .= " TOKEN_KEY=" . $oauth->gTokenKey;
+		$env_cmds .= " TOKEN_SECRET=" . $oauth->gTokenSecret;
+		exec("$env_cmds nohup /usr/bin/php run_a_batch.php >> bg.log 2>&1");
+	}
+
 	public function stop() {
 		$pidval = intval($this->pid);
 		if ($pidval > 0) {
@@ -75,6 +88,18 @@ class Batch {
 		return true;
 	}
 
+	public function add_to_queue($db_conn) {
+		$query_id = $db_conn->real_escape_string($this->batch_id);
+		$dbquery = "UPDATE batches SET queued = 1 WHERE batch_id = '$query_id'";
+		$db_conn->query($dbquery);
+	}
+
+	public function remove_from_queue($db_conn) {
+		$query_id = $db_conn->real_escape_string($this->batch_id);
+		$dbquery = "UPDATE batches SET queued = 0 WHERE batch_id = '$query_id'";
+		$db_conn->query($dbquery);
+	}
+
 	public static function batches_count($db_conn, $owner) {
 		$dbquery = "SELECT count(b.batch_id) from batches b where b.owner = '$owner'";
 		$batches_count = 0;
@@ -91,7 +116,7 @@ class Batch {
 	public static function batches_for_owner($db_conn, $owner, $limit = 50, $page = 1) {
 		$offset = ($page - 1) * $limit;
 
-		$dbquery = "SELECT b.batch_id, b.start, b.process_id, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where owner = '$owner' group by b.batch_id, b.start, b.process_id, cmd.status order by start desc LIMIT $offset,$limit";
+		$dbquery = "SELECT b.batch_id, b.start, b.process_id, b.queued, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where owner = '$owner' group by b.batch_id, b.start, b.process_id, b.queued, cmd.status order by start desc LIMIT $offset,$limit";
 		$batch_data_list = array();
 		$counts = array();
 		if ($results = $db_conn->query($dbquery)) {
@@ -103,10 +128,11 @@ class Batch {
 				$batch_data['id'] = $batch_id;
 				$batch_data['date'] = $row[1];
 				$batch_data['pid'] = $row[2];
+				$batch_data['queued'] = $row[3];
 				$batch_data_list[] = $batch_data;
 			}
-			$status = $row[3];
-			$counts[$batch_id][$status] = $row[4];
+			$status = $row[4];
+			$counts[$batch_id][$status] = $row[5];
 		    }
 		    $results->close();
 		} else {
@@ -122,7 +148,7 @@ class Batch {
 	}
 
 	public static function generate_batch_id () {
-		return substr(uniqid(), -6); # Last 6 letters of uniqid
+		return substr(uniqid(), -8); # Last 8 letters of uniqid
 	}
 }
 

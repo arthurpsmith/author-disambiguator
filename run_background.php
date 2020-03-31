@@ -1,15 +1,11 @@
 <?PHP
 
+# Manage batches for a user (until none left in queue)
+
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
 $pid = getmypid();
-
-$batch_id = getenv('BATCH_ID');
-if (! $batch_id) {
-	print("$pid - BATCH_ID environment variable missing - exiting...\n");
-	exit(1);
-}
 
 $token_key = getenv('TOKEN_KEY');
 if (! $token_key) {
@@ -31,128 +27,38 @@ if ($oauth->isAuthOK()) {
 	exit(1);
 }
 
-$eg_string = edit_groups_string($batch_id) ;
-
-$wil = new WikidataItemList ;
+$batch_mgr = new BatchManager($oauth->userinfo->name);
 
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
-$dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
-$db_conn->query($dbquery);
 
-$cmd_query = "SELECT ordinal, action, data FROM commands WHERE batch_id = '$batch_id' AND (status = 'READY' OR status = 'RUNNING') ORDER BY ordinal";
-$results = $db_conn->query($cmd_query);
+$batch_mgr->load($db_conn);
 
-$actions_to_run = array();
-while ($row = $results->fetch_row()) {
-	$action_data = array();
-	$action_data['ordinal'] = $row[0];
-	$action_data['action'] = $row[1];
-	$action_data['data'] = $row[2];
-	$actions_to_run[] = $action_data;
+if ($batch_mgr->is_running()) {
+	# Already running - quit this process!
+	$old_pid = $batch_mgr->pid;
+	print ("Already running batch manager for " . $oauth->userinfo->name . " - pid $old_pid\n");
+	exit(0);
 }
-$results->close();
 
-$edit_claims = new EditClaims($oauth);
-foreach ($actions_to_run AS $action_data) {
-	$ordinal = $action_data['ordinal'];
-	$action = $action_data['action'];
-	$data = $action_data['data'];
-	$running_cmd = "UPDATE commands SET status = 'RUNNING', run = NOW() WHERE batch_id = '$batch_id' and ordinal = $ordinal";
-	$db_conn->query($running_cmd);
-	$db_conn->close();
+$batch_mgr->pid = $pid;
+$batch_mgr->save($db_conn);
 
-	$error = NULL;
-	if ($action == 'replace_name') {
-		$cmd_parts = array();
-		if (preg_match('/^(Q\d+):(Q\d+):(\d+)/', $data, $cmd_parts)) {
-			$author_q = $cmd_parts[1];
-			$work_qid = $cmd_parts[2];
-			$author_num = $cmd_parts[3];
-			print ("$batch_id/$pid - Replacing name for $work_qid - $author_num with $author_q\n");
-			$result = $edit_claims->replace_name_with_author($work_qid, $author_num, $author_q, "Author Disambiguator set author [[$author_q]] $eg_string");
-			if (! $result) {
-				$error = $edit_claims->error;
-			}
-		} else {
-			$error = 'Bad data';
-		}
-	} else if ($action == 'revert_author') {
-		$cmd_parts = array();
-		if (preg_match('/^(Q\d+):(Q\d+)$/', $data, $cmd_parts)) {
-			$author_q = $cmd_parts[1];
-			$work_qid = $cmd_parts[2];
-
-			$wil->loadItems( [$author_q] );
-			$author_item = $wil->getItem ( $author_q ) ;
-
-			print ("$batch_id/$pid - Reverting author for $work_qid - $author_q\n");
-			$result = $edit_claims->revert_author( $work_qid, $author_item, "Author Disambiguator revert author for [[$author_q]] $eg_string" ) ;
-			if (! $result) {
-				$error = $edit_claims->error;
-			}
-		} else {
-			$error = 'Bad data';
-		}
-	} else if ($action == 'move_author') {
-		$cmd_parts = array();
-		if (preg_match('/^(Q\d+):(Q\d+):(Q\d+)$/', $data, $cmd_parts)) {
-			$author_q = $cmd_parts[1];
-			$work_qid = $cmd_parts[2];
-			$new_author_q = $cmd_parts[3];
-
-			print ("$batch_id/$pid - Moving author for $work_qid - $author_q to $new_author_q\n");
-			$result = $edit_claims->move_author( $work_qid, $author_q, $new_author_q, "Author Disambiguator change author from [[$author_q]] to [[$new_author_q]] $eg_string" ) ;
-			if (! $result) {
-				$error = $edit_claims->error;
-			}
-		} else {
-			$error = 'Bad data';
-		}
-	} else if ($action == 'merge_work') {
-		if (preg_match('/^(Q\d+)$/', $data, $cmd_parts)) {
-			$work_qid = $cmd_parts[1];
-
-			print ("$batch_id/$pid - Merging redundant author entries for $work_qid\n");
-			$article_item = generate_article_entries2( [$work_qid]) [ $work_qid ];
-			$to_load = array() ;
-			$author_qid_map = array();
-			foreach ( $article_item->authors AS $auth_list ) {
-				foreach ( $auth_list AS $auth ) {
-					$to_load[] = $auth ;
-					$author_qid_map[$auth] = 1;
-				}
-			}
-			foreach ( $article_item->published_in AS $pub ) $to_load[] = $pub ;
-			foreach ( $article_item->topics AS $topic ) $to_load[] = $topic ;
-			$to_load = array_unique( $to_load );
-			$wil->loadItems ( $to_load ) ;
-			$author_qids = array_keys($author_qid_map);
-			$stated_as_names = fetch_stated_as_for_authors($author_qids);
-			$merge_candidates = $article_item->merge_candidates($wil, $stated_as_names);
-			$author_numbers = array() ;
-			foreach ( $merge_candidates AS $num => $do_merge ) {
-				if ($do_merge) {
-					$author_numbers[] = $num ;
-				}
-			}
-			$result = $edit_claims->merge_authors( $work_qid, $author_numbers, array(), "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
-			if (! $result) {
-				$error = $edit_claims->error;
-			}
-		} else {
-			$error = 'Bad data';
-		}
-	}
-	$db_conn = $dbtools->openToolDB('authors');
-	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
-	if ($error != NULL) {
-		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
-	}
-	$db_conn->query($finished_cmd);
-}
 $db_conn->close();
 
+while (1) {
+	$db_conn = $dbtools->openToolDB('authors');
+	$batch_id = $batch_mgr->next_batch_id_in_queue($db_conn);
+	if ($batch_id == NULL) {
+		break;
+	}
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	$batch->remove_from_queue($db_conn);
+	$db_conn->close();
+
+	$batch->wait_for_batch($oauth);
+}
 
 exit ( 0 ) ;
 
