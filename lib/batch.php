@@ -100,6 +100,14 @@ class Batch {
 		$db_conn->query($dbquery);
 	}
 
+	public function has_ready() {
+		return isset($this->counts['READY']) || isset($this->counts['RUNNING']);
+	}
+
+	public function has_error() {
+		return isset($this->counts['ERROR']);
+	}
+
 	public static function batches_count($db_conn, $owner) {
 		$dbquery = "SELECT count(b.batch_id) from batches b where b.owner = '$owner'";
 		$batches_count = 0;

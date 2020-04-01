@@ -36,6 +36,9 @@ if ($action == 'restart') {
 	$restart_id = get_request( 'batch_id', '' ) ;
 	$batch = new Batch($restart_id);
 	$batch->load($db_conn);
+	if (! $batch->queued) {
+		$batch->add_to_queue($db_conn);
+	}
 	if (! $batch->is_running()) {
 		if ($oauth->isAuthOK()) {
 			$batch->start($oauth);
@@ -52,6 +55,17 @@ if ($action == 'reset') {
 	$batch = new Batch($reset_id);
 	$batch->load($db_conn);
 	$batch->reset($db_conn);
+	$db_conn->close();
+
+	header("Location: ?id=$batch_id");
+	exit(0);
+}
+
+if ($action == 'remove_from_queue') {
+	$batch_id = get_request( 'batch_id', '' ) ;
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	$batch->remove_from_queue($db_conn);
 	$db_conn->close();
 
 	header("Location: ?id=$batch_id");
@@ -123,15 +137,10 @@ if ( $batch_id  == '') {
 		$id = $batch->batch_id;
 		$display_counts = array();
 		$is_running = $batch->is_running();
-		$has_ready = 0;
-		$has_error = 0;
+		$has_ready = $batch->has_ready();
+		$has_error = $batch->has_error();
 		foreach ($batch->counts AS $status => $count) {
 			$display_counts[] = "$status($count)";
-			if ($status == 'READY' OR $status == 'RUNNING') {
-				$has_ready = 1 ;
-			} else if ($status == 'ERROR') {
-				$has_error = 1;
-			}
 		}
 		print "<tr><td>";
 		if (!$is_running ) {
@@ -151,9 +160,9 @@ if ( $batch_id  == '') {
 			print "<td><a href='?action=remove_from_queue&batch_id=$id'>Remove from queue?</a></td>";
 		} else {
 			print "<td>No</td>";
-			if ($has_ready == 1) {
+			if ($has_ready) {
 				print "<td><a href='?action=restart&batch_id=$id'>Restart batch?</a></td>";
-			} else if ($has_error == 1) {
+			} else if ($has_error) {
 				print "<td><a href='?action=reset&batch_id=$id'>Reset errors?</a></td>";
 			} else {
 				print "<td><a href='?action=delete&batch_id=$id'>Delete batch?</a></td>";
@@ -171,16 +180,29 @@ if ( $batch_id  == '') {
 	$batch = new Batch($batch_id);
 	$batch->load($db_conn);
 	print "<h3>Batch $batch_id started " . $batch->start_date . "</h3>\n";
-	if ($batch->is_running()) {
-		print("Still processing... ");
-		print("<a href='?id=$batch_id&action=stop&batch_id=$batch_id'>Stop batch?</a>");
-		print('<script type="text/javascript">
+	$reload_js = '<script type="text/javascript">
 $(document).ready ( function () {
 	setTimeout(function() { window.location.reload() }, 30000);
 } ) ;
-</script>');
+</script>';
+
+	if ($batch->is_running()) {
+		print("Still processing... ");
+		print("<a href='?id=$batch_id&action=stop&batch_id=$batch_id'>Stop batch?</a>");
+		print($reload_js);
+	} else if ($batch->queued) {
+		print("Queued (will run after earlier batches complete) ");
+		print "<a href='?id=$batch_id&action=remove_from_queue&batch_id=$batch_id'>Remove from queue?</a>";
+		print($reload_js);
 	} else {
 		print("Batch run ended");
+		if ($batch->has_ready()) {
+			print " <a href='?id=$batch_id&action=restart&batch_id=$batch_id'>Restart batch?</a></td>";
+		} else if ($batch->has_error()) {
+			print " <a href='?id=$batch_id&action=reset&batch_id=$batch_id'>Reset errors?</a>";
+		} else {
+			print " <a href='?action=delete&batch_id=$batch_id'>Delete batch?</a>";
+		}
 	}
 
 	$qids_by_ordinal = array();
