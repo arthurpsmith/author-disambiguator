@@ -401,7 +401,7 @@ class WD_OAuth {
 	 * @param object $ch Curl handle
 	 * @return array API results
 	 */
-	function doApiQuery( $post, &$ch = null , $mode = '' , $iterations_left = 12 , $last_maxlag = -1 ) {
+	function doApiQuery( $post, &$ch = null , $mode = '' , $iterations_left = 120 , $last_maxlag = -1 ) {
 		global $maxlag ;
 		if ( !isset($maxlag) ) $maxlag = 5 ;
 		$give_maxlag = $maxlag ;
@@ -495,7 +495,7 @@ class WD_OAuth {
 
 			$lag = $maxlag ;
 
-			sleep ( 60*$lag ) ; # Give it plenty of time before retrying 
+			sleep ( 6*$lag ) ; # Give it plenty of time before retrying 
 			$ch = null ;
 			$ret = $this->doApiQuery( $post, $ch , '' , $iterations_left-1 , $last_maxlag ) ;
 		}
@@ -579,7 +579,7 @@ class WD_OAuth {
 		if ( isset ( $baserev ) and $baserev != '' ) $params['baserevid'] = $baserev ;
 		if ( isset($edit_summary) and $edit_summary != '' ) $params['summary'] = $edit_summary ;
 
-		$retries = $this->interactive ? 1 : 20 ;
+		$retries = $this->interactive ? 1 : 200 ;
 
 		$res = $this->doApiQuery( $params , $ch, '', $retries );
 		if ( isset ( $res->error ) ) {
