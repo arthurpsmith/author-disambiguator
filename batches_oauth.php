@@ -182,7 +182,7 @@ if ( $batch_id  == '') {
 	print "<h3>Batch $batch_id started " . $batch->start_date . "</h3>\n";
 	$reload_js = '<script type="text/javascript">
 $(document).ready ( function () {
-	setTimeout(function() { window.location.reload() }, 30000);
+	setTimeout(function() { window.location.reload() }, 10000);
 } ) ;
 </script>';
 
