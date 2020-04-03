@@ -10,7 +10,7 @@ $action = get_request ( 'action' , '' ) ;
 
 $batch_id = get_request ( 'id' , '' ) ;
 $page = intval(get_request ( 'page', '1' ));
-$limit = intval(get_request ( 'limit', '50' ));
+$limit = intval(get_request ( 'limit', '100' ));
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'batches_oauth.php');
