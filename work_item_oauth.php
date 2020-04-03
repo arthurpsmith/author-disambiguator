@@ -6,6 +6,7 @@ require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 $oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
 $oauth->interactive = true;
 
+$batch_id = get_request ( 'batch_id' , '' ) ;
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
 $renumber = get_request ( 'renumber' , 0 ) ;
@@ -36,6 +37,7 @@ print "<hr>";
 print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
+<input type='hidden' name='batch_id' value='$batch_id'>
 <label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
 <label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
 <label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>
@@ -51,59 +53,91 @@ $wil = new WikidataItemList ;
 
 $eg_string = edit_groups_string() ;
 if ( $action == 'merge' ) {
-	$edit_claims = new EditClaims($oauth);
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+
+	if ($batch_id == '') {
+		$batch_id = Batch::generate_batch_id() ;
+		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
+		$db_conn->query($dbquery);
+	}
+	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
+	$results = $db_conn->query($seq_query);
+	$row = $results->fetch_row();
+	$seq = 1;
+	if ($row != NULL) {
+		$seq = $row[0] + 1;
+	}
+
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'merge_authors', ?, 'READY', NULL, NULL)");
+
 	$author_numbers = get_request ( 'merges' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $edit_claims->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
-	if ($result) {
-		print "Merging successful!";
-	} else {
-		print "Something went wrong? ";
-		print_r($edit_claims->error);
-		print("\n<div>Failed to update $work_qid</div>\n");
-		print "<form method='post' class='form'>" ;
-		print "<input type='hidden' name='action' value='merge' />";
-		print "<input type='hidden' name='id' value='$work_qid' />" ;
-		foreach ($author_numbers AS $num) {
-    			print "<input type='hidden' name='merges[$num]' value='$num' />\n";
-		}
-		foreach ($remove_claims AS $cid) {
-    			print "<input type='hidden' name='remove_claims[$cid]' value='$cid' />\n";
-		}
-		print "<div style='margin:20px'><input type='submit' name='doit' value='Try again' class='btn btn-primary' /> </div>";
-		print "</form>" ;
-		print_footer() ;
-		exit ( 0 ) ;
+	$data = $work_qid . ':' . implode('|', $author_numbers) . ':' . implode('|', $remove_claims);
+	$add_command->bind_param('is', $seq, $data);
+	$add_command->execute();
+	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	if (! $batch->queued) {
+		$batch->add_to_queue($db_conn);
 	}
+
+	$db_conn->close();
+
+	if (! $batch->is_running()) {
+		print("Starting batch!\n");
+		$batch->start($oauth);
+	}
+	sleep(1); # Should handle this better somehow - reload while waiting on batch?
 }
 
 if ($action == 'renumber') {
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+
+	if ($batch_id == '') {
+		$batch_id = Batch::generate_batch_id() ;
+		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
+		$db_conn->query($dbquery);
+	}
+	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
+	$results = $db_conn->query($seq_query);
+	$row = $results->fetch_row();
+	$seq = 1;
+	if ($row != NULL) {
+		$seq = $row[0] + 1;
+	}
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'renumber_authors', ?, 'READY', NULL, NULL)");
+
 	$edit_claims = new EditClaims($oauth);
 	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
-	$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for [[$work_qid]] $eg_string" ) ;
-	if ($result) {
-		print "Renumbering successful!";
-	} else {
-		print "Something went wrong? ";
-		print_r($edit_claims->error);
-		print("\n<div>Failed to update $work_qid</div>\n");
-		print "<form method='post' class='form'>" ;
-		print "<input type='hidden' name='action' value='renumber' />";
-		print "<input type='hidden' name='id' value='$work_qid' />" ;
-		foreach ($renumbering AS $cid => $num) {
-    			print "<input type='hidden' name='ordinals[$cid]' value='$num' />\n";
-		}
-		foreach ($remove_claims AS $cid) {
-    			print "<input type='hidden' name='remove_claims[$cid]' value='$cid' />\n";
-		}
-		print "<div style='margin:20px'><input type='submit' name='renumber' value='Try again' class='btn btn-primary' /> </div>";
-		print "</form>" ;
-		print_footer() ;
-		exit ( 0 ) ;
+	$renumbering_pairs = array();
+	foreach ($renumbering AS $claim => $num) {
+		$renumbering_pairs[] = "$claim,$num";
 	}
+
+	$data = $work_qid . ':' . implode('|', $renumbering_pairs) . ':' . implode('|', $remove_claims);
+	$add_command->bind_param('is', $seq, $data);
+	$add_command->execute();
+	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	if (! $batch->queued) {
+		$batch->add_to_queue($db_conn);
+	}
+
+	$db_conn->close();
+	if (! $batch->is_running()) {
+		print("Starting batch!\n");
+		$batch->start($oauth);
+	}
+	sleep(1); # Should handle this better somehow - reload while waiting on batch?
 }
 
 if ( $action == 'match' ) {
@@ -128,6 +162,21 @@ if ( $action == 'match' ) {
 	}
 	print_footer() ;
 	exit ( 0 ) ;
+}
+
+if ($batch_id != '') {
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	$display_counts = array();
+	foreach ($batch->counts AS $status => $count) {
+		$display_counts[] = "$status($count)";
+	}
+
+	print "<div>Current batch for edits: <a href='batches_oauth.php?id=$batch_id'>$batch_id</a> - ";
+	print implode($display_counts, ", ") . "</div>";
+	$db_conn->close();
 }
 
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
@@ -266,6 +315,7 @@ if ($renumber) {
     print "<input type='hidden' name='action' value='merge' />";
 }
 print "<input type='hidden' name='id' value='$work_qid' />" ;
+print "<input type='hidden' name='batch_id' value='$batch_id' />" ;
 
 ?>
 

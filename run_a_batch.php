@@ -36,27 +36,33 @@ if ($oauth->isAuthOK()) {
 $eg_string = edit_groups_string($batch_id) ;
 
 $wil = new WikidataItemList ;
-
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 $dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
 $db_conn->query($dbquery);
 
-$cmd_query = "SELECT ordinal, action, data FROM commands WHERE batch_id = '$batch_id' AND (status = 'READY' OR status = 'RUNNING') ORDER BY ordinal";
-$results = $db_conn->query($cmd_query);
+$edit_claims = new EditClaims($oauth);
 
-$actions_to_run = array();
-while ($row = $results->fetch_row()) {
+while (1) {
+
+    $cmd_query = "SELECT ordinal, action, data FROM commands WHERE batch_id = '$batch_id' AND (status = 'READY' OR status = 'RUNNING') ORDER BY ordinal";
+    $results = $db_conn->query($cmd_query);
+
+    $actions_to_run = array();
+    while ($row = $results->fetch_row()) {
 	$action_data = array();
 	$action_data['ordinal'] = $row[0];
 	$action_data['action'] = $row[1];
 	$action_data['data'] = $row[2];
 	$actions_to_run[] = $action_data;
-}
-$results->close();
+    }
+    $results->close();
 
-$edit_claims = new EditClaims($oauth);
-foreach ($actions_to_run AS $action_data) {
+    if (count($actions_to_run) == 0) {
+	break;
+    }
+
+    foreach ($actions_to_run AS $action_data) {
 	$ordinal = $action_data['ordinal'];
 	$action = $action_data['action'];
 	$data = $action_data['data'];
@@ -145,6 +151,54 @@ foreach ($actions_to_run AS $action_data) {
 		} else {
 			$error = 'Bad data';
 		}
+	} else if ($action == 'merge_authors') {
+		if (preg_match('/^(Q\d+):(.*):(.*)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			$author_numbers = explode('|', $cmd_parts[2]);
+			if ($author_numbers[0] == NULL) {
+				$author_numbers = array();
+			}
+			$remove_claims = explode('|', $cmd_parts[3]);
+			if ($remove_claims[0] == NULL) {
+				$remove_claims = array();
+			}
+
+			print ("$batch_id/$pid - Merging author entries for $work_qid : author numbers " . implode(',', $author_numbers) . "; removing claims " . implode(',', $remove_claims) . "\n");
+
+			$result = $edit_claims->merge_authors( $work_qid, $author_numbers, $remove_claims, "Author Disambiguator merge authors for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
+	} else if ($action == 'renumber_authors') {
+		if (preg_match('/^(Q\d+):(.*):(.*)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			$renumbering_pairs = explode('|', $cmd_parts[2]);
+			if ($renumbering_pairs[0] == NULL) {
+				$renumbering_pairs = array();
+			}
+			$remove_claims = explode('|', $cmd_parts[3]);
+			if ($remove_claims[0] == NULL) {
+				$remove_claims = array();
+			}
+			$claims = array();
+			$new_nums = array();
+			foreach ($renumbering_pairs AS $pair) {
+				$parts = explode(',', $pair);
+				$claims[] = $parts[0];
+				$new_nums[] = $parts[1];
+			}
+			$renumbering = array_combine($claims, $new_nums);
+
+			$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
 	}
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
@@ -152,6 +206,7 @@ foreach ($actions_to_run AS $action_data) {
 		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	}
 	$db_conn->query($finished_cmd);
+    }
 }
 $db_conn->close();
 
