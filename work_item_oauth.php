@@ -379,7 +379,7 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 							if ( !isset($emp_item) ) continue ;
 							$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
 						}
-						$row_data[] = implode("|", $employers) ;
+						$row_data[] = implode(" | ", $employers) ;
 					} else {
 						$row_data[] = '';
 						$row_data[] = '';
