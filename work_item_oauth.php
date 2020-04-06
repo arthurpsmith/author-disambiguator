@@ -112,7 +112,6 @@ if ($action == 'renumber') {
 	}
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'renumber_authors', ?, 'READY', NULL, NULL)");
 
-	$edit_claims = new EditClaims($oauth);
 	$renumbering = get_request ( 'ordinals' , array() ) ;
 	$remove_claims = get_request ( 'remove_claims' , array() ) ;
 
@@ -141,27 +140,42 @@ if ($action == 'renumber') {
 }
 
 if ( $action == 'match' ) {
-	$edit_claims = new EditClaims($oauth);
+	$dbtools = new DatabaseTools($db_passwd_file);
+	$db_conn = $dbtools->openToolDB('authors');
+
+	if ($batch_id == '') {
+		$batch_id = Batch::generate_batch_id() ;
+		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
+		$db_conn->query($dbquery);
+	}
+	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
+	$results = $db_conn->query($seq_query);
+	$row = $results->fetch_row();
+	$seq = 1;
+	if ($row != NULL) {
+		$seq = $row[0] + 1;
+	}
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'match_authors', ?, 'READY', NULL, NULL)");
+
 	$matches = get_request ( 'match_author' , array() ) ;
 
-	$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for [[$work_qid]] $eg_string" ) ;
-	if ($result) {
-		print "Matching successful!";
-	} else {
-		print "Something went wrong? ";
-		print_r($edit_claims->error);
-		print("\n<div>Failed trying to set " . count($matches) . " author values for $work_qid</div>\n");
-		print "<form method='post' class='form'>" ;
-		print "<input type='hidden' name='action' value='match' />";
-		print "<input type='hidden' name='id' value='$work_qid' />" ;
-		foreach ($matches AS $match) {
-    			print "<input type='hidden' name='match_author[$match]' value='$match' />";
-		}
-		print "<div style='margin:20px'><input type='submit' name='match' value='Try again' class='btn btn-primary' /> </div>";
-		print "</form>" ;
+	$data = $work_qid . ':' . implode('|', $matches);
+	$add_command->bind_param('is', $seq, $data);
+	$add_command->execute();
+	$add_command->close();
+
+	$batch = new Batch($batch_id);
+	$batch->load($db_conn);
+	if (! $batch->queued) {
+		$batch->add_to_queue($db_conn);
 	}
-	print_footer() ;
-	exit ( 0 ) ;
+
+	$db_conn->close();
+	if (! $batch->is_running()) {
+		print("Starting batch!\n");
+		$batch->start($oauth);
+	}
+	exit(0);
 }
 
 if ($batch_id != '') {

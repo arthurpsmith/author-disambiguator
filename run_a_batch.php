@@ -192,7 +192,23 @@ while (1) {
 			}
 			$renumbering = array_combine($claims, $new_nums);
 
+			print ("$batch_id/$pid - Renumbering authors for $work_qid\n");
 			$result = $edit_claims->renumber_authors( $work_qid, $renumbering, $remove_claims, "Author Disambiguator renumber authors for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
+	} else if ($action == 'match_authors') {
+		if (preg_match('/^(Q\d+):(.*)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			$matches = explode('|', $cmd_parts[2]);
+			if ($matches[0] == NULL) {
+				$matches = array();
+			}
+			$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for [[$work_qid]] $eg_string" ) ;
+			print ("$batch_id/$pid - Matching authors for $work_qid\n");
 			if (! $result) {
 				$error = $edit_claims->error;
 			}
