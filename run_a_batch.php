@@ -207,8 +207,8 @@ while (1) {
 			if ($matches[0] == NULL) {
 				$matches = array();
 			}
-			$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for [[$work_qid]] $eg_string" ) ;
 			print ("$batch_id/$pid - Matching authors for $work_qid\n");
+			$result = $edit_claims->match_authors( $work_qid, $matches, "Author Disambiguator matching authors for [[$work_qid]] $eg_string" ) ;
 			if (! $result) {
 				$error = $edit_claims->error;
 			}
@@ -219,8 +219,10 @@ while (1) {
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	if ($error != NULL) {
-		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
+		$error_str = $db_conn->real_escape_string($error);
+		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error_str' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	}
+	print("finishing command: $finished_cmd\n");
 	$db_conn->query($finished_cmd);
     }
 }
