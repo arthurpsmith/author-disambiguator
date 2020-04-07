@@ -22,6 +22,15 @@ if ($action == 'authorize') {
 	exit(0);
 }
 
+if ($action) { # reset checkboxes after action
+	$renumber = 0;
+	$match = 0;
+	$use_stated_as = 0;
+	$renumber_checked = '';
+	$match_checked = '';
+	$use_stated_as_checked = '';
+}
+
 print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
@@ -32,43 +41,29 @@ if ($oauth->isAuthOK()) {
 	print_footer() ;
 	exit ( 0 ) ;
 }
-print "<hr>";
-
-print "<form method='get' class='form form-inline'>
-Work Wikidata ID: 
-<input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
-<input type='hidden' name='batch_id' value='$batch_id'>
-<label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
-<label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
-<label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>
-<input type='submit' class='btn btn-primary' name='doit' value='Get author links for work' />
-</form>" ;
-
-if ( $work_qid == '' ) {
-	print_footer() ;
-	exit ( 0 ) ;
-}
 
 $wil = new WikidataItemList ;
 
-$eg_string = edit_groups_string() ;
-if ( $action == 'merge' ) {
-	$dbtools = new DatabaseTools($db_passwd_file);
-	$db_conn = $dbtools->openToolDB('authors');
+$batch_actions = ['merge', 'renumber', 'match'];
 
-	if ($batch_id == '') {
+if ($action != '' && in_array($action, $batch_actions)) {
+    $dbtools = new DatabaseTools($db_passwd_file);
+    $db_conn = $dbtools->openToolDB('authors');
+
+    if ($batch_id == '') {
 		$batch_id = Batch::generate_batch_id() ;
 		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
 		$db_conn->query($dbquery);
-	}
-	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
-	$results = $db_conn->query($seq_query);
-	$row = $results->fetch_row();
-	$seq = 1;
-	if ($row != NULL) {
+    }
+    $seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
+    $results = $db_conn->query($seq_query);
+    $row = $results->fetch_row();
+    $seq = 1;
+    if ($row != NULL) {
 		$seq = $row[0] + 1;
-	}
+    }
 
+    if ( $action == 'merge' ) {
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'merge_authors', ?, 'READY', NULL, NULL)");
 
 	$author_numbers = get_request ( 'merges' , array() ) ;
@@ -79,22 +74,9 @@ if ( $action == 'merge' ) {
 	$add_command->execute();
 	$add_command->close();
 
-	$batch = new Batch($batch_id);
-	$batch->load($db_conn);
-	if (! $batch->queued) {
-		$batch->add_to_queue($db_conn);
-	}
+    }
 
-	$db_conn->close();
-
-	if (! $batch->is_running()) {
-		print("Starting batch!\n");
-		$batch->start($oauth);
-	}
-	sleep(1); # Should handle this better somehow - reload while waiting on batch?
-}
-
-if ($action == 'renumber') {
+    if ($action == 'renumber') {
 	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
 
@@ -124,22 +106,9 @@ if ($action == 'renumber') {
 	$add_command->bind_param('is', $seq, $data);
 	$add_command->execute();
 	$add_command->close();
+    }
 
-	$batch = new Batch($batch_id);
-	$batch->load($db_conn);
-	if (! $batch->queued) {
-		$batch->add_to_queue($db_conn);
-	}
-
-	$db_conn->close();
-	if (! $batch->is_running()) {
-		print("Starting batch!\n");
-		$batch->start($oauth);
-	}
-	sleep(1); # Should handle this better somehow - reload while waiting on batch?
-}
-
-if ( $action == 'match' ) {
+    if ( $action == 'match' ) {
 	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
 
@@ -163,19 +132,36 @@ if ( $action == 'match' ) {
 	$add_command->bind_param('is', $seq, $data);
 	$add_command->execute();
 	$add_command->close();
+    }
 
-	$batch = new Batch($batch_id);
-	$batch->load($db_conn);
-	if (! $batch->queued) {
-		$batch->add_to_queue($db_conn);
-	}
+    $batch = new Batch($batch_id);
+    $batch->load($db_conn);
+    if (! $batch->queued) {
+	$batch->add_to_queue($db_conn);
+    }
 
-	$db_conn->close();
-	if (! $batch->is_running()) {
-		print("Starting batch!\n");
-		$batch->start($oauth);
-	}
-	exit(0);
+    $db_conn->close();
+    if (! $batch->is_running()) {
+	print("Starting batch!\n");
+	$batch->start($oauth);
+    }
+}
+
+print "<hr>";
+
+print "<form method='get' class='form form-inline'>
+Work Wikidata ID: 
+<input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
+<input type='hidden' name='batch_id' value='$batch_id'>
+<label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
+<label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
+<label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>
+<input type='submit' class='btn btn-primary' name='doit' value='Get author links for work' />
+</form>" ;
+
+if ( $work_qid == '' ) {
+	print_footer() ;
+	exit ( 0 ) ;
 }
 
 if ($batch_id != '') {
@@ -190,7 +176,26 @@ if ($batch_id != '') {
 
 	print "<div>Current batch for edits: <a href='batches_oauth.php?id=$batch_id'>$batch_id</a> - ";
 	print implode($display_counts, ", ") . "</div>";
+
+	$batch_id_str = $db_conn->real_escape_string($batch_id);
+	$qid_str = $db_conn->real_escape_string($work_qid);
+	$cmd_query = "SELECT ordinal FROM commands WHERE batch_id = '$batch_id_str' AND (status = 'READY' OR status = 'RUNNING') AND data like '$qid_str:%'";
+	$results = $db_conn->query($cmd_query);
+	$row = $results->fetch_row();
+	$results->close();
 	$db_conn->close();
+
+	if ($row != NULL) {
+		print("... waiting on update for this work ...");
+		$reload_url = "?id=$work_qid&batch_id=$batch_id";
+		print('<script type="text/javascript">
+$(document).ready ( function () {
+	setTimeout(function() { window.location.replace("' . $reload_url . '") }, 10000);
+} ) ;
+</script>');
+		print_footer() ;
+		exit(0);
+	}
 }
 
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
