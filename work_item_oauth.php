@@ -50,6 +50,16 @@ if ($action != '' && in_array($action, $batch_actions)) {
     $dbtools = new DatabaseTools($db_passwd_file);
     $db_conn = $dbtools->openToolDB('authors');
 
+    if ($batch_id != '') {
+	$batch_id_str = $db_conn->real_escape_string($batch_id);
+	$dbquery = "SELECT COUNT(*) from batches WHERE batch_id = '$batch_id_str'";
+	$results = $db_conn->query($dbquery);
+	$row = $results->fetch_row();
+	if ($row[0] <= 0) { # No db entry for this batch id, create a new one
+		$batch_id = '';
+	}
+    }
+
     if ($batch_id == '') {
 		$batch_id = Batch::generate_batch_id() ;
 		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
@@ -73,25 +83,9 @@ if ($action != '' && in_array($action, $batch_actions)) {
 	$add_command->bind_param('is', $seq, $data);
 	$add_command->execute();
 	$add_command->close();
-
     }
 
     if ($action == 'renumber') {
-	$dbtools = new DatabaseTools($db_passwd_file);
-	$db_conn = $dbtools->openToolDB('authors');
-
-	if ($batch_id == '') {
-		$batch_id = Batch::generate_batch_id() ;
-		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
-		$db_conn->query($dbquery);
-	}
-	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
-	$results = $db_conn->query($seq_query);
-	$row = $results->fetch_row();
-	$seq = 1;
-	if ($row != NULL) {
-		$seq = $row[0] + 1;
-	}
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'renumber_authors', ?, 'READY', NULL, NULL)");
 
 	$renumbering = get_request ( 'ordinals' , array() ) ;
@@ -109,21 +103,6 @@ if ($action != '' && in_array($action, $batch_actions)) {
     }
 
     if ( $action == 'match' ) {
-	$dbtools = new DatabaseTools($db_passwd_file);
-	$db_conn = $dbtools->openToolDB('authors');
-
-	if ($batch_id == '') {
-		$batch_id = Batch::generate_batch_id() ;
-		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
-		$db_conn->query($dbquery);
-	}
-	$seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
-	$results = $db_conn->query($seq_query);
-	$row = $results->fetch_row();
-	$seq = 1;
-	if ($row != NULL) {
-		$seq = $row[0] + 1;
-	}
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'match_authors', ?, 'READY', NULL, NULL)");
 
 	$matches = get_request ( 'match_author' , array() ) ;
@@ -149,9 +128,23 @@ if ($action != '' && in_array($action, $batch_actions)) {
 
 print "<hr>";
 
+$reload_url = "?id=$work_qid&batch_id=$batch_id";
+
+print('<script type="text/javascript">
+var timeout;
+
+function reloadPageWithTimeout () {
+	timeout = setTimeout(function() { window.location.replace("' . $reload_url . '") }, 10000);
+}
+
+function stopReloads () {
+    clearTimeout(timeout);
+}
+</script>');
+
 print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
-<input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' />
+<input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' oninput='stopReloads()' />
 <input type='hidden' name='batch_id' value='$batch_id'>
 <label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
 <label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
@@ -187,11 +180,8 @@ if ($batch_id != '') {
 
 	if ($row != NULL) {
 		print("... waiting on update for this work ...");
-		$reload_url = "?id=$work_qid&batch_id=$batch_id";
 		print('<script type="text/javascript">
-$(document).ready ( function () {
-	setTimeout(function() { window.location.replace("' . $reload_url . '") }, 10000);
-} ) ;
+$(document).ready (reloadPageWithTimeout());
 </script>');
 		print_footer() ;
 		exit(0);
