@@ -222,7 +222,6 @@ while (1) {
 		$error_str = $db_conn->real_escape_string($error);
 		$finished_cmd = "UPDATE commands SET status = 'ERROR', message = '$error_str' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
 	}
-	print("finishing command: $finished_cmd\n");
 	$db_conn->query($finished_cmd);
     }
 }
