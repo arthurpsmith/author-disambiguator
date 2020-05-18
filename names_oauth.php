@@ -174,6 +174,8 @@ $items_papers = getSPARQLitems ( $sparql ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
+#print "<pre>" ; print_r ( $items_papers) ; print "</pre>" ;
+
 // Potential authors
 $author_filter = $filter_authors ? "?article wdt:P50 ?q $filter_in_context" : '' ;
 $items_authors = array() ;
@@ -224,6 +226,8 @@ foreach ( $article_items AS $article ) {
 }
 $to_load = array_unique( $to_load );
 $wil->loadItems ( $to_load ) ;
+
+#print "<pre>" ; print_r ( $article_items) ; print "</pre>" ;
 
 $clusters = cluster_articles ( $article_items, $names, $precise) ;
 

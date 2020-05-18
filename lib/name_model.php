@@ -18,21 +18,21 @@ class NameModel {
 		$this->name_provided = $name ;
 		$utf8_name = mb_convert_encoding($name, 'UTF-8', 'UTF-8'); 
 		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $utf8_name);
-		if (($ascii_name) && ($ascii_name != $name)) {
+		if (($ascii_name) && ($ascii_name != $name) && (mb_strlen($ascii_name) > 2)) {
 			$this->ascii_nm = new NameModel($ascii_name);
 		}
-		if (strpos($name, '-') !== false) {
-			$nodash_name = str_replace('-', ' ', $name);
+		if (mb_strpos($name, '-') !== false) {
+			$nodash_name = mb_ereg_replace('-', ' ', $name);
 			$this->nodash_nm = new NameModel($nodash_name);
 		}
 // Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' but not if there's a '-' character after
-		$name_parts = preg_split('/((?<=\.)\s*|\s+)(?!-)/', $name);
+		$name_parts = mb_split('((?<=\.)\s*|\s+)(?!-)', $name);
 		$name_prefixes = array();
 		$first_name = '';
 // Pull out prefix(es) and first name:
 		while ( count($name_parts) > 0 ) {
 			$part = array_shift($name_parts) ;
-			if ( preg_match(NameModel::PREFIX_PATTERN, $part) ) {
+			if ( mb_ereg_match(NameModel::PREFIX_PATTERN, $part) ) {
 				$name_prefixes[] = $part ;
 			} else {
 				array_unshift($name_parts, $part);
@@ -45,13 +45,13 @@ class NameModel {
 		while ( count($name_parts) > 0 ) {
 			$part = array_pop($name_parts) ;
 			if ($part == '') continue;
-			if ( preg_match(NameModel::SUFFIX_PATTERN, $part) ) {
+			if ( mb_ereg_match(NameModel::SUFFIX_PATTERN, $part) ) {
 				array_unshift($name_suffixes, $part);
 				continue ;
 			} else if (count($surname_pieces) == 0) {
 				$surname_pieces[] = $part ;
 				continue;
-			} else if ( preg_match(NameModel::SURNAME_PART, $part) ) {
+			} else if ( mb_ereg_match(NameModel::SURNAME_PART, $part) ) {
 				array_unshift($surname_pieces, $part);
 				continue;
 			} else {
@@ -82,7 +82,7 @@ class NameModel {
 	public function name_with_middle_initials() {
 		$first_name = $this->first_name;
 		if (NameModel::is_initial($first_name)) {
-			$first_name = $first_name[0] . '.';
+			$first_name = NameModel::to_initial($first_name);
 		}
 		$middle_initials = array_map('NameModel::to_initial', $this->middle_names);
 		$name_parts = array_merge([$first_name],
@@ -93,9 +93,9 @@ class NameModel {
 	public function name_with_middle_first_letters() {
 		$first_name = $this->first_name;
 		if (NameModel::is_initial($first_name)) {
-			$first_name = $first_name[0];
+			$first_name = NameModel::first_letter($first_name);
 		}
-		$middle_initials = array_map(function($value) { return $value[0]; }, $this->middle_names);
+		$middle_initials = array_map(function($value) { return NameModel::first_letter($value); }, $this->middle_names);
 		$name_parts = array_merge([$first_name],
 			$middle_initials, [$this->last_name]);
 		return implode(' ', $name_parts);
@@ -118,14 +118,14 @@ class NameModel {
 
 	public function first_initial_last_name() {
 		$name_parts = array();
-		$name_parts[] = $this->first_name[0] . '.';
+		$name_parts[] = NameModel::to_initial($this->first_name);
 		$name_parts[] = $this->last_name;
 		return implode(' ', $name_parts);
 	}
 
 	public function first_letter_last_name() {
 		$name_parts = array();
-		$name_parts[] = $this->first_name[0] ;
+		$name_parts[] = NameModel::first_letter($this->first_name);
 		$name_parts[] = $this->last_name;
 		return implode(' ', $name_parts);
 	}
@@ -139,7 +139,7 @@ class NameModel {
 			$tmp_names = array();
 			for ($j = 0; $j < $count; $j++) {
 				if ($j < $i ) {
-					$tmp_names[] = $name_parts[$j][0] . '.';
+					$tmp_names[] = NameModel::to_initial($name_parts[$j]);
 				} else {
 					$tmp_names[] = $name_parts[$j];
 				}
@@ -148,7 +148,7 @@ class NameModel {
 			$tmp_names = array();
 			for ($j = 0; $j < $count; $j++) {
 				if ($j < $i ) {
-					$tmp_names[] = $name_parts[$j][0];
+					$tmp_names[] = NameModel::first_letter($name_parts[$j]);
 				} else {
 					$tmp_names[] = $name_parts[$j];
 				}
@@ -161,9 +161,9 @@ class NameModel {
 	public function initials_no_dot() {
 		$name_parts = array();
 		$first = $this->first_name;
-		$name_parts[] = str_replace('.', '', $first);
+		$name_parts[] = mb_ereg_replace('\.', '', $first);
 		foreach ($this->middle_names AS $middle_name) {
-			$name_parts[] = str_replace('.', '', $middle_name);
+			$name_parts[] = mb_ereg_replace('\.', '', $middle_name);
 		}
 		$name_parts[] = $this->last_name;
 		return implode(' ', $name_parts);
@@ -172,12 +172,12 @@ class NameModel {
 	public function add_missing_dot() {
 		$name_parts = array();
 		$first = $this->first_name ;
-		if (strlen($first) == 1) {
+		if (mb_strlen($first) == 1) {
 			$first = $first . '.' ;
 		}
 		$name_parts[] = $first ;
 		foreach ($this->middle_names AS $middle_name) {
-			if (strlen($middle_name) == 1) {
+			if (mb_strlen($middle_name) == 1) {
 				$middle_name = $middle_name . '.' ;
 			}
 			$name_parts[] = $middle_name ;
@@ -204,34 +204,34 @@ class NameModel {
 		$num_given = count($name_parts);
 		if ($num_given > 1) {
 			$last_middle = $name_parts[$num_given-1];
-			$name_parts[$num_given-1] = $last_middle[0];
+			$name_parts[$num_given-1] = NameModel::first_letter($last_middle);
 		}
 		return implode('', $name_parts) . ' ' . $this->last_name;
 	}
 
 	public function squashed_forward_name() {
 		$name_parts = array();
-		$name_parts[] = $this->first_name[0] ;
+		$name_parts[] = NameModel::first_letter($this->first_name);
 		foreach ($this->middle_names AS $middle_name) {
-			$name_parts[] = $middle_name[0];
+			$name_parts[] = NameModel::first_letter($middle_name);
 		}
 		return implode('', $name_parts) . ' ' . $this->last_name;
 	}
 
 	public function squashed_reversed_name() {
 		$name_parts = array();
-		$name_parts[] = $this->first_name[0] ;
+		$name_parts[] = NameModel::first_letter($this->first_name);
 		foreach ($this->middle_names AS $middle_name) {
-			$name_parts[] = $middle_name[0];
+			$name_parts[] = NameModel::first_letter($middle_name);
 		}
 		return $this->last_name . ' ' . implode('', $name_parts);
 	}
 
 	public function squashed_reversed_hyphen_name() {
 		$name_parts = array();
-		$name_parts[] = $this->first_name[0] ;
+		$name_parts[] = NameModel::first_letter($this->first_name) ;
 		foreach ($this->middle_names AS $middle_name) {
-			$name_parts[] = $middle_name[0];
+			$name_parts[] = NameModel::first_letter($middle_name);
 		}
 		return $this->last_name . '-' . implode('', $name_parts);
 	}
@@ -288,8 +288,8 @@ class NameModel {
 		if (NameModel::is_initial($this->first_name)) {
 			foreach($this->middle_names AS $middle_name) {
 				$search_strings[$middle_name . ' ' . $this->last_name] = 1;
-				$search_strings[$middle_name[0] . '. ' . $this->last_name] = 1;
-				$search_strings[$middle_name[0] . ' ' . $this->last_name] = 1;
+				$search_strings[NameModel::to_initial($middle_name)  . ' ' . $this->last_name] = 1;
+				$search_strings[NameModel::first_letter($middle_name) . ' ' . $this->last_name] = 1;
 			}
 		}
 		$search_strings[$this->name_with_squashed_initials()] = 1;
@@ -302,7 +302,7 @@ class NameModel {
 		}
 		$lcstrings = array_keys($search_strings);
 		foreach ($lcstrings as $string) {
-			$search_strings[strtoupper($string)] = 1 ;
+			$search_strings[mb_strtoupper($string)] = 1 ;
 		}
 		return array_keys($search_strings);
 	}
@@ -310,20 +310,26 @@ class NameModel {
 	public function fuzzy_ignore_nonascii() {
 		$search_strings = array_fill_keys($this->fuzzy_search_strings(), 1);
 		foreach (array_keys($search_strings) as $string) {
-			$new_str = preg_replace('/[^A-Za-z]/', '', $string);
-			$search_strings[strtoupper($new_str)] = 1 ;
+			$new_str = mb_ereg_replace('/[^A-Za-z]/', '', $string);
+			if (mb_strlen($new_str) > 2) {
+				$search_strings[mb_strtoupper($new_str)] = 1 ;
+			}
 		}
 		return array_keys($search_strings);
 	}
 
 	public static function is_initial($name_part) {
-		if (strlen($name_part) > 3) return false ;
-		if ($name_part[strlen($name_part)-1] == '.') return true ; // Ends in .
-		return (strlen($name_part) < 2) ; // Single letter
+		if (mb_strlen($name_part) > 3) return false ;
+		if (mb_substr($name_part, mb_strlen($name_part)-1, 1) == '.') return true ; // Ends in .
+		return (mb_strlen($name_part) < 2) ; // Single letter
+	}
+
+	public static function first_letter($name_part) {
+		return mb_substr($name_part, 0, 1) ;
 	}
 
 	public static function to_initial($name_part) {
-		return $name_part[0] . '.' ;
+		return NameModel::first_letter($name_part) . '.' ;
 	}
 
 	public function all_initials() {
