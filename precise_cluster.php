@@ -2,12 +2,13 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
+$oauth_url = str_replace('precise_cluster.php', 'names_oauth.php', $_SERVER['REQUEST_URI']);
+
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, 10 ) ) {
 	$db_conn->close();
 
-	$oauth_url = str_replace('precise_cluster.php', 'names_oauth.php', $_SERVER['REQUEST_URI']);
 	if (strpos($oauth_url, '?') === false) {
 		$oauth_url .= '?precise=1';
 	} else {
@@ -43,7 +44,7 @@ $input_names = preg_split('/[\r\n]+/', $name_strings);
 
 print disambig_header( False );
 
-print "<div style='font-size:9pt'>(<a href='names_oauth.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&precise=1&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
+print "<div style='font-size:9pt'>(<a href='$oauth_url'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
 print "<hr>";
 
 // Publications
@@ -244,7 +245,7 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
-print "<div style='font-size:9pt'><a href='index.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here for rougher clustering.</a> </div> " ;
+print "<div style='font-size:9pt'><a href='index.php?name=" . urlencode($name) . "&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here for rougher clustering.</a> </div> " ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {

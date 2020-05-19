@@ -2,6 +2,8 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
+$oauth_url = preg_replace('/(\/index.php\??|\/$|\/\?)/', '/names_oauth.php?', $_SERVER['REQUEST_URI']);
+
 $request_delay = 10;
 $article_limit = get_request ( 'limit', '' ) ;
 if ($article_limit == '' ) $article_limit = 50 ;
@@ -13,8 +15,6 @@ $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
 if (limit_requests( $db_conn, $request_delay ) ) {
 	$db_conn->close();
-
-	$oauth_url = preg_replace('/(\/index.php\??|\/$|\/\?)/', '/names_oauth.php?', $_SERVER['REQUEST_URI']);
 
 	print disambig_header( False );
 	print "<h1>Too many requests</h1>";
@@ -42,7 +42,7 @@ $input_names = preg_split('/[\r\n]+/', $name_strings);
 
 print disambig_header( False );
 
-print "<div style='font-size:9pt'>(<a href='names_oauth.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
+print "<div style='font-size:9pt'>(<a href='$oauth_url'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
 print "<hr>";
 
 // Publications
@@ -223,7 +223,7 @@ print "<p>" . count($article_items) . " publications found</p>" ;
 if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
-print "<div style='font-size:9pt'><a href='precise_cluster.php?name=$name&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
+print "<div style='font-size:9pt'><a href='precise_cluster.php?name=" . urlencode($name) . "&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
 
 $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {

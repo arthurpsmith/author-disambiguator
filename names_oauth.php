@@ -254,9 +254,9 @@ if ( $limit_reached ) {
 	print "<div><b>Warning:</b> limit reached; process these papers and then reload to see if there are more for this author name string</div>" ;
 }
 if (! $precise ) {
-	print "<div style='font-size:9pt'><a href='?name=$name&precise=1&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
+	print "<div style='font-size:9pt'><a href='?name=" . urlencode($name) . "&precise=1&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here to create clusters based on exact author strings rather than rougher matches.</a> </div> " ;
 } else {
-	print "<div style='font-size:9pt'><a href='?name=$name&precise=0&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here for rougher clustering.</a> </div> " ;
+	print "<div style='font-size:9pt'><a href='?name=" . urlencode($name) . "&precise=0&fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&use_name_strings=$use_name_strings&name_strings=" . urlencode($name_strings) . "'> Click here for rougher clustering.</a> </div> " ;
 }
 
 $is_first_group = true ;
