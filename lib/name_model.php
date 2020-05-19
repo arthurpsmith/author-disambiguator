@@ -16,6 +16,8 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
+		$name = trim($name);
+		$name = rtrim($name, '.'); # mb_split below doesn't like trailing .
 		$utf8_name = mb_convert_encoding($name, 'UTF-8', 'UTF-8'); 
 		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $utf8_name);
 		if (($ascii_name) && ($ascii_name != $name) && (mb_strlen($ascii_name) > 2)) {
