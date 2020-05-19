@@ -27,6 +27,10 @@ class NameModel {
 		}
 // Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' but not if there's a '-' character after
 		$name_parts = mb_split('((?<=\.)\s*|\s+)(?!-)', $name);
+		if (! is_array($name_parts)) {
+			error_log("mb_split failed for '$name'");
+			$name_parts = [$name];
+		}
 		$name_prefixes = array();
 		$first_name = '';
 // Pull out prefix(es) and first name:
