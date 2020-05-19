@@ -4,7 +4,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
-if (limit_requests( $db_conn, 30 ) ) {
+if (limit_requests( $db_conn, 10 ) ) {
 	$db_conn->close();
 
 	$oauth_url = str_replace('precise_cluster.php', 'names_oauth.php', $_SERVER['REQUEST_URI']);
@@ -187,15 +187,16 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='wbsearch' value='$wbsearch' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
-$to_load = array() ;
 $article_items = generate_article_entries( $items_papers );
+
+# Just need labels for the following:
+$qids_to_label = array();
 foreach ( $article_items AS $article ) {
-	foreach ( $article->authors AS $auth) $to_load[] = $auth ;
-	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
-	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
+	foreach ( $article->authors AS $auth) $qids_to_label[$auth] = 1 ;
+	foreach ( $article->published_in AS $pub ) $qids_to_label[$pub] = 1 ;
+	foreach ( $article->topics AS $topic ) $qids_to_label[$topic] = 1 ;
 }
-$to_load = array_unique( $to_load );
-$wil->loadItems ( $to_load ) ;
+$qid_labels = AuthorData::labelsForItems(array_keys($qids_to_label));
 
 $clusters = array();
 foreach ($article_items as $article) {
@@ -284,9 +285,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			if (isset($formatted_authors[$num])) {
 				$display_num = "$num-$qt";
 			}
-			$i2 = $wil->getItem ( $qt ) ;
-			if ( !isset($i2) ) continue ;
-			$label = $i2->getLabel() ;
+			$label = $qid_labels[$qt];
 			$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
 		}
 		ksort($formatted_authors);
@@ -294,8 +293,8 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 
 		$published_in = array() ;
 		foreach ( $article->published_in AS $qt ) {
-			$i2 = $wil->getItem ( $qt ) ;
-			if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			$label = $qid_labels[$qt];
+			$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/$qt/missing' target='_blank'>missing</a>]" ;
 		}
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -317,9 +316,8 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		if ( count($article->topics) > 0 ) {
 			$topics = [] ;
 			foreach ( $article->topics AS $qt ) {
-				$i2 = $wil->getItem($qt) ;
-				if ( !isset($i2) ) continue ;
-				$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+				$label = $qid_labels[$qt];
+				$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/$qt/missing' target='_blank'>missing</a>]" ;
 			}
 			print implode ( '; ' , $topics ) ;
 		}

@@ -4,7 +4,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
-if (limit_requests( $db_conn, 30 ) ) {
+if (limit_requests( $db_conn, 10 ) ) {
 	$db_conn->close();
 
 	$oauth_url = str_replace('/author_item.php', '/author_item_oauth.php', $_SERVER['REQUEST_URI']);
@@ -86,14 +86,15 @@ $to_load[] = $author_qid ;
 $wil->loadItems ( $to_load ) ;
 
 $article_items = generate_article_entries( $items_papers );
-$to_load = array() ;
+
+# Just need labels for the following:
+$qids_to_label = array();
 foreach ( $article_items AS $article ) {
-	foreach ( $article->authors AS $auth ) $to_load[] = $auth ;
-	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
-	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
+	foreach ( $article->authors AS $auth) $qids_to_label[$auth] = 1 ;
+	foreach ( $article->published_in AS $pub ) $qids_to_label[$pub] = 1 ;
+	foreach ( $article->topics AS $topic ) $qids_to_label[$topic] = 1 ;
 }
-$to_load = array_unique( $to_load );
-$wil->loadItems ( $to_load ) ;
+$qid_labels = AuthorData::labelsForItems(array_keys($qids_to_label));
 
 usort( $article_items, 'WikidataArticleEntry::dateCompare' ) ;
 
@@ -152,8 +153,7 @@ foreach ( $article_items AS $article ) {
 
 	$highlighted_authors = array();
 	foreach ( $article->authors AS $num => $qt ) {
-		$i2 = $wil->getItem ( $qt ) ;
-		$label = $i2->getLabel() ;
+		$label = $qid_labels[$qt];
 		$display_num = $num ;
 		if (isset($formatted_authors[$num])) {
 			$display_num = "$num-$qt";
@@ -163,7 +163,7 @@ foreach ( $article_items AS $article ) {
 			$highlighted_authors[] = $display_num ;
 		} else {
 			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
-			$formatted_authors[$display_num] = "[$display_num]<a href='?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+			$formatted_authors[$display_num] = "[$display_num]<a href='?id=$qt' style='color:green'>$label</a>" ;
 		}
 	}
 	ksort($formatted_authors);
@@ -171,8 +171,8 @@ foreach ( $article_items AS $article ) {
 
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
-		$i2 = $wil->getItem ( $qt ) ;
-		if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+		$label = $qid_labels[$qt];
+		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/$qt/missing' target='_blank'>missing</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -193,9 +193,8 @@ foreach ( $article_items AS $article ) {
 	if ( count($article->topics) > 0 ) {
 		$topics = [] ;
 		foreach ( $article->topics AS $qt ) {
-			$i2 = $wil->getItem($qt) ;
-			if ( !isset($i2) ) continue ;
-			$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			$label = $qid_labels[$qt];
+			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/$qt/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
@@ -217,8 +216,7 @@ print "<h2>Common author items in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	$i2 = $wil->getItem($qt) ;
-	$label = $i2->getLabel() ;
+	$label = $qid_labels[$qt];
 	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
 }
 print "</ul>" ;

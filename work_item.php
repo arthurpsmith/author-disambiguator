@@ -4,7 +4,7 @@ require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
 $dbtools = new DatabaseTools($db_passwd_file);
 $db_conn = $dbtools->openToolDB('authors');
-if (limit_requests( $db_conn, 30 ) ) {
+if (limit_requests( $db_conn, 10 ) ) {
 	$db_conn->close();
 
 	$oauth_url = str_replace('/work_item.php', '/work_item_oauth.php', $_SERVER['REQUEST_URI']);
