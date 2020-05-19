@@ -205,11 +205,11 @@ class AuthorData {
 		return $author_data ;
 	}
 
-	// Utility to quickly get labels for a list of items
+	// Utility to quickly get labels for a list of items - list needs to have no duplicates!
 	public static function labelsForItems( $items ) {
 		$id_uris = array_map(function($id) { return "wd:$id"; }, $items);
 
-		$batch_size = 500 ;
+		$batch_size = 200 ;
 		$batches = [ [] ] ;
 		foreach ( $id_uris AS $k => $v ) {
 			if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
@@ -221,6 +221,14 @@ class AuthorData {
 			$new_labels = self::_labels_for_batch($batch);
 			$labels = array_merge($labels, $new_labels);
 		}
+# Normalize result:
+		foreach ($items as $qid) {
+			if ( isset($labels[$qid]) ) {
+				$labels[$qid] = $labels[$qid][0];
+			} else {
+				$labels[$qid] = $qid;
+			}
+		}
 		return $labels;
 	}
 
@@ -228,7 +236,7 @@ class AuthorData {
 		$id_uris = implode(' ', $uri_list);
 		$sparql = "SELECT ?q ?qLabel WHERE {
   VALUES ?q { $id_uris } .
-  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en,de,es,fr,nl'. }
 }" ;
 		$query_result = getSPARQL( $sparql ) ;
 		return self::_extract_string_map( $query_result , 'q', 'qLabel' ) ;
