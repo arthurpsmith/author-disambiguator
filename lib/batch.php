@@ -6,9 +6,13 @@ class Batch {
 	public $pid = NULL;
 	public $queued = 0;
 	public $counts = array();
+	public $owner;
 
 	public function __construct ( $batch_id, $params = array() ) {
 		$this->batch_id = $batch_id;
+		if (isset($params['owner'])) {
+			$this->owner= $params['owner'];
+		}
 		if (isset($params['date'])) {
 			$this->start_date = $params['date'];
 		}
@@ -25,13 +29,14 @@ class Batch {
 
 	public function load($db_conn) {
 		$batch_id = $db_conn->real_escape_string($this->batch_id);
-		$dbquery = "SELECT b.start, b.process_id, b.queued, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where b.batch_id = '$batch_id' group by b.start, b.process_id, b.queued, cmd.status order by start desc";
+		$dbquery = "SELECT b.owner, b.start, b.process_id, b.queued, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id where b.batch_id = '$batch_id' group by b.start, b.process_id, b.queued, cmd.status order by start desc";
 		if ($results = $db_conn->query($dbquery)) {
 		    while ($row = $results->fetch_row()) {
-			$this->start_date = $row[0];
-			$this->pid = $row[1];
-			$this->queued = $row[2];
-			$this->counts[$row[3]] = $row[4];
+			$this->owner = $row[0];
+			$this->start_date = $row[1];
+			$this->pid = $row[2];
+			$this->queued = $row[3];
+			$this->counts[$row[4]] = $row[5];
 		    }
 		    $results->close();
 		} else {
@@ -119,6 +124,41 @@ class Batch {
 			print("Database error: " . $db_conn->error);
 		}
 		return $batches_count;
+	}
+
+	public static function all_batches($db_conn, $limit = 50, $page = 1) {
+		$offset = ($page - 1) * $limit;
+
+		$dbquery = "SELECT b.batch_id, b.owner, b.start, b.process_id, b.queued, cmd.status, count(*) from batches b left join commands cmd on cmd.batch_id = b.batch_id group by b.batch_id, b.start, b.process_id, b.queued, cmd.status order by start desc LIMIT $offset,$limit";
+		$batch_data_list = array();
+		$counts = array();
+		if ($results = $db_conn->query($dbquery)) {
+		    while ($row = $results->fetch_row()) {
+			$batch_id = $row[0];
+			if (! isset($counts[$batch_id]) ) {
+				$counts[$batch_id] = array();
+				$batch_data = array();
+				$batch_data['id'] = $batch_id;
+				$batch_data['owner'] = $row[1];
+				$batch_data['date'] = $row[2];
+				$batch_data['pid'] = $row[3];
+				$batch_data['queued'] = $row[4];
+				$batch_data_list[] = $batch_data;
+			}
+			$status = $row[5];
+			$counts[$batch_id][$status] = $row[6];
+		    }
+		    $results->close();
+		} else {
+		    print("Database error: " . $db_conn->error);
+		}
+		$batch_list = array();
+		foreach ($batch_data_list AS $batch_data) {
+			$batch_id = $batch_data['id'];
+			$batch_data['counts'] = $counts[$batch_id];
+			$batch_list[] = new Batch($batch_id, $batch_data);
+		}
+		return $batch_list;
 	}
 
 	public static function batches_for_owner($db_conn, $owner, $limit = 50, $page = 1) {
