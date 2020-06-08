@@ -222,7 +222,7 @@ print "<h2>" . $work_item->getLabel() . "</h2>" ;
 print "<div>" ;
 print wikidata_link($work_qid, "Wikidata Item", '') ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/scholia/work/$work_qid'>Scholia Work Page</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/work/$work_qid/missing' target='_blank'>missing</a>]";
+print "<a target='_blank' href='https://scholia.toolforge.org/work/$work_qid'>Scholia Work Page</a>&nbsp;[<a href='https://scholia.toolforge.org/work/$work_qid/missing' target='_blank'>missing</a>]";
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$work_qid'>Reasonator</a>" ;
 print ' | ' ;
@@ -240,7 +240,7 @@ print '</div><div>' ;
 $published_in = array() ;
 foreach ( $article_entry->published_in AS $qt ) {
 	$i2 = $wil->getItem ( $qt ) ;
-	if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+	if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 }
 $published_in_list = implode ( ', ', $published_in ) ;
 print "Journal(s): $published_in_list" ;
@@ -251,7 +251,7 @@ if ( count($article_entry->topics) > 0 ) {
 	foreach ( $article_entry->topics AS $qt ) {
 		$i2 = $wil->getItem($qt) ;
 		if ( !isset($i2) ) continue ;
-		$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+		$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 	}
 	print implode ( '; ' , $topics ) ;
 }
@@ -353,7 +353,7 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 			continue;
 		}
 		$label = $i2->getLabel() ;
-		$formatted_authors[$num][$id] = "<a href='author_item_oauth.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>&nbsp;[<a href='https://tools.wmflabs.org/scholia/author/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+		$formatted_authors[$num][$id] = "<a href='author_item_oauth.php?limit=50&id=" . $i2->getQ() . "' style='color:green'>$label</a>&nbsp;[<a href='https://scholia.toolforge.org/author/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
 		if (isset($repeated_ids[$qt])) {
 			$rpt_nums = $repeated_ids[$qt];
 			$formatted_authors[$num][$id] .= " also ";

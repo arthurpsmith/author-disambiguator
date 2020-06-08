@@ -108,8 +108,8 @@ print "<h2>" . $author_item->getLabel() . "</h2>" ;
 print "<div>" ;
 print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid'>Scholia Profile</a>" ;
-print " [<a target='_blank' href='https://tools.wmflabs.org/scholia/author/$author_qid/missing'>missing</a>]" ;
+print "<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid'>Scholia Profile</a>" ;
+print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/missing'>missing</a>]" ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
 print ' | ' ;
@@ -172,7 +172,7 @@ foreach ( $article_items AS $article ) {
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
 		$label = $qid_labels[$qt];
-		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/$qt/missing' target='_blank'>missing</a>]" ;
+		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/missing' target='_blank'>missing</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -194,7 +194,7 @@ foreach ( $article_items AS $article ) {
 		$topics = [] ;
 		foreach ( $article->topics AS $qt ) {
 			$label = $qid_labels[$qt];
-			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/$qt/missing' target='_blank'>missing</a>]" ;
+			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
@@ -217,7 +217,7 @@ print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
 	if ( $cnt == 1 ) break ;
 	$label = $qid_labels[$qt];
-	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://tools.wmflabs.org/scholia/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
+	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qid+$qt'>Unmatched with both names</a> - <a href='https://scholia.toolforge.org/authors/$author_qid,$qt'>Scholia comparison</a></li>" ;
 }
 print "</ul>" ;
 
