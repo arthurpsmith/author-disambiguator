@@ -9,6 +9,7 @@ $oauth->interactive = true;
 $batch_id = get_request ( 'batch_id' , '' ) ;
 $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
+$author_list_id = get_request ( 'author_list_id' , '' );
 $renumber = get_request ( 'renumber' , 0 ) ;
 $match  = get_request ( 'match' , 0 ) ;
 $use_stated_as = get_request ( 'use_stated_as', 0 );
@@ -43,11 +44,11 @@ if ($oauth->isAuthOK()) {
 }
 
 $wil = new WikidataItemList ;
+$dbtools = new DatabaseTools($db_passwd_file);
 
 $batch_actions = ['merge', 'renumber', 'match'];
 
 if ($action != '' && in_array($action, $batch_actions)) {
-    $dbtools = new DatabaseTools($db_passwd_file);
     $db_conn = $dbtools->openToolDB('authors');
 
     if ($batch_id != '') {
@@ -128,7 +129,7 @@ if ($action != '' && in_array($action, $batch_actions)) {
 
 print "<hr>";
 
-$reload_url = "?id=$work_qid&batch_id=$batch_id";
+$reload_url = "?id=$work_qid&batch_id=$batch_id&author_list_id=$author_list_id";
 
 print('<script type="text/javascript">
 var timeout;
@@ -146,6 +147,7 @@ print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' oninput='stopReloads()' />
 <input type='hidden' name='batch_id' value='$batch_id'>
+<input type='hidden' name='author_list_id' value='$author_list_id'>
 <label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
 <label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
 <label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>
@@ -157,9 +159,9 @@ if ( $work_qid == '' ) {
 	exit ( 0 ) ;
 }
 
+$db_conn = $dbtools->openToolDB('authors');
+
 if ($batch_id != '') {
-	$dbtools = new DatabaseTools($db_passwd_file);
-	$db_conn = $dbtools->openToolDB('authors');
 	$batch = new Batch($batch_id);
 	$batch->load($db_conn);
 	$display_counts = array();
@@ -176,7 +178,6 @@ if ($batch_id != '') {
 	$results = $db_conn->query($cmd_query);
 	$row = $results->fetch_row();
 	$results->close();
-	$db_conn->close();
 
 	if ($row != NULL) {
 		print("... waiting on update for this work ...");
@@ -188,7 +189,43 @@ $(document).ready (reloadPageWithTimeout());
 	}
 }
 
+$auth_list_for_match = NULL;
+if ($author_list_id !== '') {
+	$auth_list_for_match = new AuthorList($author_list_id);
+	$auth_list_for_match->load($db_conn);
+	print "<div>Current author list for matching: <a href='author_lists.php?list_id=$author_list_id'>$author_list_id</a> - ";
+	print $auth_list_for_match->label;
+	if ($action === '') {
+		print "<form method='get' class='form form-inline'>";
+		print "<input type='hidden' name='action' value='update_author_list' />";
+		print "<input type='hidden' name='id' value='$work_qid' />" ;
+		print "<input type='hidden' name='batch_id' value='$batch_id' />" ;
+		print "<input type='hidden' name='author_list_id' value='$author_list_id' />" ;
+		print "<input type='submit' name='update_author_list' value='Update with known authors from this work' class='btn btn-primary btn-sm' />";
+		print "</form>\n";
+	}
+	print "</div>";
+}
+
+$db_conn->close();
+
 $article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
+
+if ($action === 'update_author_list') {
+	$author_qid_map = array();
+	foreach ($auth_list_for_match->author_qids AS $qid) {
+		$author_qid_map[$qid] = 1;
+	}
+	foreach ( $article_entry->authors AS $auth_list ) {
+		foreach ( $auth_list AS $qid ) {
+			$author_qid_map[$qid] = 1;
+		}
+	}
+	$auth_list_for_match->author_qids = array_keys($author_qid_map);
+	$db_conn = $dbtools->openToolDB('authors');
+	$auth_list_for_match->save($db_conn);
+	$db_conn->close();
+}
 
 // Load items
 $to_load = array() ;
@@ -280,7 +317,14 @@ foreach ( $article_entry->authors as $author_qid_list ) {
 }
 $author_qids = array_keys($author_qid_map);
 if ($match) {
-	$related_authors = fetch_related_authors($work_qid, $author_qids);
+	$related_authors = NULL;
+	if ($author_list_id != '') {
+		$related_authors = $auth_list_for_match->author_qids;
+
+	} else {
+		$related_authors = fetch_related_authors($work_qid, $author_qids);
+	}
+	$related_authors = array_diff($related_authors, $author_qids); # Only fetch stated-as etc. for new qids
 	$wil->loadItems ( $related_authors ) ;
 	$stated_as_names = array();
 	if ($use_stated_as) {
@@ -325,6 +369,7 @@ if ($renumber) {
 }
 print "<input type='hidden' name='id' value='$work_qid' />" ;
 print "<input type='hidden' name='batch_id' value='$batch_id' />" ;
+print "<input type='hidden' name='author_list_id' value='$author_list_id' />" ;
 
 ?>
 

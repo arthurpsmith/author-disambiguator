@@ -30,3 +30,12 @@ create table commands(
 );
 
 create table rate_limit_table(last_time BIGINT);
+
+create table author_lists (
+  list_id MEDIUMINT NOT NULL AUTO_INCREMENT,
+  owner VARCHAR(200) NOT NULL,
+  label VARCHAR(200),
+  updated TIMESTAMP NOT NULL,
+  authors MEDIUMTEXT,
+  PRIMARY KEY(list_id)
+);

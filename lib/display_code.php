@@ -91,4 +91,34 @@ function disambig_header ($use_oauth_menu) {
 	return $s ;
 }
 
+function author_data_rows($author_qids, $wil) {
+	$wil->loadItems ( $author_qids ) ;
+	$auth_data = AuthorData::authorDataFromItems( $author_qids, $wil, false, false ) ;
+	$to_load = array();
+	foreach ($auth_data AS $author_data) {
+		foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
+	}
+	$to_load = array_unique($to_load);
+	$wil->loadItems ( $to_load ) ;
+
+	$author_rows = array();
+	foreach ($auth_data as $author_data) {
+		$qid = $author_data->qid;
+		$label = $author_data->label;
+		$row_data = array();
+		$row_data['name'] = "<a href='author_item_oauth.php?id=$qid' target='_blank' style='color:green'>$label</a>" ;
+		$row_data['desc'] = $author_data->desc;
+		$row_data['count'] = $author_data->article_count ;
+		$employers = array();
+		foreach ( $author_data->employer_qids AS $emp_qid ) {
+			$emp_item = $wil->getItem ( $emp_qid ) ;
+			if ( !isset($emp_item) ) continue ;
+			$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+		}
+		$row_data['employers'] = implode(" | ", $employers) ;
+		$author_rows[$qid] = $row_data;
+	}
+	return $author_rows;
+}
+
 ?>

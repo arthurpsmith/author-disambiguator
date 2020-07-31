@@ -2,6 +2,8 @@
 
 class AuthorData {
 	public $qid ;
+	public $label ;
+	public $desc ;
 	public $complete = false;
 	public $article_count = 0;
 	public $coauthors = array() ;
@@ -17,6 +19,8 @@ class AuthorData {
 
 	public function __construct ( $author_item ) {
 		$this->qid = $author_item->getQ() ;
+		$this->label = $author_item->getLabel() ;
+		$this->desc = $author_item->getDesc() ;
 		$x = $author_item->getStrings ( 'P496' ) ;
 		if ( count($x) > 0 ) {
 			$this->orcid = $x[0] ;
@@ -160,7 +164,28 @@ class AuthorData {
 		return self::_extract_item_map( $topics, 'q', 'topic' ) ;
 	}
 
-	public static function authorDataFromItems( $author_items, $wil, $complete) {
+	public static function authorDataFromItems( $author_items, $wil, $complete, $resorted = true) {
+		$batch_size = 200 ;
+		$batches = [ [] ] ;
+		foreach ( $author_items AS $k => $v ) {
+			if ( count($batches[count($batches)-1]) >= $batch_size ) $batches[] = [] ;
+			$batches[count($batches)-1][$k] = $v ;
+		}
+
+		$author_data = array();
+		foreach ( $batches as $batch ) {
+			$new_data = self::_auth_data_for_batch($batch, $wil, $complete);
+			$author_data = array_merge($author_data, $new_data);
+		}
+		if ($resorted) {
+			uasort ( $author_data, function ($a, $b) {
+				return $b->article_count - $a->article_count ;
+			} );
+		}
+		return $author_data;
+	}
+
+	private static function _auth_data_for_batch ( $author_items, $wil, $complete) {
 		$author_data = array() ;
 		$direct_author_items = array();
 		foreach ($author_items AS $qid) {
@@ -198,10 +223,6 @@ class AuthorData {
 		foreach ( $topics AS $qid => $topic_qids ) {
 			$author_data[$qid]->add_topics($topic_qids) ;
 		}
-		uasort ( $author_data, function ($a, $b) {
-				return $b->article_count - $a->article_count ;
-			}
-		);
 		return $author_data ;
 	}
 
