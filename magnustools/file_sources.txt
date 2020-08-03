@@ -1,4 +1,4 @@
-Various php files obtained from wmflabs:
+Various php files obtained from Toolforge:
 
 scp login.toolforge.org:/data/project/magnustools/public_html/php/common.php .
 scp login.toolforge.org:/data/project/magnustools/public_html/php/oauth.php .
