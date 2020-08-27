@@ -62,8 +62,40 @@ if ($action == 'update') {
 	$auth_list->load($db_conn);
 	if ($auth_list->owner === $owner) {
 		$auth_list->label = get_request ( 'label', 'Unlabeled');
-		$author_qids = get_request ( 'author_qids', '');
-		$auth_list->author_qids = preg_split('/[\r\n]+/', $author_qids);
+		$author_qids = preg_split('/[\r\n]+/', get_request ( 'author_qids', ''));
+		$article_qids = preg_split('/[\r\n]+/', get_request ( 'article_qids', ''));
+		$articles = generate_article_entries2( $article_qids );
+		$author_qid_map = array();
+		foreach ($auth_list->author_qids AS $qid) {
+			if (substr($qid, 0, 1) === 'Q') {
+				$author_qid_map[$qid] = 1;
+			}
+		}
+		foreach ( $author_qids AS $qid ) {
+			if (substr($qid, 0, 1) === 'Q') {
+				$author_qid_map[$qid] = 1;
+			}
+		}
+		foreach ( $articles AS $article_entry ) {
+			foreach ( $article_entry->authors AS $art_auth_list ) {
+				foreach ( $art_auth_list AS $qid ) {
+					$author_qid_map[$qid] = 1;
+				}
+			}
+		}
+		$auth_list->author_qids = array_keys($author_qid_map);
+		$auth_list->save($db_conn);
+	} else {
+		print "You don't own this author list; updating disallowed.";
+	}
+}
+
+if ($action == 'remove_from_list') {
+	$auth_list = new AuthorList($list_id);
+	$auth_list->load($db_conn);
+	if ($auth_list->owner === $owner) {
+		$removal_list = get_request ( 'removal' , array() ) ;
+		$auth_list->author_qids = array_diff($auth_list->author_qids, $removal_list);
 		$auth_list->save($db_conn);
 	} else {
 		print "You don't own this author list; updating disallowed.";
@@ -158,15 +190,19 @@ if ( $list_id == '') {
 	$author_list = new AuthorList($list_id);
 	$author_list->load($db_conn);
 	print "<h2>" . $author_list->label . "</h2>\n";
-	print "<h3>Author List $list_id for " . $author_list->owner . " last updated" . $author_list->updated_date . "</h3>\n";
+	print "<h3>Author List $list_id for " . $author_list->owner . " last updated " . $author_list->updated_date . "</h3>\n";
 
 	$author_data_rows = author_data_rows($author_list->author_qids, $wil);
+	print "<form method='post' class='form'>" ;
+	print "<input type='hidden' name='action' value='remove_from_list' />";
+	print "<input type='hidden' name='list_id' value='$list_id' />";
 
-	print "<table class='table table-striped table-condensed'><tr><th>#</th><th>Qid</th><th>Author</th><th>Description</th><th>Works</th><th>Affiliations</th></tr>";
+	print "<table class='table table-striped table-condensed'><tr><th>#</th><th></th><th>Qid</th><th>Author</th><th>Description</th><th>Works</th><th>Affiliations</th></tr>";
 	$index = 1;
 	foreach ($author_data_rows as $qid => $author_row) {
 		print "<tr>";
 		print "<td>$index</td>";
+		print "<td><input type='checkbox' name='removal[$qid]' value='$qid'/></td>" ;
 		print "<td>" . wikidata_link($qid, $qid, '') . "</td>";
 		print "<td>" . $author_row['name'] . "</td>";
 		print "<td>" . $author_row['desc'] . "</td>";
@@ -176,17 +212,22 @@ if ( $list_id == '') {
 		$index += 1;
 	}
 	print "</table>";
+	print "<div style='margin:20px'><input type='submit' name='doit' value='Remove checked authors' class='btn btn-primary' /></div>" ;
+	print "</form>";
 
 	print "<strong>Update this list:</strong>\n";
 	print "<form method='post' class='form'>" ;
 	print "<input type='hidden' name='action' value='update' />";
 	print "<input type='hidden' name='list_id' value='$list_id' />";
 	print "Label: <input name='label' type='text' size='40' value='$author_list->label'/>\n";
-	print "<div>QID's for authors, 1 per line:</div>\n";
+	print "<div>QID's for additional authors, 1 per line:</div>\n";
 	print "<div><textarea name='author_qids' rows='5' cols='40'>";
-	print implode("\n", $author_list->author_qids);
+	print "</textarea></div>\n";
+	print "<div>QID's for articles (add identified authors):</div>\n";
+	print "<div><textarea name='article_qids' rows='5' cols='40'>";
 	print "</textarea></div>\n";
 	print "<div style='margin:20px'><input type='submit' name='doit' value='Update author list' class='btn btn-primary' /></div>" ;
+	print "</form>";
 }
 $db_conn->close();
 

@@ -225,6 +225,11 @@ function all_names_for_author($wil, $qid, $stated_as_names) {
 	array_walk_recursive($aliases, function($a)
 		use (&$search_strings) {
 			$search_strings[$a] = 1; } ) ;
+	$names_so_far = array_keys($search_strings);
+	foreach ($names_so_far AS $name_str) {
+		$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $name_str));
+		$search_strings[$ta] = 1;
+	}
 	return array_keys($search_strings);
 }
 
