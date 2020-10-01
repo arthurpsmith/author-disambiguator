@@ -121,4 +121,29 @@ function author_data_rows($author_qids, $wil) {
 	return $author_rows;
 }
 
+function  author_data_table($author_rows, $checkbox_label) {
+	$html_string = "<table class='table table-striped table-condensed'><tr><th>#</th>";
+	if ($checkbox_label != '') {
+		$html_string .= "<th></th>";
+	}
+	$html_string .= "<th>Qid</th><th>Author</th><th>Description</th><th>Works</th><th>Affiliations</th></tr>";
+	$index = 1;
+	foreach ($author_rows as $qid => $author_row) {
+		$html_string .= "<tr>";
+		$html_string .="<td>$index</td>";
+		if ($checkbox_label != '') {
+			$html_string .= "<td><input type='checkbox' name='$checkbox_label" . '[' . $qid . "]' value='$qid'/></td>" ;
+		}
+		$html_string .= "<td>" . wikidata_link($qid, $qid, '') . "</td>";
+		$html_string .= "<td>" . $author_row['name'] . "</td>";
+		$html_string .= "<td>" . $author_row['desc'] . "</td>";
+		$html_string .= "<td>" . $author_row['count'] . "</td>";
+		$html_string .= "<td>" . $author_row['employers'] . "</td>";
+		$html_string .= "</tr>\n";
+		$index += 1;
+	}
+	$html_string .= "</table>";
+	return $html_string;
+}
+
 ?>

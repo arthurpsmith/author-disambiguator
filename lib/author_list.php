@@ -5,6 +5,7 @@ class AuthorList {
 	public $label;
 	public $updated_date = '';
 	public $owner;
+	public $count;
 	public $author_qids = array();
 
 	public function __construct ( $list_id, $params = array() ) {
@@ -18,8 +19,12 @@ class AuthorList {
 		if (isset($params['owner'])) {
 			$this->owner= $params['owner'];
 		}
+		if (isset($params['count'])) {
+			$this->count = $params['count'];
+		}
 		if (isset($params['qids'])) {
 			$this->author_qids = $params['qids'];
+			$this->count = count($params['qids']);
 		}
 	}
 
@@ -49,6 +54,7 @@ class AuthorList {
 			$this->updated_date = $row[1];
 			$this->owner = $row[2];
 			$this->author_qids = explode('|', $row[3]);
+			$this->count = count($this->author_qids);
 		    }
 		    $results->close();
 		} else {
@@ -80,7 +86,7 @@ class AuthorList {
 	public static function all_lists($db_conn, $limit = 50, $page = 1) {
 		$offset = ($page - 1) * $limit;
 
-		$dbquery = "SELECT al.list_id, al.owner, al.updated, al.label from author_lists al order by al.updated desc LIMIT $offset,$limit";
+		$dbquery = "SELECT al.list_id, al.owner, al.updated, al.label, (LENGTH(al.authors) - LENGTH(REPLACE(al.authors, '|', '')) + 1) AS count from author_lists al order by al.updated desc LIMIT $offset,$limit";
 		$author_lists = array();
 		if ($results = $db_conn->query($dbquery)) {
 		    while ($row = $results->fetch_row()) {
@@ -90,6 +96,7 @@ class AuthorList {
 			$al_data['owner'] = $row[1];
 			$al_data['date'] = $row[2];
 			$al_data['label'] = $row[3];
+			$al_data['count'] = $row[4];
 			$author_lists[] = new AuthorList($list_id, $al_data);
 		    }
 		    $results->close();

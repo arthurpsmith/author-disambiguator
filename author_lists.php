@@ -9,6 +9,7 @@ $oauth->interactive = false;
 $action = get_request ( 'action' , '' ) ;
 
 $list_id = get_request ( 'list_id' , '' ) ;
+$compare_id = get_request ( 'compare_id' , '' ) ;
 $page = intval(get_request ( 'page', '1' ));
 $limit = intval(get_request ( 'limit', '100' ));
 
@@ -152,7 +153,7 @@ if ( $list_id == '') {
 	    print "<table class='table table-striped table-condensed'>";
 	    print "<tr><th>";
 	    if ($viewall != '') print "Owner";
-	    print "</th><th>List ID</th><th>Label</th><th>Last Updated</th></tr>";
+	    print "</th><th>List ID</th><th>Label</th><th>Item Count</th><th>Last Updated</th></tr>";
 	    foreach ($author_lists AS $author_list) {
 		$id = $author_list->list_id;
 		print "<tr><td>";
@@ -165,6 +166,7 @@ if ( $list_id == '') {
 		print "</td>";
 		print "<td><a href='?list_id=$id'>$id</a></td>";
 		print "<td>" . $author_list->label. "</td>";
+		print "<td>" . $author_list->count. "</td>";
 		print "<td>" . $author_list->updated_date . "</td>";
 		print "</tr>";
 	    }
@@ -184,34 +186,51 @@ if ( $list_id == '') {
 		print "<div style='margin:20px'><input type='submit' name='doit' value='Create author list with these ids' class='btn btn-primary' /></div>" ;
 		print "</form>\n" ;
 	}
+} else if ($compare_id != '') {
+	$wil = new WikidataItemList ;
+
+	$list1 = new AuthorList($list_id);
+	$list1->load($db_conn);
+	$list2 = new AuthorList($compare_id);
+	$list2->load($db_conn);
+	print "<h2>Comparison of " . $list1->label . " ($list_id) with " . $list2->label . " ($compare_id)</h2>\n";
+	$comparison = new CompareLists($list1->author_qids, $list2->author_qids);
+	print "<h3>Only in List <a href='?list_id=$list_id'>$list_id</a>:</h3>";
+	$author_data_rows = author_data_rows($comparison->only1, $wil);
+	print author_data_table($author_data_rows, "");
+	print "<h3>Only in List <a href='?list_id=$compare_id'>$compare_id</a>:</h3>";
+	$author_data_rows = author_data_rows($comparison->only2, $wil);
+	print author_data_table($author_data_rows, "");
+	print "<h3>In both:</h3>";
+	$author_data_rows = author_data_rows($comparison->both, $wil);
+	print author_data_table($author_data_rows, "");
 } else {
 	$wil = new WikidataItemList ;
+
+	$author_lists = AuthorList::lists_for_owner($db_conn, $owner);
 
 	$author_list = new AuthorList($list_id);
 	$author_list->load($db_conn);
 	print "<h2>" . $author_list->label . "</h2>\n";
 	print "<h3>Author List $list_id for " . $author_list->owner . " last updated " . $author_list->updated_date . "</h3>\n";
 
+	print "<form method='get' class='form form-inline'>";
+	print "<input type='hidden' name='list_id' value='$list_id' />";
+	print "Compare to List: <select name='compare_id'>" ;
+	print "<option value='' selected>select one...</option>";
+	foreach ($author_lists AS $auth_list) {
+		$id = $auth_list->list_id;
+		$label = $auth_list->label;
+		print "<option value='$id'>$label</option>" ;
+	}
+	print "</select><input type='submit' class='btn btn-primary' name='doit' value='Compare' /></form>";
+
 	$author_data_rows = author_data_rows($author_list->author_qids, $wil);
 	print "<form method='post' class='form'>" ;
 	print "<input type='hidden' name='action' value='remove_from_list' />";
 	print "<input type='hidden' name='list_id' value='$list_id' />";
 
-	print "<table class='table table-striped table-condensed'><tr><th>#</th><th></th><th>Qid</th><th>Author</th><th>Description</th><th>Works</th><th>Affiliations</th></tr>";
-	$index = 1;
-	foreach ($author_data_rows as $qid => $author_row) {
-		print "<tr>";
-		print "<td>$index</td>";
-		print "<td><input type='checkbox' name='removal[$qid]' value='$qid'/></td>" ;
-		print "<td>" . wikidata_link($qid, $qid, '') . "</td>";
-		print "<td>" . $author_row['name'] . "</td>";
-		print "<td>" . $author_row['desc'] . "</td>";
-		print "<td>" . $author_row['count'] . "</td>";
-		print "<td>" . $author_row['employers'] . "</td>";
-		print "</tr>\n";
-		$index += 1;
-	}
-	print "</table>";
+	print author_data_table($author_data_rows, "removal");
 	print "<div style='margin:20px'><input type='submit' name='doit' value='Remove checked authors' class='btn btn-primary' /></div>" ;
 	print "</form>";
 

@@ -158,7 +158,7 @@ Work Wikidata ID:
 print "Author List: <select name='author_list_id'>" ;
 print "<option value=''";
 if ($author_list_id == '') print ' selected';
-print "></option>";
+print ">(all coauthors)</option>";
 foreach ($author_lists AS $auth_list) {
 	$list_id = $auth_list->list_id;
 	$label = $auth_list->label;
@@ -360,6 +360,9 @@ print "<input type='hidden' name='author_list_id' value='$author_list_id' />" ;
 ?>
 
 <div>
+<a href='#' onclick='$($(this).parents("form")).find("tr[class=no-name-string]").toggle();return false'>Toggle identified authors</a>
+</div>
+<div>
 <a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
 <a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",false);return false'>Uncheck all</a>
 </div>
@@ -411,14 +414,19 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 		continue ;
 	}
         $row_count ++;
+	if ( isset($article_entry->author_names[$num]) ){
+		print "<tr class='with-name-string'>";
+	} else {
+		print "<tr class='no-name-string'>";
+	}
 	if ($match) {
 		$rows_for_matches = 1;
 		if (isset($match_candidates[$num])) {
 			$rows_for_matches = count($match_candidates[$num]);
 		}
-		print "<tr><td rowspan='$rows_for_matches'>$row_count</td><td rowspan='$rows_for_matches'>";
+		print "<td rowspan='$rows_for_matches'>$row_count</td><td rowspan='$rows_for_matches'>";
         } else {
-		print "<tr><td>$row_count</td><td>";
+		print "<td>$row_count</td><td>";
 		if ( $merge_candidates[$num] ) {
 			$merge_count += 1;
 			if (! $renumber) {
