@@ -42,7 +42,7 @@ $input_names = preg_split('/[\r\n]+/', $name_strings);
 
 print disambig_header( False );
 
-print "<div style='font-size:9pt'>(<a href='$oauth_url'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates - still experimental.</a>) </div> " ;
+print "<div style='font-size:9pt'>(<a href='$oauth_url'> Log in to your Wikimedia account to use OAuth instead of Quickstatements for updates.</a>) </div> " ;
 print "<hr>";
 
 // Publications
