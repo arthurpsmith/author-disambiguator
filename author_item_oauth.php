@@ -41,6 +41,7 @@ Author Wikidata ID:
 </form>" ;
 
 if ( $author_qid == '' ) {
+	print_auth_example() ;
 	print_footer() ;
 	exit ( 0 ) ;
 }

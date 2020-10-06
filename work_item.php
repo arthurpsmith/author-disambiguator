@@ -31,6 +31,7 @@ Work Wikidata ID:
 </form>" ;
 
 if ( $work_qid == '' ) {
+	print_work_example();
 	print_footer() ;
 	exit ( 0 ) ;
 }

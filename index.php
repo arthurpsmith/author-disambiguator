@@ -127,6 +127,7 @@ if ( $use_name_strings ) {
 print "</form>" ;
 
 if ( $name == '' ) {
+	print_name_example();
 	print_footer() ;
 	exit ( 0 ) ;
 }

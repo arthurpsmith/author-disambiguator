@@ -18,6 +18,58 @@ function print_footer () {
 	print get_common_footer() ;
 }
 
+function print_name_example() {
+	print "<hr/>Some example names with works needing to be matched:<ul>";
+
+	$offset = rand(0,20000);
+	$sparql = "SELECT ?name WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . FILTER(STRLEN(?name) > 5) } OFFSET $offset LIMIT 20" ;
+	$query_result = getSPARQL($sparql);
+	$used_names = [];
+	if ( isset($query_result->results) ) {
+		$bindings = $query_result->results->bindings ;
+		$name = '';
+		foreach ( $bindings AS $binding ) {
+			$name  = $binding->name->value ;
+			if (! isset($used_names[$name]) ) {
+				print "<li><a href='?name=" . urlencode($name) . "'>$name</a></li>";
+				$used_names[$name] = 1;
+			}
+		}
+	}
+	print "</ul>";
+}
+
+function print_auth_example() {
+	print "<hr/>Some example authors:<ul>";
+
+	print "<li><a href='?id=Q42'>Douglas Adams</a></li>";
+	print "<li><a href='?id=Q937'>Albert Einstein</a></li>";
+	print "<li><a href='?id=Q193803'>Roger Penrose</a></li>";
+	print "</ul>";
+}
+
+function print_work_example() {
+	print "<hr/>Some example works needing authors matched:<ul>";
+
+	$offset = rand(0,10000);
+	$sparql = "SELECT ?work ?workLabel WHERE { { SELECT ?work WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . } LIMIT 10010 } SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\". } } OFFSET $offset LIMIT 5" ;
+	$query_result = getSPARQL($sparql);
+	$used_qids = [];
+	if ( isset($query_result->results) ) {
+		$bindings = $query_result->results->bindings ;
+		$name = '';
+		foreach ( $bindings AS $binding ) {
+			$work_qid  = $binding->work->value ;
+			$work_label  = $binding->workLabel->value ;
+			if (! isset($used_qids[$work_qid]) ) {
+				print "<li><a href='?id=$work_qid'>$work_label</a></li>";
+				$used_qids[$work_qid] = 1;
+			}
+		}
+	}
+	print "</ul>";
+}
+
 function compress_display_list($list, $highlights, $total_limit, $limit_first, $limit_nbr) {
 	if (count($list) <= $total_limit) return $list ;
 	$compressed_list = array();
