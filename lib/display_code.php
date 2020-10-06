@@ -15,6 +15,7 @@ function getORCIDurl ( $s ) {
 
 function print_footer () {
 	print "<hr/><a href='https://github.com/arthurpsmith/author-disambiguator/issues' target='_blank'>Feedback</a><br/><a href='https://github.com/arthurpsmith/author-disambiguator/'>Source and documentation (at github)</a><br/>" ;
+	print "<a href='https://www.wikidata.org/wiki/Wikidata:Tools/Author_Disambiguator'>Wikidata page</a><br/>";
 	print get_common_footer() ;
 }
 
