@@ -158,8 +158,32 @@ if ( !isset($author_item) )  {
 	print_footer() ;
 	exit ( 0 ) ;
 }
-print "<h2>" . $author_item->getLabel() . "</h2>" ;
-print "<div>" ;
+
+$author_data = new AuthorData($author_item);
+$author_alias_names = $author_item->getAliases ( 'en' );
+$author_stated_as = fetch_stated_as_for_authors( [ $author_qid ] ) [ $author_qid ];
+
+print "<h2>" . $author_data->label. "</h2>" ;
+print "<div>" . $author_data->desc  . " -- ";
+$identifier_display = [];
+if ( $author_data->orcid != '' ) {
+	$identifier_display[] = "ORCID: <a target='_blank' href='https://orcid.org/$author_data->orcid'>$author_data->orcid</a>" ;
+}
+if ( $author_data->isni != '' ) {
+	$isni = preg_replace('/\s+/', '', $author_data->isni) ;
+	$identifier_display[] = "ISNI: <a target='_blank' href='http://isni.org/$isni'>$author_data->isni</a>" ;
+}
+if ( $author_data->rsrchrid != '' ) {
+	$identifier_display[] = "Researcher ID: <a target='_blank' href='https://www.researcherid.com/rid/$author_data->rsrchrid'>$author_data->rsrchrid</a>" ;
+}
+if ( $author_data->viaf != '' ) {
+	$identifier_display[] = "VIAF ID: <a target='_blank' href='https://viaf.org/viaf/$author_data->viaf'>$author_data->viaf</a>" ;
+}
+if ( $author_data->rgprofile != '' ) {
+	$identifier_display[] = "ResearchGate Profile: <a target='_blank' href='https://www.researchgate.net/profile/$author_data->rgprofile'>$author_data->rgprofile</a>" ;
+}
+print implode("|", $identifier_display); 
+print "</div>" ;
 print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid'>Scholia Profile</a>" ;
@@ -168,6 +192,13 @@ print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
 print ' | ' ;
 print "<a target='_blank' href='https://tools.wmflabs.org/sqid/#/view?id=$author_qid'>SQID</a>" ;
+
+if (count($author_alias_names) > 0) {
+	print "<div>Aliases: " . implode(", ", $author_alias_names) . "</div>";
+}
+if (count($author_stated_as) > 0) {
+	print "<div>Stated as: " . implode(", ", $author_stated_as) . "</div>";
+}
 print '</div>' ;
 
 print "<form method='post' class='form' target='_blank' action='?'>" ;
