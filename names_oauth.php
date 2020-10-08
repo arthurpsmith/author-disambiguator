@@ -217,26 +217,28 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='wbsearch' value='$wbsearch' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
-$article_items = generate_article_entries( $items_papers );
+$article_items = generate_article_entries2( $items_papers );
 
 # Just need labels for the following:
 $qids_to_label = array();
 foreach ( $article_items AS $article ) {
-	foreach ( $article->authors AS $auth) $qids_to_label[$auth] = 1 ;
+	foreach ( $article->authors AS $auth_list ) {
+		foreach ( $auth_list AS $auth ) {
+			$qids_to_label[$auth] = 1 ;
+		}
+	}
 	foreach ( $article->published_in AS $pub ) $qids_to_label[$pub] = 1 ;
 	foreach ( $article->topics AS $topic ) $qids_to_label[$topic] = 1 ;
 }
 $qid_labels = AuthorData::labelsForItems(array_keys($qids_to_label));
 
-#print "<pre>" ; print_r ( $article_items) ; print "</pre>" ;
-
-$clusters = cluster_articles ( $article_items, $names, $precise) ;
+$clusters = cluster_articles2 ( $article_items, $names, $precise) ;
 
 $potential_authors_by_cluster_label = array();
 foreach ($clusters AS $label => $cluster ) {
 	$potential_authors_by_cluster_label[$label]  = array();
 	foreach ( $potential_author_data AS $author_data ) {
-		if (author_matches_cluster( $cluster, $author_data, $names )) {
+		if (author_matches_cluster2( $cluster, $author_data, $names )) {
 			$potential_authors_by_cluster_label[$label][$author_data->qid] = 1 ;
 		}
 	}
@@ -290,7 +292,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 	if ($precise) {
 		foreach ($cluster->article_authnums AS $article_num) {
 			$matches = array();
-			if (preg_match('/^(Q\d+):(\d+)/', $article_num, $matches)) {
+			if (preg_match('/^(Q\d+):(.+)/', $article_num, $matches)) {
 				$qid = $matches[1];
 				$num = $matches[2];
 				$selected_nums[$qid] = $num;
@@ -306,28 +308,42 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 
 		$formatted_authors = array();
 		$highlighted_authors = array();
-		foreach ( $article->author_names AS $num => $a ) {
-			if ( ($precise && ($num == $selected_num) ) ||
+		foreach ( $article->author_names AS $num => $name_list ) {
+		    $formatted_authors[$num] = "[$num]";
+		    $has_name = 0;
+		    foreach ( $name_list AS $claim_id => $a) {
+			if ( $has_name == 1 ) {
+				$formatted_authors[$num] .= '|';
+			}
+			if ( ($precise && ($claim_id == $selected_num) ) ||
 			  ( (! $precise ) && in_array ( $a , $names ) ) ) {
-				$formatted_authors[$num] = "[$num]" .
-			"<input type='checkbox' name='papers[$q:$num]' value='$q:$num' " .
+				$formatted_authors[$num] .= "<input type='checkbox' name='papers[$q:$claim_id]' value='$q:$claim_id' " .
 			($is_first_group?'checked':'') . " /><b>$a</b>" ;
 				$highlighted_authors[] = $num ;
 			} else {
-				$formatted_authors[$num] = "[$num]<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
+				$formatted_authors[$num] .= "<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a>" ;
 				$name_counter[$a] = isset($name_counter[$a]) ? $name_counter[$a]+1 : 1 ;
 			}
+		    	$has_name = 1;
+		    }
 		}
 		
-		foreach ( $article->authors AS $num => $qt ) {
-//			$stated_as = $article->authors_stated_as[$qt] ;
-			$display_num = $num ;
-			if (isset($formatted_authors[$num])) {
-				$display_num = "$num-$qt";
+		foreach ( $article->authors AS $num => $auth_list ) {
+		    $has_name = 1;
+		    if (! isset($formatted_authors[$num])) {
+			$has_name = 0;
+			$formatted_authors[$num] = "[$num]";
+		    }
+		    foreach ($auth_list AS $claim_id => $qt ) {
+			if ( $has_name == 1 ) {
+				$formatted_authors[$num] .= '|';
 			}
+//			$stated_as = $article->authors_stated_as[$qt] ;
 			$label = $qid_labels[$qt];
 			$author_qid_counter[$qt] = isset($author_qid_counter[$qt]) ? $author_qid_counter[$qt]+1 : 1 ;
-			$formatted_authors[$display_num] = "[$display_num]<a href='author_item_oauth.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
+			$formatted_authors[$num] .= "<a href='author_item_oauth.php?id=$qt' target='_blank' style='color:green'>$label</a>" ;
+			$has_name = 1;
+		    }
 		}
 		ksort($formatted_authors);
 		$authors_list = implode ( ', ' , compress_display_list($formatted_authors, $highlighted_authors, 20, 10, 2)) ;
@@ -370,7 +386,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		print "</td><td style='font-size:10pt'>" ;
 
 		foreach ( $potential_author_data AS $author_data ) {
-			if (author_matches_article( $article, $author_data, $names )) {
+			if (author_matches_article2( $article, $author_data, $names )) {
 				$potential_item = $wil->getItem ( $author_data->qid ) ;
 				print "<a href='author_item_oauth.php?id=" . $potential_item->getQ() . "' target='_blank' style='color:green'>" . $potential_item->getLabel() . "</a>" ;
 				print " ($author_data->qid; $author_data->article_count items)<br/>" ;

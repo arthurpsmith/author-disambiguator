@@ -29,6 +29,7 @@ require_once ( __DIR__ . '/../lib/article_model.php' ) ;
 require_once ( __DIR__ . '/../lib/article_model2.php' ) ;
 require_once ( __DIR__ . '/../lib/cluster.php' ) ;
 require_once ( __DIR__ . '/../lib/clustering.php' ) ;
+require_once ( __DIR__ . '/../lib/clustering2.php' ) ;
 require_once ( __DIR__ . '/../lib/qs_commands.php' ) ;
 require_once ( __DIR__ . '/../lib/author_data.php' ) ;
 require_once ( __DIR__ . '/../lib/compare_lists.php' ) ;

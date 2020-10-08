@@ -399,7 +399,7 @@ class EditClaims {
 					foreach ($ordinals AS $tmp) {
 						$num = $this->string_value_from_snak($tmp);
 						if (isset($auth_qid_by_ordinal[$num])) {
-							$new_cmds = $this->change_name_to_author_claim($c, $num, $auth_qid_by_ordinal[$num]);
+							$new_cmds = $this->change_name_to_author_claim($c, $auth_qid_by_ordinal[$num]);
 							$commands = array_merge($commands, $new_cmds);
 						}
 					}
@@ -416,7 +416,7 @@ class EditClaims {
 		return true;
 	}
 
-	function change_name_to_author_claim($c, $num, $author_qid) {
+	function change_name_to_author_claim($c, $author_qid) {
 		$commands = array();
 		
 		$quals = isset($c->qualifiers) ? (array) $c->qualifiers : [] ;
@@ -538,7 +538,7 @@ class EditClaims {
 					foreach ($ordinals AS $tmp) {
 						$num = $this->string_value_from_snak($tmp);
 						if ($num == $auth_num) {
-							$commands = $this->change_name_to_author_claim($c, $num, $qid) ;
+							$commands = $this->change_name_to_author_claim($c, $qid) ;
 						}
 					}
 				}
@@ -546,6 +546,33 @@ class EditClaims {
 			if (! $has_ordinal) {
 				$this->error = "Unordered authors";
 				return false;
+			}
+		}
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+		return true;
+	}
+
+	function replace_name_claim_with_author($work_qid, $claim_id, $qid, $edit_summary) {
+		$prep = $this->oauth->prepare_edit_token('replace_name_with_author') ;
+		if ($prep == NULL) return false;
+	// Fetch edit token
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+	// Fetch work
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
+		$commands = [];
+		foreach ( $author_name_claims AS $c ) {
+			if ( $claim_id == $c->id ) {
+				$commands = $this->change_name_to_author_claim($c, $qid) ;
 			}
 		}
 		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;

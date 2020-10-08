@@ -82,6 +82,15 @@ while (1) {
 			if (! $result) {
 				$error = $edit_claims->error;
 			}
+		} else if (preg_match('/^(Q\d+):(Q\d+):(.+)/', $data, $cmd_parts)) {
+			$author_q = $cmd_parts[1];
+			$work_qid = $cmd_parts[2];
+			$claim_id = $cmd_parts[3];
+			print ("$batch_id/$pid - Replacing name for $work_qid - $claim_id with $author_q\n");
+			$result = $edit_claims->replace_name_claim_with_author($work_qid, $claim_id, $author_q, "Author Disambiguator set author [[$author_q]] $eg_string");
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
 		} else {
 			$error = 'Bad data';
 		}
