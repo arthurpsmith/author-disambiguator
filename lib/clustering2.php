@@ -279,6 +279,9 @@ function rough_cluster2 ( $article_items, $names_to_ignore ) {
 }
 
 function neighboring_author_strings2 ( $article, $num, $preceding = 1, $following = 1 ) {
+	if ($num == 'unordered') {
+		return implode('|', $article->author_names['unordered']);
+	}
 	$author_name_strings = array();
 	for ($i = $num - $preceding; $i <= $num + $following; $i++) {
 		if (isset($article->author_names[$i]) ) {
