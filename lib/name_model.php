@@ -8,6 +8,7 @@ class NameModel {
 	public $prefixes = array();
 	public $suffixes = array();
 	public $ascii_nm = NULL;
+	public $latin1_nm = NULL;
 	public $nodash_nm = NULL;
 
 	const PREFIX_PATTERN = '/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$/i' ;
@@ -22,6 +23,11 @@ class NameModel {
 		$ascii_name = iconv('UTF-8', 'ASCII//TRANSLIT', $utf8_name);
 		if (($ascii_name) && ($ascii_name != $name) && (mb_strlen($ascii_name) > 2)) {
 			$this->ascii_nm = new NameModel($ascii_name);
+		}
+		$l1_name = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $utf8_name);
+		$latin1_name = iconv('ISO-8859-1', 'UTF-8',  $l1_name);
+		if (($latin1_name) && ($latin1_name != $name) && ($latin1_name != $ascii_name) && (mb_strlen($latin1_name) > 2)) {
+			$this->latin1_nm = new NameModel($latin1_name);
 		}
 		if (mb_strpos($name, '-') !== false) {
 			$nodash_name = mb_ereg_replace('-', ' ', $name);
@@ -247,6 +253,9 @@ class NameModel {
 		if (isset($this->ascii_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->default_search_strings(), 1));
 		}
+		if (isset($this->latin1_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->latin1_nm->default_search_strings(), 1));
+		}
 		if (isset($this->nodash_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->nodash_nm->default_search_strings(), 1));
 		}
@@ -269,6 +278,9 @@ class NameModel {
 		$search_strings = array_fill_keys($this->default_search_strings(), 1);
 		if (isset($this->ascii_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->fuzzy_search_strings(), 1));
+		}
+		if (isset($this->latin1_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->latin1_nm->fuzzy_search_strings(), 1));
 		}
 		if (isset($this->nodash_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->nodash_nm->fuzzy_search_strings(), 1));
