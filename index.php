@@ -106,9 +106,9 @@ if ( $action == 'add' ) {
 print "<form method='get' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
-<label><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
-<label style='margin:10px'><input type='checkbox' name='wbsearch' value='1' $wbsearch_checked /> Wikibase search </label>
-<label style='margin:10px'><input type='checkbox' name='use_name_strings' value='1' $use_name_strings_checked /> Specify name strings </label>
+<label title='match initials, uppercase, etc.'><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
+<label title='ignore accents, case' style='margin:10px'><input type='checkbox' name='wbsearch' value='1' $wbsearch_checked /> Wikibase search </label>
+<label title='use text box to select names' style='margin:10px'><input type='checkbox' name='use_name_strings' value='1' $use_name_strings_checked /> Specify name strings </label>
 <div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Look for author' /></div>
 Limit: <select name='limit'>" ;
 foreach ($limit_options AS $limit_option) {

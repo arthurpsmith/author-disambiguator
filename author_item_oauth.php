@@ -34,7 +34,7 @@ print "<hr>";
 print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
-<label><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
+<label title='search for multiple matching authors with same ordinal'><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>

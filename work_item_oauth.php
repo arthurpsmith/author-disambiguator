@@ -152,9 +152,9 @@ print "<form method='get' class='form form-inline'>
 Work Wikidata ID: 
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' oninput='stopReloads()' />
 <input type='hidden' name='batch_id' value='$batch_id'>
-<label style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
-<label style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
-<label style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>";
+<label title='edit author ordinal values' style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
+<label title='search coauthors or list for items to replace strings' style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
+<label title='search using stated names on other works' style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>";
 print "Author List: <select name='author_list_id'>" ;
 print "<option value=''";
 if ($author_list_id == '') print ' selected';
