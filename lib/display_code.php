@@ -60,7 +60,7 @@ function print_work_example() {
 		$bindings = $query_result->results->bindings ;
 		$name = '';
 		foreach ( $bindings AS $binding ) {
-			$work_qid  = $binding->work->value ;
+			$work_qid  = item_id_from_uri($binding->work->value) ;
 			$work_label  = $binding->workLabel->value ;
 			if (! isset($used_qids[$work_qid]) ) {
 				print "<li><a href='?id=$work_qid'>$work_label</a></li>";
