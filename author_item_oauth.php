@@ -161,7 +161,11 @@ if ( !isset($author_item) )  {
 
 $author_data = new AuthorData($author_item);
 $author_alias_names = $author_item->getAliases ( 'en' );
-$author_stated_as = fetch_stated_as_for_authors( [ $author_qid ] ) [ $author_qid ];
+$stated_as_list = fetch_stated_as_for_authors( [ $author_qid ] );
+$author_stated_as = [];
+if ( isset( $stated_as_list[ $author_qid ] ) ) {
+	$author_stated_as = $stated_as_list[ $author_qid ];
+}
 
 print "<h2>" . $author_data->label. "</h2>" ;
 print "<div>" . $author_data->desc  . " -- ";
