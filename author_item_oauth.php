@@ -235,6 +235,9 @@ foreach ($article_items AS $article) {
 }
 $author_qids = array_keys($author_qid_map);
 $stated_as_names = fetch_stated_as_for_authors($author_qids);
+if ($merge) {
+	$wil->loadItems ( $author_qids ) ;
+}
 
 print "<div class='group'>" ;
 ?>
