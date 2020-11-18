@@ -66,7 +66,11 @@ if ($action != '' && in_array($action, $batch_actions)) {
     if ($batch_id == '') {
 		$batch_id = Batch::generate_batch_id() ;
 		$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($username) . "',  NULL, NULL, 1)";
-		$db_conn->query($dbquery);
+		if (! $db_conn->query($dbquery) ) {
+			print("Database update failed - quitting!");
+			print_footer() ;
+			exit ( 0 ) ;
+		}
     }
     $seq_query = "SELECT max(ordinal) from commands where batch_id = '$batch_id'";
     $results = $db_conn->query($seq_query);

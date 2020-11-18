@@ -57,7 +57,11 @@ if ( $action == 'remove' ) {
 	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
 	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
-	$db_conn->query($dbquery);
+	if (! $db_conn->query($dbquery) ) {
+		print("Database update failed - quitting!");
+		print_footer() ;
+		exit ( 0 ) ;
+	}
 
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'move_author', ?, 'READY', NULL, NULL)");
 	if ( $author_match == 'none' ) {
@@ -99,7 +103,11 @@ if ($action == 'merge') {
 	$dbtools = new DatabaseTools($db_passwd_file);
 	$db_conn = $dbtools->openToolDB('authors');
 	$dbquery = "INSERT INTO batches VALUES('$batch_id', '" . $db_conn->real_escape_string($oauth->userinfo->name) . "',  NULL, NULL, 1)";
-	$db_conn->query($dbquery);
+	if (! $db_conn->query($dbquery) ) {
+		print("Database update failed - quitting!");
+		print_footer() ;
+		exit ( 0 ) ;
+	}
 
 	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'merge_work', ?, 'READY', NULL, NULL)");
 
