@@ -1,7 +1,7 @@
 # author-disambiguator
 Wikidata service to help create or link author items to published articles
 
-To use the tool go to https://tools.wmflabs.org/author-disambiguator/
+To use the tool go to https://author-disambiguator.toolforge.org/
 
 To run in development you need a php server with an https front-end.  Install the files as provided in this distribution directly in an appropriate subdirectory of your local web server's documents root directory.
 
