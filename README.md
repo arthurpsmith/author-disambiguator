@@ -7,7 +7,7 @@ To run in development you need a php server with an https front-end.  Install th
 
 Several configuration files need to be set up - copy "sample_local_config.php" to "local_config.php" and modify the entries there. The "sample_oauth.ini" and "sample_db.cnf" files show the format required for the OAuth and database connection files, respectively.
 
-You can run without OAuth enabled; however it still requires database connection information. 
+You can run without OAuth enabled; however it still requires database connection information. The database must be running MySQL or MariaDB and have the tables specified in schema.sql (just run that file on your database if you are starting fresh). The database tables manage batches, author lists, and the rate limit monitor.
 
 # Features
 
