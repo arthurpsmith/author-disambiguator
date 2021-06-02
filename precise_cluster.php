@@ -389,7 +389,7 @@ print "<form method='post' class='form form-inline' target='_blank' action='?'>
 <div>Author name: <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' /></div>";
 print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for $name</a> | Author has ORCID ID: <input type='text' name='orcid_author' placeholder='xxxx-xxxx-xxxx-xxxx' /></div>" ;
 print "<div><a href='https://viaf.org/viaf/search?query=local.personalNames%20all%20%22$name' target='_blank'>Check VIAF for $name</a> | Author has VIAF ID: <input type='text' name='viaf_author' placeholder='xxxxxxxxxxxxxxxxxxxx' /></div>" ;
-print "<div><a href='https://www.researchgate.net/search/authors?q=$name' target='_blank'>Check ResearchGate for $name</a> | Author has ResearchGate Profile ID: <input type='text' name='researchgate_author' placeholder='Xxxxxxx_Xxxxxx' /></div>" ;
+print "<div><a href='https://www.researchgate.net/search/researcher?q=$name' target='_blank'>Check ResearchGate for $name</a> | Author has ResearchGate Profile ID: <input type='text' name='researchgate_author' placeholder='Xxxxxxx_Xxxxxx' /></div>" ;
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to create author item' class='btn btn-primary' /></div>" ;
 print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
