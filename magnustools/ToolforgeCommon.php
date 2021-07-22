@@ -298,7 +298,7 @@ final class ToolforgeCommon {
 
 		$f1 = preg_replace ( '/<body>.*/ms' , "<body>\n" , $f1 ) ;
 		$f1 = preg_replace ( '/<script src=".\/main.js"><\/script>\s*/' , '' , $f1 ) ;
-		$f3 = '<div id="main_content" class="container"><div class="row"><div class="col-sm-12" style="margin-bottom:20px;margin-top:10px;">' ;
+		$f3 = '<div id="main_content" class="container"><div><div class="col-sm-12" style="margin-bottom:20px;margin-top:10px;">' ;
 
 		return "$f1$f2$f3\n" ;
 	}
