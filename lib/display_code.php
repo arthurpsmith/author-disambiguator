@@ -136,7 +136,7 @@ function disambig_header ($use_oauth_menu) {
 	} else {
 		$f2 = file_get_contents ( "$dir/menubar_bs4.html" ) ;
 	}
-	$f3 = '<div id="main_content" class="container"><div class="row"><div class="col-sm-12" style="margin-bottom:20px;margin-top:10px;">' ;
+	$f3 = '<div id="main_content" class="container"><div><div class="col-sm-12" style="margin-bottom:20px;margin-top:10px;">' ;
 	$s = $f1 . $f2 . $f3 ;
 	$s = str_replace ( '</head>' , "<title>$title</title></head>" , $s ) ;
 
