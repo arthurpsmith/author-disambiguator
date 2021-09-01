@@ -19,7 +19,7 @@ if ( $action == 'add' ) {
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	if ( $author_match == 'new' ) {
 		print disambig_header( True );
-		print "<form method='post' class='form form-inline' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+		print "<form method='post' class='form form-inline' action='$quickstatements_api_url'>" ;
 		print "<input type='hidden' name='action' value='import' />" ;
 		print "<input type='hidden' name='temporary' value='1' />" ;
 		print "<input type='hidden' name='openpage' value='1' />" ;

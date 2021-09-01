@@ -39,7 +39,7 @@ if ( $work_qid == '' ) {
 $wil = new WikidataItemList ;
 
 if ( $action == 'add' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<form method='post' class='form' action='$quickstatements_api_url'>" ;
 	print "<input type='hidden' name='action' value='import' />" ;
 	print "<input type='hidden' name='temporary' value='1' />" ;
 	print "<input type='hidden' name='openpage' value='1' />" ;

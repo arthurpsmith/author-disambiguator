@@ -35,7 +35,7 @@ print disambig_header( False );
 print "<h3>Multi-author match</h3>";
 
 if ( $action == 'match' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<form method='post' class='form' action='$quickstatements_api_url'>" ;
 	print "<input type='hidden' name='action' value='import' />" ;
 	print "<input type='hidden' name='temporary' value='1' />" ;
 	print "<input type='hidden' name='openpage' value='1' />" ;

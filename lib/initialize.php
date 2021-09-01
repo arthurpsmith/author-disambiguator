@@ -21,6 +21,7 @@ set_time_limit ( 60 * 10 ) ; // Seconds
 
 setlocale(LC_CTYPE, 'en_US.UTF-8'); // Required for iconv to work
 
+require_once ( __DIR__ . '/../lib/wikibase_config.php' ) ;
 require_once ( __DIR__ . '/../magnustools/common.php' ) ;
 require_once ( __DIR__ . '/../magnustools/wikidata.php' ) ;
 require_once ( __DIR__ . '/../lib/wikidata_claims.php' ) ;
