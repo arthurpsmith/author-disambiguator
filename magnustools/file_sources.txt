@@ -1,6 +1,0 @@
-Various php files obtained from Toolforge:
-
-scp login.toolforge.org:/data/project/magnustools/public_html/php/common.php .
-scp login.toolforge.org:/data/project/magnustools/public_html/php/oauth.php .
-scp login.toolforge.org:/data/project/magnustools/public_html/php/wikidata.php .
-scp login.toolforge.org:/data/project/magnustools/public_html/php/ToolforgeCommon.php .

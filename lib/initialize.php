@@ -19,13 +19,13 @@ if (isset($_SERVER['HTTP_USER_AGENT'])) {
 error_reporting(E_ALL);
 ini_set('display_errors', 'On');
 ini_set('memory_limit','1500M');
+ini_set('user_agent', 'Toolforge - Author Disambiguator');
 set_time_limit ( 60 * 10 ) ; // Seconds
 
 setlocale(LC_CTYPE, 'en_US.UTF-8'); // Required for iconv to work
 
 require_once ( __DIR__ . '/../lib/wikibase_config.php' ) ;
-require_once ( __DIR__ . '/../magnustools/common.php' ) ;
-require_once ( __DIR__ . '/../magnustools/wikidata.php' ) ;
+require_once ( __DIR__ . '/../lib/borrowed_utilities.php' );
 require_once ( __DIR__ . '/../lib/wikidata_claims.php' ) ;
 require_once ( __DIR__ . '/../lib/edit_claims.php' ) ;
 require_once ( __DIR__ . '/../lib/article_model.php' ) ;

@@ -1,7 +1,72 @@
 <?PHP
 
+# Much code below copied from Magnus Manske's tools collection
+
+header("Connection: close");
+$maxlag = 5 ; // https://www.mediawiki.org/wiki/Manual:Maxlag_parameter
+
+function escape_attribute ( $s ) {
+	$ret = preg_replace ( "/\"/" , '&quot;' , $s ) ;
+	$ret = preg_replace ( "/'/" , '&apos;' , $ret ) ;
+	return $ret ;
+}
+
+$prefilled_requests = [] ;
+function get_request ( $key , $default = "" ) {
+	if ( ! isset ( $prefilled_requests[$key] ) ) {
+		if ( isset ( $_REQUEST[$key] ) ) {
+			$prefilled_requests[$key] = str_replace ( "\'" , "'" , $_REQUEST[$key] ) ;
+		} else {
+			$prefilled_requests[$key] = $default;
+		}
+	}
+	return $prefilled_requests[$key];;
+}
+
+# SPARQL
+function getSPARQL ( $cmd ) {
+	global $tool_name;
+	global $sparql_endpoint;
+
+	$sparql = "$cmd\n#TOOL: $tool_name" ;
+
+	$ctx = stream_context_create(['http'=>
+		['timeout' => 1200]  //1200 seconds is 20 minutes
+	]);
+
+	$url = "$sparql_endpoint?format=json&query=" . urlencode($sparql) ;
+	$fc = @file_get_contents ( $url , false , $ctx ) ;
+
+	// Catch "wait" response, wait 5, retry
+	if ( preg_match ( '/429/' , $http_response_header[0] ) ) {
+		sleep ( 5 ) ;
+		return getSPARQL ( $cmd ) ;
+	}
+		
+	assert ( $fc !== false , 'SPARQL query failed: '.$sparql ) ;
+
+	if ( $fc === false ) return ; // Nope
+	return json_decode ( $fc ) ;
+}
+
+function parseItemFromURL ( $url ) /*:string*/ {
+	return preg_replace ( '/^.+([A-Z]\d+)$/' , '$1' , $url ) ;
+}
+
+function getSPARQLitems ( $cmd , $varname = 'q' ) {
+	$ret = [] ;
+	$j = getSPARQL ( $cmd ) ;
+	if ( !isset($j) or !isset($j->head) ) return $ret ;
+	if ( $varname == '' ) $varname = $j->head->vars[0] ;
+	if ( !isset($j->results) or !isset($j->results->bindings) or count($j->results->bindings) == 0 ) return $ret ;
+	foreach ( $j->results->bindings AS $v ) {
+		$ret[] = parseItemFromURL ( $v->$varname->value ) ;
+	}
+	$ret = array_unique ( $ret ) ;
+	return $ret ;
+}
+
 $wikidata_preferred_langs = ['en','de','nl','fr','es','it','zh'] ;
-$wikidata_api_url = 'https://www.wikidata.org/w/api.php' ;
 
 class WDI {
 
@@ -9,11 +74,11 @@ class WDI {
 	public $j ;
 	
 	public function __construct ( $q = '' ) {
-		global $wikidata_api_url ;
+		global $wikibase_api_url ;
 		if ( $q != '' ) {
 			$q = 'Q' . preg_replace ( '/\D/' , '' , "$q" ) ;
 			$this->q = $q ;
-			$url = "$wikidata_api_url?action=wbgetentities&ids=$q&format=json" ;
+			$url = "$wikibase_api_url?action=wbgetentities&ids=$q&format=json" ;
 			$j = json_decode ( file_get_contents ( $url ) ) ;
 			$this->j = $j->entities->$q ;
 		}
@@ -306,13 +371,14 @@ class WikidataItemList {
 	}
 		
     function loadItems ( $list ) {
-    	global $wikidata_api_url ;
+    	global $wikibase_api_url ;
+	$batch_size = 50;
     	$qs = [ [] ] ;
     	foreach ( $list AS $q ) {
     		$this->sanitizeQ($q) ;
     		if ( $q == 'Q' || $q == 'P' ) continue ;
 	    	if ( isset($this->items[$q]) ) continue ;
-	    	if ( count($qs[count($qs)-1]) == 50 ) $qs[] = [] ;
+	    	if ( count($qs[count($qs)-1]) == $batch_size ) $qs[] = [] ;
     		$qs[count($qs)-1][] = $q ;
     	}
     	
@@ -321,17 +387,20 @@ class WikidataItemList {
     	$urls = [] ;
     	foreach ( $qs AS $k => $sublist ) {
     		if ( count ( $sublist ) == 0 ) continue ;
-			$url = "{$wikidata_api_url}?action=wbgetentities&ids=" . implode('|',$sublist) . "&format=json" ;
+			$url = "{$wikibase_api_url}?action=wbgetentities&ids=" . implode('|',$sublist) . "&format=json" ;
 			$urls[$k] = $url ;
     	}
-#print_r ( $urls ) ;
+# print_r ( $urls ) ;
     	$res = $this->getMultipleURLsInParallel ( $urls ) ;
     	
-		foreach ( $res AS $k => $txt ) {
-			$j = json_decode ( $txt ) ;
-			if ( !isset($j) or !isset($j->entities) ) continue ;
-			$this->parseEntities ( $j ) ;
+	foreach ( $res AS $k => $txt ) {
+		$j = json_decode ( $txt ) ;
+		if ( !isset($j) or !isset($j->entities) ) {
+			print "<div>JSON decode failed!</div>";
+			continue ;
 		}
+		$this->parseEntities ( $j ) ;
+	}
     }
     
     function loadItem ( $q ) {
@@ -354,18 +423,6 @@ class WikidataItemList {
     	return isset($this->items[$q]) ;
     }
 	
-	public function loadItemByPage ( $page , $wiki ) {
-		global $wikidata_api_url ;
-		$page = urlencode ( ucfirst ( str_replace ( ' ' , '_' , trim($page) ) ) ) ;
-		$url = $wikidata_api_url . "?action=wbgetentities&sites=$wiki&titles=$page&format=json" ;
-		$j = json_decode ( file_get_contents ( $url ) ) ;
-		if ( !isset($j) or !isset($j->entities) ) return false ;
-		$this->parseEntities ( $j ) ;
-		foreach ( $j->entities AS $q => $dummy ) {
-			return $q ;
-		}
-	}
-
 	protected function getMultipleURLsInParallel ( $urls ) {
 		$ret = [] ;
 	
