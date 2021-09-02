@@ -338,7 +338,8 @@ function generate_article_entries2($id_list) {
 }
 
 function claim_uri_to_id($claim_uri) {
-	$claim_id = preg_replace ( '/http:\/\/www.wikidata.org\/entity\/statement\//' , '' , $claim_uri) ;
+	global $wikibase_endpoint ;
+	$claim_id = preg_replace ( "/http:\/\/$wikibase_endpoint\/entity\/statement\//" , '' , $claim_uri) ;
 	$pos = strpos($claim_id, '-');
 	return substr_replace($claim_id, '$', $pos, 1);
 }

@@ -1,17 +1,15 @@
 <?PHP
 
-$wikidata_api_url = 'https://www.wikidata.org/w/api.php' ;
-
 class WDClaim {
 	public $id ;
 	public $p ;
 	public $c ;
 	
 	public function __construct ( $id = '' ) {
-		global $wikidata_api_url ;
+		global $wikibase_api_url ;
 		if ( $id != '' ) {
 			$this->id = $id ;
-			$url = "$wikidata_api_url?action=wbgetclaims&claim=$id&format=json" ;
+			$url = "$wikibase_api_url?action=wbgetclaims&claim=$id&format=json" ;
 			$j = json_decode ( file_get_contents ( $url ) ) ;
 			$props = array();
 			foreach ( $j->claims AS $p => $v ) $props[] = $p ;

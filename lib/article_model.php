@@ -100,7 +100,8 @@ class WikidataArticleEntry {
 }
 
 function item_id_from_uri ( $item_uri ) {
-	return preg_replace( ' /http:\/\/www.wikidata.org\/entity\//', '', $item_uri );
+	global $wikibase_endpoint ;
+	return preg_replace( "/http:\/\/$wikibase_endpoint\/entity\//", '', $item_uri );
 }
 
 function prepend_q ( $id ) {

@@ -20,10 +20,11 @@ class WD_OAuth {
 	var $interactive = false ;
 	
 	function __construct ( $tool, $ini_file, $token_key='', $token_secret='' ) {
+		global $wikibase_api_url ;
 		$this->tool = $tool ;
 		$this->ini_file = $ini_file ;
 
-		$this->apiUrl = 'https://www.wikidata.org/w/api.php' ;
+		$this->apiUrl = $wikibase_api_url ;
 
 		if ( !isset( $this->publicMwOAuthUrl )) {
 			$this->publicMwOAuthUrl = $this->mwOAuthUrl;

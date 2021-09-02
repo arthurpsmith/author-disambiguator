@@ -2,11 +2,12 @@
 
 // Various display handlers
 function wikidata_link ( $q, $text, $color ) {
+	global $wikibase_endpoint;
 	$style = '';
 	if ( $color != '' ) {
 		$style = "style='color:$color'" ;
 	}
-	return "<a href='//www.wikidata.org/wiki/$q' target='_blank' $style'>$text</a>" ;
+	return "<a href='https://$wikibase_endpoint/wiki/$q' target='_blank' $style'>$text</a>" ;
 }
 
 function getORCIDurl ( $s ) {

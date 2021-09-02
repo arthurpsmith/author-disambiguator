@@ -93,6 +93,7 @@ class AuthorData {
 	}
 
 	private static function _extract_item_map($query_result, $item_label, $value_label) {
+		global $wikibase_endpoint ;
 		$item_map = array() ;
 		if (! isset($query_result->results) ) {
 			return $item_map;
@@ -101,8 +102,8 @@ class AuthorData {
 		foreach ( $bindings AS $binding ) {
 			$item_uri = $binding->$item_label->value ;
 			$value_uri = $binding->$value_label->value ;
-			$item_qid = preg_replace ( '/http:\/\/www.wikidata.org\/entity\//' , '' , $item_uri ) ;
-			$value_qid = preg_replace ( '/http:\/\/www.wikidata.org\/entity\//' , '' , $value_uri ) ;
+			$item_qid = preg_replace ( "/http:\/\/$wikibase_endpoint\/entity\//" , '' , $item_uri ) ;
+			$value_qid = preg_replace ( "/http:\/\/$wikibase_endpoint\/entity\//" , '' , $value_uri ) ;
 			if (! isset( $item_map[$item_qid] ) ) $item_map[$item_qid] = array() ;
 			$item_map[$item_qid][] = $value_qid ;
 		}
@@ -110,6 +111,7 @@ class AuthorData {
 	}
 
 	private static function _extract_string_map($query_result, $item_label, $value_label) {
+		global $wikibase_endpoint;
 		$item_map = array() ;
 		if (! isset($query_result->results) ) {
 			return $item_map;
@@ -118,7 +120,7 @@ class AuthorData {
 		foreach ( $bindings AS $binding ) {
 			$item_uri = $binding->$item_label->value ;
 			$value = $binding->$value_label->value ;
-			$item_qid = preg_replace ( '/http:\/\/www.wikidata.org\/entity\//' , '' , $item_uri ) ;
+			$item_qid = preg_replace ( "/http:\/\/$wikibase_endpoint\/entity\//" , '' , $item_uri ) ;
 			if (! isset( $item_map[$item_qid] ) ) $item_map[$item_qid] = array() ;
 			$item_map[$item_qid][] = $value ;
 		}

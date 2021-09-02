@@ -13,6 +13,7 @@ function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchg
 }
 
 function get_author_statement_guid($paperq, $author_num, $names) {
+	global $wikibase_endpoint;
 	$sparql = "SELECT ?author_name ?statement WHERE { wd:$paperq p:P2093 ?statement . ?statement ps:P2093 ?author_name ; pq:P1545 '$author_num' . }" ;
 	$result = getSPARQL( $sparql ) ;
 	$bindings = $result->results->bindings ;
@@ -34,7 +35,7 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 	}
 	$name_string = $bindings[0]->author_name->value ;
 	$statement_uri = $bindings[0]->statement->value ;
-	$statement_id = preg_replace ( '/http:\/\/www.wikidata.org\/entity\/statement\//' , '' , $statement_uri) ;
+	$statement_id = preg_replace ( "/http:\/\/$wikibase_endpoint\/entity\/statement\//" , '' , $statement_uri) ;
 	$pos = strpos($statement_id, '-');
 	return substr_replace($statement_id, '$', $pos, 1);
 }

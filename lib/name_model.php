@@ -364,6 +364,7 @@ class NameModel {
 	}
 
 	public function names_from_wbsearch($names) {
+		global $wikibase_endpoint;
 		$new_names = array_fill_keys($names, 1);
 		$search_strings = '"\"' . implode( '\"" "\"', $names )  . '\""' ;
 		$sparql = "SELECT DISTINCT ?name WHERE {
@@ -372,7 +373,7 @@ class NameModel {
   BIND(LCASE(REPLACE(?search_string, '\"', '')) AS ?lc_string)
   SERVICE wikibase:mwapi {
     bd:serviceParam wikibase:api \"Search\";
-                    wikibase:endpoint \"www.wikidata.org\";
+                    wikibase:endpoint \"$wikibase_endpoint\";
                     mwapi:srsearch ?search_string .
     ?page_title wikibase:apiOutput mwapi:title .
   }
@@ -391,7 +392,7 @@ class NameModel {
   BIND(LCASE(REPLACE(?search_string, '\"', '')) AS ?lc_string)
   SERVICE wikibase:mwapi {
     bd:serviceParam wikibase:api \"Search\";
-                    wikibase:endpoint \"www.wikidata.org\";
+                    wikibase:endpoint \"$wikibase_endpoint\";
                     mwapi:srsearch ?search_string .
     ?page_title wikibase:apiOutput mwapi:title .
   }
