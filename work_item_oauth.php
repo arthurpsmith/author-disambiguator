@@ -253,9 +253,9 @@ print wikidata_link($work_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://scholia.toolforge.org/work/$work_qid'>Scholia Work Page</a>&nbsp;[<a href='https://scholia.toolforge.org/work/$work_qid/missing' target='_blank'>missing</a>]";
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$work_qid'>Reasonator</a>" ;
+print "<a target='_blank' href='$reasonator_prefix$work_qid'>Reasonator</a>" ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/sqid/#/view?id=$work_qid'>SQID</a>" ;
+print "<a target='_blank' href='$sqid_prefix$work_qid'>SQID</a>" ;
 print '</div><div>' ;
 print "Published: " .  $article_entry->formattedPublicationDate () . "; " ;
 if ( $article_entry->doi != '' ) {

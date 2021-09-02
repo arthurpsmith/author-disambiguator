@@ -201,9 +201,9 @@ print ' | ' ;
 print "<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid'>Scholia Profile</a>" ;
 print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/missing'>missing</a>]" ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/reasonator/?q=$author_qid'>Reasonator</a>" ;
+print "<a target='_blank' href='$reasonator_prefix$author_qid'>Reasonator</a>" ;
 print ' | ' ;
-print "<a target='_blank' href='https://tools.wmflabs.org/sqid/#/view?id=$author_qid'>SQID</a>" ;
+print "<a target='_blank' href='$sqid_prefix$author_qid'>SQID</a>" ;
 
 if (count($author_alias_names) > 0) {
 	print "<div>Aliases: " . implode(", ", $author_alias_names) . "</div>";
