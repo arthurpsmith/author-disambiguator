@@ -153,14 +153,14 @@ $items_papers = array_unique( $items_papers );
 // Potential authors
 $author_filter = $filter_authors ? "?article wdt:P50 ?q $filter_in_context" : '' ;
 $items_authors = array() ;
-$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:Q5 . $author_filter }" ;
+$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:$instance_prop_id wd:$human_qid . $author_filter }" ;
 #print $sparql ;
 $items_individual_authors = getSPARQLitems ( $sparql ) ;
 
 if (strlen($nm->last_name) < 4) {
 	$items_collective_authors = []; # Otherwise may time out
 } else {
-	$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:Q16334295 . $author_filter }" ;
+	$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:$instance_prop_id/wdt:${subclass_prop_id}* wd:$human_group_qid . $author_filter }" ;
 #print $sparql ;
 	$items_collective_authors = getSPARQLitems ( $sparql ) ;
 }
