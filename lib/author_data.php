@@ -18,6 +18,7 @@ class AuthorData {
 	public $rgprofile = '' ;
 
 	public function __construct ( $author_item ) {
+		global $affiliation_prop_ids;
 		$this->qid = $author_item->getQ() ;
 		$this->label = $author_item->getLabel() ;
 		$this->desc = $author_item->getDesc() ;
@@ -43,25 +44,13 @@ class AuthorData {
 		}
 
 		$org_qid_list = array();
-		if ( $author_item->hasClaims('P108') ) { // employer
-			$claims = $author_item->getClaims('P108') ;
-			foreach ( $claims AS $c ) {
-				$q = $author_item->getTarget ( $c ) ;
-				$org_qid_list[$q] = 1 ;
-			}
-		}
-		if ( $author_item->hasClaims('P1416') ) { // affiliation
-			$claims = $author_item->getClaims('P1416') ;
-			foreach ( $claims AS $c ) {
-				$q = $author_item->getTarget ( $c ) ;
-				$org_qid_list[$q] = 1 ;
-			}
-		}
-		if ( $author_item->hasClaims('P69') ) { // educated at
-			$claims = $author_item->getClaims('P69') ;
-			foreach ( $claims AS $c ) {
-				$q = $author_item->getTarget ( $c ) ;
-				$org_qid_list[$q] = 1 ;
+		foreach ( $affiliation_prop_ids AS $affiliation_prop ) {
+			if ( $author_item->hasClaims( $affiliation_prop ) ) {
+				$claims = $author_item->getClaims( $affiliation_prop ) ;
+				foreach ( $claims AS $c ) {
+					$q = $author_item->getTarget ( $c ) ;
+					$org_qid_list[$q] = 1 ;
+				}
 			}
 		}
 		$this->employer_qids = array_keys($org_qid_list);
