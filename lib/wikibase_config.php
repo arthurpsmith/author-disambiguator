@@ -24,11 +24,14 @@ $topic_prop_id = 'P921';
 $title_prop_id = 'P1476';
 $doi_prop_id = 'P356';
 $pubmed_prop_id = 'P698';
-$orcid_prop_id = 'P496';
-$isni_prop_id = 'P213';
-$researcherid_prop_id = 'P1053';
-$viaf_prop_id = 'P214';
-$researchgate_prop_id = 'P2038';
+$identifier_prop_ids = ['P496','P213','P1053','P214','P2038'];
+$identifier_details = [
+	'P213' => ['label' => 'ISNI', 'url_prefix' => 'http://isni.org/'],
+	'P214' => ['label' => 'VIAF ID', 'url_prefix' => 'https://viaf.org/viaf/'],
+	'P496' => ['label' => 'ORCID', 'url_prefix' => 'https://orcid.org/'],
+	'P1053' => ['label' => 'Researcher ID', 'url_prefix' => 'https://www.researcherid.com/rid/'],
+	'P2038' => ['label' => 'ResearchGate Profile', 'url_prefix' => 'https://www.researchgate.net/profile/']
+];
 $affiliation_prop_ids = ['P108','P1416','P69'];
 
 ?>

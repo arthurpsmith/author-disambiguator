@@ -11,38 +11,20 @@ class AuthorData {
 	public $journal_qids = array() ;
 	public $topic_qids = array() ;
 	public $employer_qids = array() ;
-	public $orcid = '' ;
-	public $isni = '' ;
-	public $rsrchrid = '' ;
-	public $viaf = '' ;
-	public $rgprofile = '' ;
+	public $identifiers = array() ;
 
 	public function __construct ( $author_item ) {
 		global $affiliation_prop_ids;
+		global $identifier_prop_ids;
 		$this->qid = $author_item->getQ() ;
 		$this->label = $author_item->getLabel() ;
 		$this->desc = $author_item->getDesc() ;
-		$x = $author_item->getStrings ( 'P496' ) ;
-		if ( count($x) > 0 ) {
-			$this->orcid = $x[0] ;
+		foreach ( $identifier_prop_ids AS $identifier_prop ) {
+			$x = $author_item->getStrings ( $identifier_prop ) ;
+			if ( count($x) > 0 ) {
+				$this->identifiers[$identifier_prop] = $x[0] ;
+			}
 		}
-		$x = $author_item->getStrings ( 'P213' ) ;
-		if ( count($x) > 0 ) {
-			$this->isni = $x[0] ;
-		}
-		$x = $author_item->getStrings ( 'P1053' ) ;
-		if ( count($x) > 0 ) {
-			$this->rsrchrid = $x[0] ;
-		}
-		$x = $author_item->getStrings ( 'P214' ) ;
-		if ( count($x) > 0 ) {
-			$this->viaf = $x[0] ;
-		}
-		$x = $author_item->getStrings ( 'P2038' ) ;
-		if ( count($x) > 0 ) {
-			$this->rgprofile = $x[0] ;
-		}
-
 		$org_qid_list = array();
 		foreach ( $affiliation_prop_ids AS $affiliation_prop ) {
 			if ( $author_item->hasClaims( $affiliation_prop ) ) {

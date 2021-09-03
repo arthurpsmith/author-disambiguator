@@ -349,21 +349,15 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	print "<td>" . $i->getDesc() . "</td>" ;
 	print "<td>$author_data->article_count</td>" ;
 	print "<td>" ;
-	if ( $author_data->orcid != '' ) {
-		print "ORCID: <a target='_blank' href='https://orcid.org/$author_data->orcid'>$author_data->orcid</a><br/>" ;
-	}
-	if ( $author_data->isni != '' ) {
-		$isni = preg_replace('/\s+/', '', $author_data->isni) ;
-		print "ISNI: <a target='_blank' href='http://isni.org/$isni'>$author_data->isni</a><br/>" ;
-	}
-	if ( $author_data->rsrchrid != '' ) {
-		print "Researcher ID: <a target='_blank' href='https://www.researcherid.com/rid/$author_data->rsrchrid'>$author_data->rsrchrid</a><br/>" ;
-	}
-	if ( $author_data->viaf != '' ) {
-		print "VIAF ID: <a target='_blank' href='https://viaf.org/viaf/$author_data->viaf'>$author_data->viaf</a><br/>" ;
-	}
-	if ( $author_data->rgprofile != '' ) {
-		print "ResearchGate Profile: <a target='_blank' href='https://www.researchgate.net/profile/$author_data->rgprofile'>$author_data->rgprofile</a><br/>" ;
+	foreach ( $author_data->identifiers AS $id_prop => $id_value ) {
+		$id_prop_details = $identifier_details[$id_prop];
+		$prop_label = $id_prop_details['label'];
+		$prop_url = $id_prop_details['url_prefix'] . $id_value;
+		if ( $prop_label == 'ISNI' ) {
+			$prop_url = $id_prop_details['url_prefix'] .
+				preg_replace( '/\s+/', '', $id_value );
+		}
+		print "$prop_label: <a target='_blank' href='$prop_url'>$id_value</a><br/>" ;
 	}
 	print "</td><td style='font-size:9pt'>" ;
 	foreach ( $author_data->employer_qids AS $emp_qid ) {
