@@ -501,6 +501,8 @@ function extract_coauthors_from_sparql_query($sparql) {
 }
 
 function fetch_related_authors($work_qid, $author_qids) {
+	global $cites_work_prop_id ;
+
 	$work_qid_for_sparql = 'wd:' . $work_qid ;
 
 	$coauthors = array();
@@ -519,12 +521,12 @@ function fetch_related_authors($work_qid, $author_qids) {
 		$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
 	}
 	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE {
-        ?q2 wdt:P2860 $work_qid_for_sparql ;
+        ?q2 wdt:$cites_work_prop_id $work_qid_for_sparql ;
             wdt:P50 ?coauthor_qid .
 }" ;
 	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
 	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
-	$work_qid_for_sparql wdt:P2860 ?q2 .
+	$work_qid_for_sparql wdt:$cites_work_prop_id ?q2 .
         ?q2 wdt:P50 ?coauthor_qid .
 }" ;
 	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
