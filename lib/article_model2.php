@@ -16,6 +16,8 @@ class WikidataArticleEntry2 {
 	public $publication_date = '';
 
 	public function __construct ( $item = NULL ) {
+		global $doi_prop_id, $pubmed_prop_id ;
+
 		if (! isset($item) ) {
 			return ;
 		}
@@ -82,11 +84,11 @@ class WikidataArticleEntry2 {
 		foreach ( $claims AS $c ) {
 			$this->published_in[] = $item->getTarget($c) ;
 		}
-		$x = $item->getStrings ( 'P356' ) ;
+		$x = $item->getStrings ( $doi_prop_id ) ;
 		if ( count($x) > 0 ) {
 			$this->doi = $x[0] ;
 		}
-		$x = $item->getStrings ( 'P698' ) ;
+		$x = $item->getStrings ( $pubmed_prop_id ) ;
 		if ( count($x) > 0 ) {
 			$this->pmid = $x[0] ;
 		}
@@ -345,6 +347,8 @@ function claim_uri_to_id($claim_uri) {
 }
 
 function generate_entries_for_batch2( $uri_list ) {
+	global $doi_prop_id, $pubmed_prop_id ;
+
 	$id_uris = implode(' ', $uri_list);
 	$keyed_article_entries = array() ;
 
@@ -352,8 +356,8 @@ function generate_entries_for_batch2( $uri_list ) {
   VALUES ?q { $id_uris } .
   OPTIONAL { ?q wdt:P1476 ?title } .
   OPTIONAL { ?q wdt:P1433 ?published_in } .
-  OPTIONAL { ?q wdt:P356 ?doi } .
-  OPTIONAL { ?q wdt:P698 ?pmid }.
+  OPTIONAL { ?q wdt:$doi_prop_id ?doi } .
+  OPTIONAL { ?q wdt:$pubmed_prop_id ?pmid }.
   OPTIONAL { ?q wdt:P921 ?topic }.
   OPTIONAL { ?q wdt:P577 ?pub_date }.
   SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
