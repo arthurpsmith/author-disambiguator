@@ -36,7 +36,7 @@ Author Wikidata ID:
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <label title='search for multiple matching authors with same ordinal'><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
 <input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
-<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:$topic_prop_id wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
 
@@ -391,7 +391,7 @@ print "<h2>Publishing venues for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $venue_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
-	print "<li>" . wikidata_link($qt, $label, 'black') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3AP1433+wd%3A$qt'>$cnt&times;</a>)</li>" ;
+	print "<li>" . wikidata_link($qt, $label, 'black') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3A$published_in_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
@@ -400,7 +400,7 @@ print "<h2>Topics for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $topic_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
-	print "<li>" . wikidata_link($qt, $label, 'brown') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3AP921+wd%3A$qt'>$cnt&times;</a>)</li>" ;
+	print "<li>" . wikidata_link($qt, $label, 'brown') . " (<a href='?limit=$article_limit&id=$author_qid&filter=wdt%3A$topic_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 

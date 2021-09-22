@@ -124,15 +124,19 @@ class AuthorData {
 	}
 
 	public static function journalsForAuthors($author_items) {
+		global $published_in_prop_id ;
+
 		$query_list = self::_article_id_query_list( $author_items ) ;
-		$sparql = "SELECT DISTINCT ?q ?journal WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:P1433 ?journal . }" ;
+		$sparql = "SELECT DISTINCT ?q ?journal WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:$published_in_prop_id ?journal . }" ;
 		$journals = getSPARQL( $sparql ) ;
 		return self::_extract_item_map( $journals, 'q', 'journal' ) ;
 	}
 
 	public static function topicsForAuthors($author_items) {
+		global $topic_prop_id ;
+
 		$query_list = self::_article_id_query_list( $author_items ) ;
-		$sparql = "SELECT DISTINCT ?q ?topic WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:P921 ?topic . }" ;
+		$sparql = "SELECT DISTINCT ?q ?topic WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:$topic_prop_id ?topic . }" ;
 		$topics = getSPARQL( $sparql ) ;
 		return self::_extract_item_map( $topics, 'q', 'topic' ) ;
 	}

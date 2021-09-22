@@ -117,7 +117,7 @@ foreach ($limit_options AS $limit_option) {
 	print ">$limit_option</option>" ;
 }
 print "</select><br />
-<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:$topic_prop_id wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 <div style='font-size:9pt'><input type='checkbox' name='filter_authors' value='1' $filter_authors_checked /> Filter potential authors as well?</div><br/>";
 
@@ -410,7 +410,7 @@ print "<h2>Publishing venues for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $venue_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
-	print "<li>" . wikidata_link($qt, $label, 'black') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP1433+wd%3A$qt'>$cnt&times;</a>)</li>" ;
+	print "<li>" . wikidata_link($qt, $label, 'black') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3A$published_in_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 
@@ -419,7 +419,7 @@ print "<h2>Topics for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $topic_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
-	print "<li>" . wikidata_link($qt, $label, 'brown') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP921+wd%3A$qt'>$cnt&times;</a>)</li>" ;
+	print "<li>" . wikidata_link($qt, $label, 'brown') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3A$topic_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
 print "</ul>" ;
 

@@ -31,7 +31,7 @@ print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
-<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:P921 wd:Q202864):
+<div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:$topic_prop_id wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
 
