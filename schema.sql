@@ -39,3 +39,10 @@ create table author_lists (
   authors MEDIUMTEXT,
   PRIMARY KEY(list_id)
 );
+
+create table sessions (
+  id VARCHAR(128) NOT NULL,
+  timestamp INT(10) unsigned DEFAULT NULL,
+  data MEDIUMTEXT,
+  PRIMARY KEY(id)
+);
