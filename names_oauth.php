@@ -3,15 +3,19 @@
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
-$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $db_conn);
 $oauth->interactive = true;
 
 $action = get_request ( 'action' , '' ) ;
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'names_oauth.php');
+	$db_conn->close();
 	exit(0);
 }
+$db_conn->close();
 
 $name = trim ( str_replace ( '_' , ' ' , get_request ( 'name' , '' ) ) ) ;
 

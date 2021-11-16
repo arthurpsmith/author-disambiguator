@@ -3,7 +3,9 @@
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 require_once ( __DIR__ . '/lib/wikidata_oauth.php' );
 
-$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file);
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $db_conn);
 $oauth->interactive = false;
 
 $action = get_request ( 'action' , '' ) ;
@@ -16,11 +18,9 @@ $limit = intval(get_request ( 'limit', '100' ));
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'author_lists.php');
+	$db_conn->close();
 	exit(0);
 }
-
-$dbtools = new DatabaseTools($db_passwd_file);
-$db_conn = $dbtools->openToolDB('authors');
 
 if ($action == 'delete') {
 	$delete_list = [$list_id];

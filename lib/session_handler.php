@@ -42,10 +42,12 @@ class MySqlSessionHandler implements SessionHandlerInterface
 
 	public function read($id)
 	{
-		$sql = "SELECT data FROM $this->dbTable where id = :id";
-		$params = array("id" => $id);
-		if ($result = $this->dbConnection->single($sql, $params)) {
-			return (string)$result;
+		$stmt = $this->dbConnection->prepare("SELECT data FROM $this->dbTable where id = ?");
+		$stmt->bind_param("s", $id);
+		$stmt->execute();
+		if ($results = $stmt->get_result()) {
+			$row = $results->fetch_row();
+			return (string) $row[0];
 		} else {
 			return false;
 		}
@@ -53,27 +55,24 @@ class MySqlSessionHandler implements SessionHandlerInterface
 
 	public function write($id, $data)
 	{
-		$sql = "REPLACE INTO $this->dbTable (id, data, timestamp) VALUES(:id, :data, :timestamp)";
-		$params = array(
-			"id" => $id,
-			"data" => $data,
-			"timestamp" => time()
-		);
-		return $this->dbConnection->query($sql, $params);
+		$stmt = $this->dbConnection->prepare("REPLACE INTO $this->dbTable (id, data, timestamp) VALUES(?, ?, ?)");
+		$timestamp = time();
+		$stmt->bind_param("ssi", $id, $data, $timestamp);
+		return $stmt->execute();
 	}
 
 	public function destroy($id)
 	{
-		$sql = "DELETE FROM $this->dbTable WHERE id = :id";
-		$params = array("id" => $id);
-		return $this->dbConnection->query($sql, $params);
+		$stmt = $this->dbConnection->prepare("DELETE FROM $this->dbTable WHERE id = ?");
+		$stmt->bind_param("s", $id);
+		return $stmt->execute();
 	}
 
 	public function gc($maxlifetime)
 	{
 		$limit = time() - intval($maxlifetime);
-		$sql = "DELETE from $this->dbTable WHERE timestamp < :ts";
-		$params = array("ts" => $limit);
-		return $this->dbConnection->query($sql, $params);
+		$stmt = $this->dbConnection->prepare("DELETE from $this->dbTable WHERE timestamp < ?");
+		$stmt->bind_param("i", $limit);
+		return $stmt->execute();
 	}
 }

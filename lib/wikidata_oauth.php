@@ -1,5 +1,7 @@
 <?PHP
 
+require_once ( __DIR__ . '/session_handler.php' ) ;
+
 class WD_OAuth {
 
 	var $use_cookies = true ;
@@ -19,7 +21,7 @@ class WD_OAuth {
 	var $delay_after_upload_s = 1 ;
 	var $interactive = false ;
 	
-	function __construct ( $tool, $ini_file, $token_key='', $token_secret='' ) {
+	function __construct ( $tool, $ini_file, $db_conn, $token_key='', $token_secret='' ) {
 		global $wikibase_api_url ;
 		$this->tool = $tool ;
 		$this->ini_file = $ini_file ;
@@ -32,7 +34,7 @@ class WD_OAuth {
 
 		$this->loadIniFile() ;
 		if ($token_key == '') {
-			$this->setupSession() ;
+			$this->setupSession( $db_conn ) ;
 			$this->loadToken() ;
 			if ( isset( $_GET['oauth_verifier'] ) && $_GET['oauth_verifier'] ) {
 				$this->fetchAccessToken();
@@ -62,8 +64,8 @@ class WD_OAuth {
 		if ( $type == 'upload' ) sleep ( $this->delay_after_upload_s ) ;
 	}
 	
-	function logout () {
-		$this->setupSession() ;
+	function logout ( $db_conn ) {
+		$this->setupSession( $db_conn ) ;
 		session_start();
 		setcookie ( 'tokenKey' , '' , 1 , '/'.$this->tool.'/' ) ;
 		setcookie ( 'tokenSecret' , '' , 1 , '/'.$this->tool.'/' ) ;
@@ -72,7 +74,12 @@ class WD_OAuth {
 		session_write_close();
 	}
 	
-	function setupSession() {
+	function setupSession( $db_conn ) {
+		// Initialize session handler using database:
+		$db_save_handler = new MySqlSessionHandler();
+		$db_save_handler->setDbConnectioN( $db_conn );
+		$db_save_handler->setDbTable( 'sessions' );
+		session_set_save_handler( $db_save_handler );
 		// Setup the session cookie
 		session_name( $this->tool );
 		$params = session_get_cookie_params();
