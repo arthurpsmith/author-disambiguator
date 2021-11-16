@@ -19,19 +19,18 @@ if (! $token_key) {
 	exit(1);
 }
 
-$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $token_key, $token_secret);
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $db_conn, $token_key, $token_secret);
 if ($oauth->isAuthOK()) {
 	print ("$pid - Authorized for " .  $oauth->userinfo->name . "\n") ;
 } else {
 	print ("$pid - Authorization not working - exiting!\n");
+	$db_conn->close();
 	exit(1);
 }
 
 $batch_mgr = new BatchManager($oauth->userinfo->name);
-
-$dbtools = new DatabaseTools($db_passwd_file);
-$db_conn = $dbtools->openToolDB('authors');
-
 $batch_mgr->load($db_conn);
 
 if ($batch_mgr->is_running()) {

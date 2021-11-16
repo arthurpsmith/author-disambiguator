@@ -25,19 +25,20 @@ if (! $token_key) {
 	exit(1);
 }
 
-$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $token_key, $token_secret);
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+$oauth = new WD_OAuth('author-disambiguator', $oauth_ini_file, $db_conn, $token_key, $token_secret);
 if ($oauth->isAuthOK()) {
 	print ("$pid - Authorized for " .  $oauth->userinfo->name . "\n") ;
 } else {
 	print ("$pid - Authorization not working - exiting!\n");
+	$db_conn->close();
 	exit(1);
 }
 
 $eg_string = edit_groups_string($batch_id) ;
 
 $wil = new WikidataItemList ;
-$dbtools = new DatabaseTools($db_passwd_file);
-$db_conn = $dbtools->openToolDB('authors');
 $dbquery = "UPDATE batches SET process_id = $pid WHERE batch_id = '$batch_id'";
 $db_conn->query($dbquery);
 
