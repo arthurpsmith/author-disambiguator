@@ -120,6 +120,14 @@ class NameModel {
 		return implode(' ', $name_parts);
 	}
 
+	public function first_second_last_name() {
+		$name_parts = array();
+		$name_parts[] = $this->first_name;
+		$name_parts[] = $this->middle_names[0];
+		$name_parts[] = $this->last_name;
+		return implode(' ', $name_parts);
+	}
+
 	public function first_last_suffixes() {
 		$name_parts = array();
 		$name_parts[] = $this->first_name;
@@ -286,8 +294,15 @@ class NameModel {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->nodash_nm->fuzzy_search_strings(), 1));
 		}
 // Adopt fuzzy search strings for shorter versions of the name:
-		if (count($this->middle_names) > 0) {
+		if (count($this->middle_names) == 1) {
 			$nm = new NameModel($this->first_last_name());
+			$names = $nm->fuzzy_search_strings();
+			foreach($names as $name) {
+				$search_strings[$name] = 1;
+			}
+		}
+		if (count($this->middle_names) > 1) {
+			$nm = new NameModel($this->first_second_last_name());
 			$names = $nm->fuzzy_search_strings();
 			foreach($names as $name) {
 				$search_strings[$name] = 1;
