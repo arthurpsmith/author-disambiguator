@@ -11,9 +11,9 @@ class NameModel {
 	public $latin1_nm = NULL;
 	public $nodash_nm = NULL;
 
-	const PREFIX_PATTERN = '/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$/i' ;
-	const SUFFIX_PATTERN = '/^([SJ]r\.?|I{1,3}V?|VI{0,3})$/' ;
-	const SURNAME_PART = '/^(van|der|de|la|von|del|den|della|da|mac|das|ter|di|vander|vanden|le|das|sant|st|\'t)$/i' ;
+	const PREFIX_PATTERN = '^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$' ;
+	const SUFFIX_PATTERN = '^([SJ]r\.?|I{1,3}V?|VI{0,3})$' ;
+	const SURNAME_PART = '^(van|der|de|la|von|del|den|della|da|mac|das|ter|di|vander|vanden|le|das|sant|st|\'t)$' ;
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
@@ -44,7 +44,7 @@ class NameModel {
 // Pull out prefix(es) and first name:
 		while ( count($name_parts) > 0 ) {
 			$part = array_shift($name_parts) ;
-			if ( mb_ereg_match(NameModel::PREFIX_PATTERN, $part) ) {
+			if ( mb_ereg_match(NameModel::PREFIX_PATTERN, $part, 'i') ) {
 				$name_prefixes[] = $part ;
 			} else {
 				array_unshift($name_parts, $part);
@@ -57,13 +57,13 @@ class NameModel {
 		while ( count($name_parts) > 0 ) {
 			$part = array_pop($name_parts) ;
 			if ($part == '') continue;
-			if ( mb_ereg_match(NameModel::SUFFIX_PATTERN, $part) ) {
+			if ( mb_ereg_match(NameModel::SUFFIX_PATTERN, $part, 'i') ) {
 				array_unshift($name_suffixes, $part);
 				continue ;
 			} else if (count($surname_pieces) == 0) {
 				$surname_pieces[] = $part ;
 				continue;
-			} else if ( mb_ereg_match(NameModel::SURNAME_PART, $part) ) {
+			} else if ( mb_ereg_match(NameModel::SURNAME_PART, $part, 'i') ) {
 				array_unshift($surname_pieces, $part);
 				continue;
 			} else {
