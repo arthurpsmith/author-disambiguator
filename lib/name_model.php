@@ -10,6 +10,7 @@ class NameModel {
 	public $ascii_nm = NULL;
 	public $latin1_nm = NULL;
 	public $nodash_nm = NULL;
+	public $ucfirst_nm = NULL;
 
 	const PREFIX_PATTERN = '^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$' ;
 	const SUFFIX_PATTERN = '^([SJ]r\.?|I{1,3}V?|VI{0,3})$' ;
@@ -32,6 +33,10 @@ class NameModel {
 		if (mb_strpos($name, '-') !== false) {
 			$nodash_name = mb_ereg_replace('-', ' ', $name);
 			$this->nodash_nm = new NameModel($nodash_name);
+		}
+		$ucfirst_name = mb_convert_case($utf8_name, MB_CASE_TITLE);
+		if (($ucfirst_name) && ($ucfirst_name != $name)) {
+			$this->ucfirst_nm = new NameModel($ucfirst_name);
 		}
 // Split if there's a '.' and 0 or more spaces, or no 1+ spaces with no '.' but not if there's a '-' character after
 		$name_parts = mb_split('((?<=\.)\s*|\s+)(?!-)', $name);
@@ -267,6 +272,9 @@ class NameModel {
 		if (isset($this->nodash_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->nodash_nm->default_search_strings(), 1));
 		}
+		if (isset($this->ucfirst_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->ucfirst_nm->default_search_strings(), 1));
+		}
 		$search_strings[$this->name_provided] = 1;
 		$search_strings[$this->name_with_middles_and_suffixes()] = 1;
 		$search_strings[$this->name_with_middles()] = 1;
@@ -292,6 +300,9 @@ class NameModel {
 		}
 		if (isset($this->nodash_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->nodash_nm->fuzzy_search_strings(), 1));
+		}
+		if (isset($this->ucfirst_nm)) {
+			$search_strings = array_merge($search_strings, array_fill_keys($this->ucfirst_nm->fuzzy_search_strings(), 1));
 		}
 // Adopt fuzzy search strings for shorter versions of the name:
 		if (count($this->middle_names) == 1) {
