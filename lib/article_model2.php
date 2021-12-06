@@ -276,15 +276,19 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 		}
 	} else { # No linked authors yet
 		$mapping = array_combine($author_names, array_map('strlen', $author_names));
-		$longest_name = array_keys($mapping, max($mapping))[0];
-		$nm = new NameModel($longest_name);
-		$names = $nm->fuzzy_ignore_nonascii();
-		foreach ($author_names as $a) {
-			$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $a));
-			if ( ! (in_array ( $a , $names ) || in_array( $ta, $names) ) ) {
-				$eval = FALSE;
-				break;
+		$longest_names = array_keys($mapping, max($mapping));
+		foreach ($longest_names AS $longest_name) {
+			$eval = TRUE;
+			$nm = new NameModel($longest_name);
+			$names = $nm->fuzzy_ignore_nonascii();
+			foreach ($author_names as $a) {
+				$ta = strtoupper(preg_replace('/[^A-Za-z]/', '', $a));
+				if ( ! (in_array ( $a , $names ) || in_array( $ta, $names) ) ) {
+					$eval = FALSE;
+					break;
+				}
 			}
+			if ( $eval ) break;
 		}
 	}
 	return $eval;
