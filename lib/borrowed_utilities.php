@@ -397,6 +397,7 @@ class WikidataItemList {
 		$j = json_decode ( $txt ) ;
 		if ( !isset($j) or !isset($j->entities) ) {
 			print "<div>JSON decode failed!</div>";
+			print "<pre>$txt</pre>";
 			continue ;
 		}
 		$this->parseEntities ( $j ) ;
