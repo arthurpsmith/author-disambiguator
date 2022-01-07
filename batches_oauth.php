@@ -241,22 +241,22 @@ $(document).ready ( function () {
 } ) ;
 </script>';
 
-	if ($batch->is_running()) {
-		print("Still processing... ");
-		print("<a href='?id=$batch_id&action=stop&batch_id=$batch_id'>Stop batch?</a>");
-		print($reload_js);
-	} else if ($batch->queued) {
+	if ($batch->queued) {
 		print("Queued (will run after earlier batches complete) ");
 		if ($owner == $batch->owner) {
 			print "<a href='?id=$batch_id&action=remove_from_queue&batch_id=$batch_id'>Remove from queue?</a>";
 		}
 		print($reload_js);
+	} else if ($batch->has_ready()) {
+		print("Still processing... ");
+		if ($owner == $batch->owner) {
+			print("<a href='?id=$batch_id&action=stop&batch_id=$batch_id'>Stop batch?</a>");
+		}
+		print($reload_js);
 	} else {
 		print("Batch run ended");
 		if ($owner == $batch->owner) {
-			if ($batch->has_ready()) {
-				print " <a href='?id=$batch_id&action=restart&batch_id=$batch_id'>Restart batch?</a></td>";
-			} else if ($batch->has_error()) {
+			if ($batch->has_error()) {
 				print " <a href='?id=$batch_id&action=reset&batch_id=$batch_id'>Reset errors?</a>";
 			} else {
 				print " <a href='?action=delete&batch_id=$batch_id'>Delete batch?</a>";
