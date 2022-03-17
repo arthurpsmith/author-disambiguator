@@ -14,6 +14,7 @@ class WikidataArticleEntry2 {
 	public $pmid = '' ;
 	public $topics = array() ;
 	public $publication_date = '';
+	public $shifted_numbers = array();
 
 	public function __construct ( $item = NULL ) {
 		global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
@@ -122,7 +123,10 @@ class WikidataArticleEntry2 {
 		return ($adate > $bdate) ? -1 : 1 ;
 	}
 
-	public function merge_candidates ($wil, $all_stated_as) {
+# For each numeric index check if there are multiple author names or ids
+# that are compatible (names are same or could be mapped in some variation)
+# Use $auth_num_shift to adjust index of entries if incompatibilties found
+	public function merge_candidates ($wil, $all_stated_as, $auth_num_shift) {
 		$evaluation_by_index = array();
 		$name_indexes = array_keys($this->author_names);
 		$auth_indexes = array_keys($this->authors);
@@ -137,9 +141,81 @@ class WikidataArticleEntry2 {
 			if ( isset($this->authors[$num]) ) {
 				$authors = $this->authors[$num] ;
 			}
-			$evaluation_by_index[$num] = evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wil) ;
+			if ( count($author_names) + count($authors) <= 1 ) {
+				$evaluation_by_index[$num] = FALSE;
+				continue;
+			}
+			$eval = evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wil) ;
+			if ( ($auth_num_shift != 0) && (! $eval ) && ( $num != 'unordered' ) ) {
+				$eval = $this->try_shifting( $num, $auth_num_shift, $all_stated_as, $wil, $evaluation_by_index );
+			}
+			$evaluation_by_index[$num] = $eval;
 		}
 		return $evaluation_by_index;
+	}
+
+	private function try_shifting( $num, $auth_num_shift, $all_stated_as, $wil, &$evaluation_by_index ) {
+		$shift_count = 0;
+		$num2 = $num + $auth_num_shift;
+		$author_names = [] ;
+		if ( isset($this->author_names[$num]) ) {
+			$author_names = $this->author_names[$num] ;
+		}
+		$author_names2 = [];
+		if ( isset($this->author_names[$num2]) ) {
+			$author_names2 = $this->author_names[$num2] ;
+		}
+		$authors = [] ;
+		if ( isset($this->authors[$num]) ) {
+			$authors = $this->authors[$num] ;
+		}
+		$authors2 = [];
+		if ( isset($this->authors[$num2]) ) {
+			$authors2 = $this->authors[$num2] ;
+		}
+		$eval = FALSE;
+		if ( count($author_names2) + count($authors2) == 0 ) {
+			return $eval;
+		}
+		foreach ( $author_names as $cid => $name ) {
+# Don't shift twice:
+			if ( isset($this->shifted_numbers[$cid]) ) {
+				continue;
+			}
+			$names2_copy = $author_names2;
+			$names2_copy[$cid] = $name;
+			$eval2 = evaluate_names_for_ordinal($names2_copy, $authors2, $all_stated_as, $wil) ;
+			if ( $eval2 ) { # Do the shift:
+				$this->shifted_numbers[$cid] = 1;
+				$shift_count++;
+				$author_names2[$cid] = $name;
+				$this->author_names[$num2] = $author_names2;
+				unset($author_names[$cid]);
+				$this->author_names[$num] = $author_names;
+				$evaluation_by_index[$num2] = $eval2;
+			}
+		}
+		foreach ( $authors as $cid => $qid ) {
+# Don't shift twice:
+			if ( isset($this->shifted_numbers[$cid]) ) {
+				continue;
+			}
+			$authors2_copy = $authors2;
+			$authors2_copy[$cid] = $qid;
+			$eval2 = evaluate_names_for_ordinal($author_names2, $authors2_copy, $all_stated_as, $wil) ;
+			if ( $eval2 ) { # Do the shift:
+				$this->shifted_numbers[$cid] = 1;
+				$shift_count++;
+				$authors2[$cid] = $qid;
+				$this->authors[$num2] = $authors2;
+				unset($authors[$cid]);
+				$this->authors[$num] = $authors;
+				$evaluation_by_index[$num2] = $eval2;
+			}
+		}
+		if ( $shift_count > 0 ) {
+			$eval = evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wil) ;
+		}
 	}
 
 	public function repeated_ids () {

@@ -19,6 +19,7 @@ $renumber = $match ? 0: $renumber ; # Supercede renumbering if match selected
 $renumber_checked = $renumber ? 'checked' : '' ;
 $match_checked = $match ? 'checked' : '' ;
 $use_stated_as_checked = $use_stated_as ? 'checked' : '' ;
+$auth_num_shift = get_request ( 'auth_num_shift', 0 );
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'work_item_oauth.php');
@@ -34,6 +35,7 @@ if ($action) { # reset checkboxes after action
 	$renumber_checked = '';
 	$match_checked = '';
 	$use_stated_as_checked = '';
+	$auth_num_shift = 0;
 }
 
 print disambig_header( True );
@@ -304,6 +306,23 @@ printf("%d/%d (%.2f%%) identified,", $id_count, $max_num, $identified_pct);
 printf(" with %d/%d (%.2f%%) names remaining to match", $name_count, $max_num, $name_pct);
 print "</div>";
 
+if ($renumber) {
+    print "<div>";
+    if ( $auth_num_shift != 0 ) {
+       print "Entries shifted by $auth_num_shift indicated with a '*'";
+    } else {
+	    print "<form method='get' class='form form-inline'>";
+	    print "Attempt to fix mismatches with a shift: "; 
+	    print "<input name='auth_num_shift' type='text' placeholder='-2' />
+<input type='hidden' name='batch_id' value='$batch_id'>
+<input type='hidden' name='id' value='$work_qid'>
+<input type='hidden' name='renumber' value='1'>
+<input type='submit' class='btn btn-primary' name='doit' value='Shift Authors' />
+</form>" ;
+    }
+    print "</div>";
+}
+
 # Fetch 'stated as' values for all identified authors:
 $author_qid_map = array();
 foreach ( $article_entry->authors as $author_qid_list ) {
@@ -339,7 +358,7 @@ if ($match) {
 	$wil->loadItems ( $to_load ) ;
 } else {
 	$stated_as_names = fetch_stated_as_for_authors($author_qids);
-	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
+	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names, $auth_num_shift);
 }
 $repeated_ids = $article_entry->repeated_ids();
 
@@ -448,6 +467,9 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 	if ($renumber) {
 		foreach ( $display_list AS $cid => $display_name ) {
 			print "<input size='1' name='ordinals[$cid]' value='$num'/>$display_name";
+			if (isset($article_entry->shifted_numbers[$cid])) {
+				print "*";
+			}
 		}
 	} else {
 		print "[$num] ";
