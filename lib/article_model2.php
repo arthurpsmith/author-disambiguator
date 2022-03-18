@@ -272,6 +272,67 @@ class WikidataArticleEntry2 {
 		return $matches;
 	}
 
+# Auto-match unordered authors:
+# (1) if another entry with same qid has a series ordinal value, move there
+# (2) if not, run match algorithm for these qid's with author names list
+	public function auto_match_unordered( $wil ) {
+		$unordered_auths = $this->authors['unordered'];
+		$repeated_ids = $this->repeated_ids();
+
+		foreach ( $unordered_auths AS $cid => $qid ) {
+			if ( ! isset($repeated_ids[$qid]) ) {
+				continue;
+			}
+			$rpt_nums = $repeated_ids[$qid];
+			$fix_num = -1;
+			$single_num = 1;
+			foreach ($rpt_nums as $rpt_num) {
+				if ($rpt_num != 'unordered') {
+					if ($fix_num == -1) {
+						$fix_num = $rpt_num;
+					} elseif ($fix_num != $rpt_num) {
+						$single_num = 0;
+					}
+				}
+			}
+			if ( $single_num && ($fix_num >= 0) ) {
+				$this->authors[$fix_num][$cid] = $qid;
+				unset($this->authors['unordered'][$cid]);
+				$this->shifted_numbers[$cid] = 1;
+			}
+		}
+		$unordered_auths = $this->authors['unordered'];
+		$stated_as = fetch_stated_as_for_authors($unordered_auths);
+		$matches = $this->match_candidates( $wil, $unordered_auths, $stated_as );
+		$candidate_match_nums = [];
+		foreach ( $matches AS $num => $qid_list ) {
+			foreach ( $qid_list AS $qid ) {
+				if (! isset($candidate_match_nums[$qid] ) ) {
+					$candidate_match_nums[$qid] = [$num];
+				} else {
+					$candidate_match_nums[$qid][] = $num;
+				}
+			}
+		}
+		foreach ( $unordered_auths AS $cid => $qid ) {
+			if ( ! isset($candidate_match_nums[$qid]) ) {
+				continue;
+			}
+			$nums = array_unique($candidate_match_nums[$qid]);
+			if (count($nums) > 1) {
+				continue;
+			}
+			$this->authors[$nums[0]][$cid] = $qid;
+			unset($this->authors['unordered'][$cid]);
+			$this->shifted_numbers[$cid] = 1;
+		}
+		if (count($this->authors['unordered']) == 0 ) {
+			unset($this->authors['unordered']);
+			return TRUE;
+		}
+		return FALSE;
+	}
+
 	public function author_statistics() {
 		$stats = [];
 

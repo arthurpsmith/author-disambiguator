@@ -20,6 +20,7 @@ $renumber_checked = $renumber ? 'checked' : '' ;
 $match_checked = $match ? 'checked' : '' ;
 $use_stated_as_checked = $use_stated_as ? 'checked' : '' ;
 $auth_num_shift = get_request ( 'auth_num_shift', 0 );
+$auto_match_unordered = get_request ( 'auto_match_unordered', 0 );
 
 if ($action == 'authorize') {
 	$oauth->doAuthorizationRedirect($oauth_url_prefix . 'work_item_oauth.php');
@@ -36,6 +37,7 @@ if ($action) { # reset checkboxes after action
 	$match_checked = '';
 	$use_stated_as_checked = '';
 	$auth_num_shift = 0;
+	$auto_match_unordered = 0;
 }
 
 print disambig_header( True );
@@ -310,6 +312,8 @@ if ($renumber) {
     print "<div>";
     if ( $auth_num_shift != 0 ) {
        print "Entries shifted by $auth_num_shift indicated with a '*'";
+    } elseif ( $auto_match_unordered ) {
+       print "Entries automatically renumbered indicated with a '*'";
     } else {
 	    print "<form method='get' class='form form-inline'>";
 	    print "Attempt to fix mismatches with a shift: "; 
@@ -323,6 +327,7 @@ if ($renumber) {
     print "</div>";
 }
 
+
 # Fetch 'stated as' values for all identified authors:
 $author_qid_map = array();
 foreach ( $article_entry->authors as $author_qid_list ) {
@@ -331,6 +336,14 @@ foreach ( $article_entry->authors as $author_qid_list ) {
 	}
 }
 $author_qids = array_keys($author_qid_map);
+
+if ($auto_match_unordered) {
+	$match_success = $article_entry->auto_match_unordered( $wil );
+	if (! $match_success ) {
+		print "<div>WARNING: Some unordered authors could not be auto-matched, please review</div>";
+	}
+}
+
 if ($match) {
 	$related_authors = NULL;
 	if ($author_list_id != '') {
@@ -360,7 +373,6 @@ if ($match) {
 	$stated_as_names = fetch_stated_as_for_authors($author_qids);
 	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names, $auth_num_shift);
 }
-$repeated_ids = $article_entry->repeated_ids();
 
 # Reload author items in case some missed from SPARQL:
 $to_load = [];
@@ -370,6 +382,8 @@ foreach ( $article_entry->authors AS $num => $qt_list ) {
 	}
 }
 $wil->loadItems ( $to_load ) ;
+
+$repeated_ids = $article_entry->repeated_ids();
 
 // Author list
 print "<h2>Authors</h2>" ;
@@ -527,6 +541,7 @@ print "</table>\n" ;
 
 if (isset($formatted_authors['unordered']) ) {
 	print "<h3>Unordered authors - set author number or check to remove</h3>" ;
+	print "<a href='?id=$work_qid&batch_id=$batch_id&renumber=1&auto_match_unordered=1'>Auto-match unordered authors?</a>";
 	$merge_count += 1;
 	print "<ul>";
 	foreach ( $formatted_authors['unordered'] AS $cid => $formatted_auth ) {
