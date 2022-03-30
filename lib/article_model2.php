@@ -126,7 +126,7 @@ class WikidataArticleEntry2 {
 # For each numeric index check if there are multiple author names or ids
 # that are compatible (names are same or could be mapped in some variation)
 # Use $auth_num_shift to adjust index of entries if incompatibilties found
-	public function merge_candidates ($wil, $all_stated_as, $auth_num_shift) {
+	public function merge_candidates ($wil, $all_stated_as, $auth_num_shift = 0) {
 		$evaluation_by_index = array();
 		$name_indexes = array_keys($this->author_names);
 		$auth_indexes = array_keys($this->authors);
