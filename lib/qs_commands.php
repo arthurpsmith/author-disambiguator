@@ -8,6 +8,7 @@ function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchg
 	$commands[] = "CREATE" ;
 	$commands[] = "LAST\tLen\t\"$name\""  ;
 	$commands[] = "LAST\t$instance_prop_id\t$human_qid"  ;
+	$commands[] = "LAST\t$occupation_prop_id\t$researcher_qid"  ;
 	if ( $orcid_author != '' ) $commands[] = "LAST\tP496\t\"$orcid_author\"" ;
 	if ( $viaf_author != '' ) $commands[] = "LAST\tP214\t\"$viaf_author\"" ;
 	if ( $researchgate_author != '' ) $commands[] = "LAST\tP2038\t\"$researchgate_author\"" ;
