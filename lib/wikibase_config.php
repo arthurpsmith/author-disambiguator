@@ -10,6 +10,7 @@ $reasonator_prefix = 'https://reasonator.toolforge.org/?q=';
 $sqid_prefix = 'https://sqid.toolforge.org/#/view?id=';
 
 $human_qid = 'Q5';
+$researcher_qid = 'Q1650915';
 $human_group_qid = 'Q16334295';
 $instance_prop_id = 'P31';
 $subclass_prop_id = 'P279';
@@ -24,6 +25,7 @@ $topic_prop_id = 'P921';
 $title_prop_id = 'P1476';
 $doi_prop_id = 'P356';
 $pubmed_prop_id = 'P698';
+$occupation_prop_id = 'P106';
 $identifier_prop_ids = ['P496','P213','P1053','P214','P2038'];
 $identifier_details = [
 	'P213' => ['label' => 'ISNI', 'url_prefix' => 'http://isni.org/'],
