@@ -4,6 +4,8 @@
 function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author ) {
 	global $human_qid;
 	global $instance_prop_id;
+	global $occupation_prop_id;
+	global $researcher_qid;
 	$commands = array() ;
 	$commands[] = "CREATE" ;
 	$commands[] = "LAST\tLen\t\"$name\""  ;
