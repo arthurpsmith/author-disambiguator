@@ -10,7 +10,7 @@ class Cluster {
 	public $journal_qids = array() ;
 	public $topic_qids = array() ;
 	public $potential_author_qids = array() ;
-	public $article_list = array() ;
+	public $article_authnums = array() ;
 
 	public function __construct ( $author_list, $article_list ) {
 		$this->addAuthorList( $author_list );
@@ -54,6 +54,29 @@ class Cluster {
 			if (isset($article->authors_stated_as[$author_q])) {
 				$stated_name = $article->authors_stated_as[$author_q] ;
 				if (! empty($stated_name) ) $this->author_names[$stated_name] = 1 ;
+			}
+		}
+		foreach ( $article->published_in AS $journal_qid ) {
+			$this->journal_qids[$journal_qid] = 1 ;
+		}
+		foreach ( $article->topics AS $topic_qid ) {
+			$this->topic_qids[$topic_qid] = 1 ;
+		}
+	}
+
+	public function addArticleItem2( $article ) {
+		$this->articles[$article->q] = 1 ;
+		foreach ( $article->author_names AS $name_list ) {
+			foreach ( $name_list AS $name ) {
+				$this->author_names[$name] = 1 ;
+			}
+		}
+		foreach ( $article->authors AS $qid_list ) {
+			foreach ( $qid_list AS $author_q ) {
+				if (isset($article->authors_stated_as[$author_q])) {
+					$stated_name = $article->authors_stated_as[$author_q] ;
+					if (! empty($stated_name) ) $this->author_names[$stated_name] = 1 ;
+				}
 			}
 		}
 		foreach ( $article->published_in AS $journal_qid ) {

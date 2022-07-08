@@ -1,0 +1,5 @@
+[client]
+password = MY_DB_PASSWD
+user = MY_DB_USER
+host = MY_DB_HOST
+port = MY_DB_PORT

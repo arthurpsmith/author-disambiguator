@@ -2,6 +2,22 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
+$dbtools = new DatabaseTools($db_passwd_file);
+$db_conn = $dbtools->openToolDB('authors');
+if (limit_requests( $db_conn, 10 ) ) {
+	$db_conn->close();
+
+	# This isn't (yet) supported in oauth, link just to names page:
+	$oauth_url = str_replace('match_multi_authors.php', 'author_item_oauth.php', $_SERVER['REQUEST_URI']);
+
+	print disambig_header( False );
+	print "<h1>Too many requests</h1>";
+	print "Please wait before making another request of this service; note that use of <a href='$oauth_url'>the OAuth option</a> is not rate-limited.";
+	print_footer() ;
+	exit ( 0 ) ;
+}
+$db_conn->close();
+
 $action = get_request ( 'action' , '' ) ;
 $author_qids_string = get_request( 'id', '' ) ;
 $article_limit = get_request ( 'limit', '' ) ;
@@ -14,12 +30,12 @@ foreach ($name_strings AS $q => $name_list) {
 	$input_names[$q] = preg_split('/[\r\n]+/', $name_list);
 }
 
-print get_common_header ( '' , 'Author Disambiguator' ) ;
+print disambig_header( False );
 
 print "<h3>Multi-author match</h3>";
 
 if ( $action == 'match' ) {
-	print "<form method='post' class='form' action='https://tools.wmflabs.org/quickstatements/api.php'>" ;
+	print "<form method='post' class='form' action='$quickstatements_api_url'>" ;
 	print "<input type='hidden' name='action' value='import' />" ;
 	print "<input type='hidden' name='temporary' value='1' />" ;
 	print "<input type='hidden' name='openpage' value='1' />" ;
@@ -133,14 +149,15 @@ $limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
 $article_items = generate_article_entries( $items_papers );
-$to_load = array() ;
+
+# Just need labels for the following:
+$qids_to_label = array();
 foreach ( $article_items AS $article ) {
-	foreach ( $article->authors AS $auth ) $to_load[] = $auth ;
-	foreach ( $article->published_in AS $pub ) $to_load[] = $pub ;
-	foreach ( $article->topics AS $topic ) $to_load[] = $topic ;
+	foreach ( $article->authors AS $auth) $qids_to_label[$auth] = 1 ;
+	foreach ( $article->published_in AS $pub ) $qids_to_label[$pub] = 1 ;
+	foreach ( $article->topics AS $topic ) $qids_to_label[$topic] = 1 ;
 }
-$to_load = array_unique( $to_load );
-$wil->loadItems ( $to_load ) ;
+$qid_labels = AuthorData::labelsForItems(array_keys($qids_to_label));
 
 usort( $article_items, 'WikidataArticleEntry::dateCompare' ) ;
 
@@ -185,13 +202,12 @@ foreach ( $article_items AS $article ) {
 	}
 
 	foreach ( $article->authors AS $num => $qt ) {
-		$i2 = $wil->getItem ( $qt ) ;
-		$label = $i2->getLabel() ;
+		$label = $qid_labels[$qt];
 		$display_num = $num ;
 		if (isset($formatted_authors[$num])) {
 			$display_num = "$num-$qt";
 		}
-		$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=" . $i2->getQ() . "' style='color:green'>$label</a>" ;
+		$formatted_authors[$display_num] = "[$display_num]<a href='author_item.php?id=$qt' style='color:green'>$label</a>" ;
 		if ( in_array($qt, $author_qids) ) {
 			$highlighted_authors[] = $display_num ;
 		} else {
@@ -203,14 +219,14 @@ foreach ( $article_items AS $article ) {
 
 	$published_in = array() ;
 	foreach ( $article->published_in AS $qt ) {
-		$i2 = $wil->getItem ( $qt ) ;
-		if ( isset($i2) ) $published_in[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'black') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/venue/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+		$label = $qid_labels[$qt];
+		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/missing' target='_blank'>missing</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
 	print "<tr>" ;
-	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . " <a href='work_item.php?id=" . $q . "'>[work]</a></td>" ;
-	print "<td style='width:50%;font-size:9pt'>$authors_list</td>" ;
+	print "<td style='width:20%;font-size:10pt'>" . wikidata_link($q, $article->title, '') . "</td>" ;
+	print "<td style='width:50%;font-size:9pt'>$authors_list <a href='work_item.php?id=$q'>[Full author list]</a></td>" ;
 	print "<td style='font-size:9pt'>$published_in_list</td>" ;
 	print "<td style='font-size:9pt'>" ;
 	if ( $article->doi != '' ) {
@@ -224,9 +240,8 @@ foreach ( $article_items AS $article ) {
 	if ( count($article->topics) > 0 ) {
 		$topics = [] ;
 		foreach ( $article->topics AS $qt ) {
-			$i2 = $wil->getItem($qt) ;
-			if ( !isset($i2) ) continue ;
-			$topics[] = wikidata_link($i2->getQ(), $i2->getLabel(), 'brown') . "&nbsp;[<a href='https://tools.wmflabs.org/scholia/topic/" . $i2->getQ() . "/missing' target='_blank'>missing</a>]" ;
+			$label = $qid_labels[$qt];
+			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/missing' target='_blank'>missing</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
@@ -246,8 +261,7 @@ print "</div><h2>Common author items in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
 	if ( $cnt == 1 ) break ;
-	$i2 = $wil->getItem($qt) ;
-	$label = $i2->getLabel() ;
+	$label = $qid_labels[$qt];
 	print "<li><a href='author_item.php?limit=50&id=$qt' style='color:green'>$label</a> ($cnt&times;) - <a href='match_multi_authors.php?limit=50&id=$author_qids_string+$qt'>Add to search</a></li>" ;
 }
 print "</ul>" ;

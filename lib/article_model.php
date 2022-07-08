@@ -13,12 +13,16 @@ class WikidataArticleEntry {
 	public $publication_date = '';
 
 	public function __construct ( $item = NULL ) {
+		global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
+			$published_date_prop_id, $published_in_prop_id,
+			$topic_prop_id ;
+
 		if (! isset($item) ) {
 			return ;
 		}
 		$this->q = $item->getQ() ;
 
-		$title = $item->getStrings ( 'P1476' ) ;
+		$title = $item->getStrings ( $title_prop_id ) ;
 		if ( count($title) == 0 ) $this->title = $item->getLabel() ;
 		else $this->title = $title[0] ;
 
@@ -58,27 +62,27 @@ class WikidataArticleEntry {
 		}
 		ksort($this->authors) ;
 
-		$claims = $item->getClaims ( 'P1433' ) ;
+		$claims = $item->getClaims ( $published_in_prop_id ) ;
 		foreach ( $claims AS $c ) {
 			$this->published_in[] = $item->getTarget($c) ;
 		}
-		$x = $item->getStrings ( 'P356' ) ;
+		$x = $item->getStrings ( $doi_prop_id ) ;
 		if ( count($x) > 0 ) {
 			$this->doi = $x[0] ;
 		}
-		$x = $item->getStrings ( 'P698' ) ;
+		$x = $item->getStrings ( $pubmed_prop_id ) ;
 		if ( count($x) > 0 ) {
 			$this->pmid = $x[0] ;
 		}
-		if ( $item->hasClaims('P921') ) { // main subject
-			$claims = $item->getClaims('P921') ;
+		if ( $item->hasClaims( $topic_prop_id ) ) { // main subject
+			$claims = $item->getClaims( $topic_prop_id ) ;
 			foreach ( $claims AS $c ) {
 				$qt = $item->getTarget ( $c ) ;
 				$this->topics[] = $qt ;
 			}
 		}
-		if ( $item->hasClaims('P577') ) { // publication date
-			$claims = $item->getClaims('P577') ;
+		if ( $item->hasClaims( $published_date_prop_id ) ) { // publication date
+			$claims = $item->getClaims( $published_date_prop_id ) ;
 			if ( count($claims) > 0 ) $this->publication_date = $claims[0]->mainsnak->datavalue->value->time ;
 		}
 	}
@@ -100,7 +104,8 @@ class WikidataArticleEntry {
 }
 
 function item_id_from_uri ( $item_uri ) {
-	return preg_replace( ' /http:\/\/www.wikidata.org\/entity\//', '', $item_uri );
+	global $wikibase_endpoint ;
+	return preg_replace( "/http:\/\/$wikibase_endpoint\/entity\//", '', $item_uri );
 }
 
 function prepend_q ( $id ) {
@@ -126,17 +131,21 @@ function generate_article_entries($id_list) {
 }
 
 function generate_entries_for_batch( $uri_list ) {
+	global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
+		$published_date_prop_id, $published_in_prop_id,
+		$topic_prop_id ;
+
 	$id_uris = implode(' ', $uri_list);
 	$keyed_article_entries = array() ;
 
 	$sparql = "SELECT ?q ?qLabel ?title ?published_in ?doi ?pmid ?topic ?pub_date WHERE {
   VALUES ?q { $id_uris } .
-  OPTIONAL { ?q wdt:P1476 ?title } .
-  OPTIONAL { ?q wdt:P1433 ?published_in } .
-  OPTIONAL { ?q wdt:P356 ?doi } .
-  OPTIONAL { ?q wdt:P698 ?pmid }.
-  OPTIONAL { ?q wdt:P921 ?topic }.
-  OPTIONAL { ?q wdt:P577 ?pub_date }.
+  OPTIONAL { ?q wdt:$title_prop_id ?title } .
+  OPTIONAL { ?q wdt:$published_in_prop_id ?published_in } .
+  OPTIONAL { ?q wdt:$doi_prop_id ?doi } .
+  OPTIONAL { ?q wdt:$pubmed_prop_id ?pmid }.
+  OPTIONAL { ?q wdt:$topic_prop_id ?topic }.
+  OPTIONAL { ?q wdt:$published_date_prop_id ?pub_date }.
   SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
 }" ;
 	$query_result = getSPARQL( $sparql ) ;
