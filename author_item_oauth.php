@@ -197,7 +197,7 @@ print "</div>" ;
 print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid'>Scholia Profile</a>" ;
-print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/missing'>missing</a>]" ;
+print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/curation'>curation</a>]" ;
 print ' | ' ;
 print "<a target='_blank' href='$reasonator_prefix$author_qid'>Reasonator</a>" ;
 print ' | ' ;
@@ -320,7 +320,7 @@ foreach ( $article_items AS $article ) {
 	foreach ( $article->published_in AS $qt ) {
 		$label = $qid_labels[$qt];
 		$venue_counter[$qt] = isset($venue_counter[$qt]) ? $venue_counter[$qt]+1 : 1 ;
-		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/missing' target='_blank'>missing</a>]" ;
+		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/curation' target='_blank'>curation</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -351,7 +351,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$label = $qid_labels[$qt];
 			$topic_counter[$qt] = isset($topic_counter[$qt]) ? $topic_counter[$qt]+1 : 1 ;
-			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/missing' target='_blank'>missing</a>]" ;
+			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/curation' target='_blank'>curation</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}
