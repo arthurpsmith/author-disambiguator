@@ -161,15 +161,20 @@ function author_data_rows($author_qids, $wil) {
 		$label = $author_data->label;
 		$row_data = array();
 		$row_data['name'] = "<a href='author_item_oauth.php?id=$qid' target='_blank' style='color:green'>$label</a>" ;
-		$row_data['desc'] = $author_data->desc;
 		$row_data['count'] = $author_data->article_count ;
-		$employers = array();
-		foreach ( $author_data->employer_qids AS $emp_qid ) {
-			$emp_item = $wil->getItem ( $emp_qid ) ;
-			if ( !isset($emp_item) ) continue ;
-			$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+		if ( $author_data->redirect != NULL ) {
+			$row_data['desc'] = "Redirected to " . $author_data->redirect ;
+			$row_data['employers'] = '';
+		} else {
+			$row_data['desc'] = $author_data->desc;
+			$employers = array();
+			foreach ( $author_data->employer_qids AS $emp_qid ) {
+				$emp_item = $wil->getItem ( $emp_qid ) ;
+				if ( !isset($emp_item) ) continue ;
+				$employers[] = wikidata_link($emp_qid, $emp_item->getLabel(), '') ;
+			}
+			$row_data['employers'] = implode(" | ", $employers) ;
 		}
-		$row_data['employers'] = implode(" | ", $employers) ;
 		$author_rows[$qid] = $row_data;
 	}
 	return $author_rows;
