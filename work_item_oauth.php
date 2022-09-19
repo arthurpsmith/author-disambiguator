@@ -358,6 +358,7 @@ if ($match) {
 		$stated_as_names = fetch_stated_as_for_authors($related_authors);
 	}
 	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
+	$repeated_match_ids = $article_entry->repeated_author_ids( $match_candidates );
 	$items_authors = $author_qids;
 	foreach ($match_candidates AS $author_qids) {
 		$items_authors = array_merge($items_authors, $author_qids);
@@ -369,6 +370,7 @@ if ($match) {
 	}
 	$to_load = array_unique($to_load);
 	$wil->loadItems ( $to_load ) ;
+
 } else {
 	$stated_as_names = fetch_stated_as_for_authors($author_qids);
 	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names, $auth_num_shift);
@@ -399,10 +401,14 @@ print "<input type='hidden' name='id' value='$work_qid' />" ;
 print "<input type='hidden' name='batch_id' value='$batch_id' />" ;
 print "<input type='hidden' name='author_list_id' value='$author_list_id' />" ;
 
+if ($match) {
+	print '<div><a href="#" onclick=\'$($(this).parents("form")).find("tr[class~=no-choice]").toggle();return false\'>Multi-matched authors</a></div>';
+}
+
 ?>
 
 <div>
-<a href='#' onclick='$($(this).parents("form")).find("tr[class=no-name-string]").toggle();return false'>Toggle identified authors</a>
+<a href='#' onclick='$($(this).parents("form")).find("tr[class~=no-name-string]").toggle();return false'>Toggle identified authors</a>
 </div>
 <div>
 <a href='#' onclick='$($(this).parents("form")).find("input[type=checkbox]").prop("checked",true);return false'>Check all</a> | 
@@ -456,16 +462,25 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 		continue ;
 	}
         $row_count ++;
-	if ( isset($article_entry->author_names[$num]) ){
-		print "<tr class='with-name-string'>";
-	} else {
-		print "<tr class='no-name-string'>";
-	}
+	$classes_for_row = [];
+	$rows_for_matches = 1;
 	if ($match) {
-		$rows_for_matches = 1;
 		if (isset($match_candidates[$num])) {
 			$rows_for_matches = count($match_candidates[$num]);
 		}
+		if ($rows_for_matches > 1) {
+			$classes_for_row[] = "multiple-choice";
+		} else {
+			$classes_for_row[] = "no-choice";
+		}
+	}
+	if ( isset($article_entry->author_names[$num]) ){
+		$classes_for_row[] = "with-name-string";
+	} else {
+		$classes_for_row[] = "no-name-string";
+	}
+	print "<tr class='" . implode(' ', $classes_for_row) . "'>";
+	if ($match) {
 		print "<td rowspan='$rows_for_matches'>$row_count</td><td rowspan='$rows_for_matches'>";
         } else {
 		print "<td>$row_count</td><td>";
@@ -507,9 +522,19 @@ foreach ( $formatted_authors AS $num => $display_list ) {
 					if (isset($match_candidate_data[$match_qid])) {
 						$author_data = $match_candidate_data[$match_qid];
 					}
+					$also_matches = "";
+					if (isset($repeated_match_ids[$match_qid])) {
+						$rpt_nums = $repeated_match_ids[$match_qid];
+						$also_matches = " also";
+						foreach ($rpt_nums as $rptnum ) {
+							if ($rptnum != $num) {
+								$also_matches .= " #" . $rptnum ;
+							}
+						}
+					}
 					$row_data = array();
 					if ($has_match == 1) {
-						$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a>" ;
+						$row_data[] = "<input type='checkbox' name='match_author[$match_qid:$num]' value='$match_qid:$num' /><a href='author_item_oauth.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a> $also_matches" ;
 					} else {
 						$row_data[] = '';
 					}

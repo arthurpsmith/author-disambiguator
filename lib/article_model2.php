@@ -219,18 +219,22 @@ class WikidataArticleEntry2 {
 	}
 
 	public function repeated_ids () {
-		$author_ids_used = [] ;
-		foreach ( $this->authors AS $num => $auth_list ) {
+		return $this->repeated_author_ids( $this->authors );
+	}
+
+	public function repeated_author_ids( $author_id_map ) {
+		$ids_used = [] ;
+		foreach ( $author_id_map  AS $num => $auth_list ) {
 			foreach ( $auth_list AS $auth_qid ) {
-				if (! isset($author_ids_used[$auth_qid])) {
-					$author_ids_used[$auth_qid] = [];
+				if (! isset($ids_used[$auth_qid])) {
+					$ids_used[$auth_qid] = [];
 				}
-				if ( ! in_array($num, $author_ids_used[$auth_qid]) ) {
-					$author_ids_used[$auth_qid][] = $num ;
+				if ( ! in_array($num, $ids_used[$auth_qid]) ) {
+					$ids_used[$auth_qid][] = $num ;
 				}
 			}
 		}
-		return array_filter($author_ids_used, function($a) {
+		return array_filter($ids_used, function($a) {
 				return count($a) > 1 ;
 			} );
 	}
