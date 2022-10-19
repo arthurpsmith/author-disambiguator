@@ -34,7 +34,7 @@ class EditClaims {
 
 	function create_string_snak($property, $string) {
 		$dv = new stdClass();
-		$dv->value = $string ;
+		$dv->value = strval($string);
 		$dv->type = 'string' ;
 		$snak = new stdClass();
 		$snak->snaktype = 'value';
@@ -581,6 +581,67 @@ class EditClaims {
 			$this->error = $this->oauth->error;
 			return false;
 		}
+		return true;
+	}
+
+	function add_authors ( $work_qid, $authors_to_add, $edit_summary ) {
+		$prep = $this->oauth->prepare_edit_token('add_authors') ;
+		if ($prep == NULL) {
+			$this->error = $this->oauth->error ;
+			return false;
+		}
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+		$new_author_names = [];
+		$new_authors = [];
+		foreach ($authors_to_add AS $author_line) {
+			$auth_info = trim($author_line);
+			if (preg_match('/^(\d+)\s+(.*)$/', $auth_info, $parts)) {
+				$ordinal = $parts[1];
+				$author = trim($parts[2]);
+				if (preg_match('/^Q\d+$/', $author)) {
+					$new_authors[$ordinal] = $author;
+				} else {
+					$new_author_names[$ordinal] = $author;
+				}
+			} else if (strlen($auth_info) > 0) {
+				$this->error = "Failed to parse line '$auth_info'";
+				return false;
+			}
+		}
+
+		if (count($new_authors) + count($new_author_names) == 0) {
+			$this->error = "No authors found to add";
+			return false;
+		}
+	// Fetch latest version of work:
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$commands = array();
+		foreach ($new_authors AS $ordinal => $qid) {
+			print "Adding author $qid, ordinal $ordinal\n";
+			$new_claim = $this->create_new_item_claim('P50', $qid);
+			$new_qualifier_entry = $this->create_string_snak('P1545', $ordinal);
+			$new_claim->qualifiers = ['P1545' => [$new_qualifier_entry]];
+			$commands[] = $new_claim;
+		}
+		foreach ($new_author_names AS $ordinal => $name) {
+			print "Adding string $name, ordinal $ordinal\n";
+			$new_claim = $this->create_new_string_claim('P2093', $name);
+			$new_qualifier_entry = $this->create_string_snak('P1545', $ordinal);
+			$new_claim->qualifiers = ['P1545' => [$new_qualifier_entry]];
+			$commands[] = $new_claim;
+		}
+		print_r($commands);
+
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+
 		return true;
 	}
 }

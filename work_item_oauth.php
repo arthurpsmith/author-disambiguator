@@ -13,12 +13,12 @@ $action = get_request ( 'action' , '' ) ;
 $work_qid = get_request( 'id', '' ) ;
 $author_list_id = get_request ( 'author_list_id' , '' );
 $renumber = get_request ( 'renumber' , 0 ) ;
+$addmissing = get_request ( 'addmissing' , 0 ) ;
 $match  = get_request ( 'match' , 0 ) ;
-$use_stated_as = get_request ( 'use_stated_as', 0 );
 $renumber = $match ? 0: $renumber ; # Supercede renumbering if match selected
 $renumber_checked = $renumber ? 'checked' : '' ;
+$addmissing_checked = $addmissing ? 'checked' : '' ;
 $match_checked = $match ? 'checked' : '' ;
-$use_stated_as_checked = $use_stated_as ? 'checked' : '' ;
 $auth_num_shift = get_request ( 'auth_num_shift', 0 );
 $auto_match_unordered = get_request ( 'auto_match_unordered', 0 );
 
@@ -32,10 +32,10 @@ $db_conn->close();
 if ($action) { # reset checkboxes after action
 	$renumber = 0;
 	$match = 0;
-	$use_stated_as = 0;
+	$addmissing = 0;
 	$renumber_checked = '';
 	$match_checked = '';
-	$use_stated_as_checked = '';
+	$addmissing_checked = '';
 	$auth_num_shift = 0;
 	$auto_match_unordered = 0;
 }
@@ -56,7 +56,7 @@ if ($oauth->isAuthOK()) {
 $wil = new WikidataItemList ;
 $dbtools = new DatabaseTools($db_passwd_file);
 
-$batch_actions = ['merge', 'renumber', 'match'];
+$batch_actions = ['merge', 'renumber', 'match', 'addmissing'];
 
 if ($action != '' && in_array($action, $batch_actions)) {
     $db_conn = $dbtools->openToolDB('authors');
@@ -128,6 +128,18 @@ if ($action != '' && in_array($action, $batch_actions)) {
 	$add_command->close();
     }
 
+    if ( $action == 'addmissing' ) {
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'add_missing', ?, 'READY', NULL, NULL)");
+
+	$missing = get_request ( 'missing_authors' , '' ) ;
+	$auth_list = array_map('trim', explode("\n", $missing));
+
+	$data = $work_qid . ':' . implode('|', $auth_list);
+	$add_command->bind_param('is', $seq, $data);
+	$add_command->execute();
+	$add_command->close();
+    }
+
     $batch = new Batch($batch_id);
     $batch->load($db_conn);
     if (! $batch->queued) {
@@ -161,12 +173,12 @@ $db_conn = $dbtools->openToolDB('authors');
 $author_lists = AuthorList::lists_for_owner($db_conn, $username);
 
 print "<form method='get' class='form form-inline'>
-Work Wikidata ID: 
+Work Wikidata ID:
 <input name='id' value='" . escape_attribute($work_qid) . "' type='text' placeholder='Qxxxxx' oninput='stopReloads()' />
 <input type='hidden' name='batch_id' value='$batch_id'>
 <label title='edit author ordinal values' style='margin:10px'><input type='checkbox' name='renumber' value='1' $renumber_checked />Renumber authors?</label>
-<label title='search coauthors or list for items to replace strings' style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>
-<label title='search using stated names on other works' style='margin:10px'><input type='checkbox' name='use_stated_as' value='1' $use_stated_as_checked />Use \"stated as\" names (can be slow)?</label>";
+<label title='add missing author strings' style='margin:10px'><input type='checkbox' name='addmissing' value='1' $addmissing_checked />Add missing authors?</label>
+<label title='search coauthors or list for items to replace strings' style='margin:10px'><input type='checkbox' name='match' value='1' $match_checked />Suggest matches?</label>";
 print "Author List: <select name='author_list_id'>" ;
 print "<option value=''";
 if ($author_list_id == '') print ' selected';
@@ -354,9 +366,7 @@ if ($match) {
 	$related_authors = array_diff($related_authors, $author_qids); # Only fetch stated-as etc. for new qids
 	$wil->loadItems ( $related_authors ) ;
 	$stated_as_names = array();
-	if ($use_stated_as) {
-		$stated_as_names = fetch_stated_as_for_authors($related_authors);
-	}
+	$stated_as_names = fetch_stated_as_for_authors($related_authors);
 	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
 	$repeated_match_ids = $article_entry->repeated_author_ids( $match_candidates );
 	$items_authors = $author_qids;
@@ -394,6 +404,8 @@ if ($renumber) {
     print "<input type='hidden' name='action' value='renumber' />";
 } else if ($match) {
     print "<input type='hidden' name='action' value='match' />";
+} else if ($addmissing) {
+    print "<input type='hidden' name='action' value='addmissing' />";
 } else {
     print "<input type='hidden' name='action' value='merge' />";
 }
@@ -584,13 +596,18 @@ if ($renumber) {
 	print "<div style='margin:20px'><input type='submit' name='renumber' value='Renumber authors' class='btn btn-primary' /> </div>";
 } else if ($merge_count > 0) {
 	print "<div style='margin:20px'><input type='submit' name='doit' value='Merge these author records' class='btn btn-primary' /></div>" ;
-}
+} 
 if ($match) {
 	if ($match_count > 0) {
 		print "<div style='margin:20px'><input type='submit' name='match' value='Match selected authors' class='btn btn-primary' /> </div>";
 	} else {
 		print "<div>No matches found</div>";
 	}
+}
+if ($addmissing) {
+    print "<p>Enter missing authors as one author per line, with author preceded by series ordinal value. Authors can be represented either as author name strings or as author items (Qxxxx).</p>";
+    print "<textarea name='missing_authors' rows=20 placeholder='1 First Author\n2 Q222222\n3 ...'></textarea>";
+    print "<div style='margin:20px'><input type='submit' name='addmissing' value='Add missing authors' class='btn btn-primary' /> </div>";
 }
 print "</form>" ;
 

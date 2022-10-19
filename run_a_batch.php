@@ -225,6 +225,18 @@ while (1) {
 		} else {
 			$error = 'Bad data';
 		}
+	} else if ($action == 'add_missing') {
+		if (preg_match('/^(Q\d+):(.*)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			$authors_to_add = explode('|', $cmd_parts[2]);
+			print ("$batch_id/$pid - Adding authors for $work_qid\n");
+			$result = $edit_claims->add_authors( $work_qid, $authors_to_add, "Author Disambiguator adding authors for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
 	}
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";
