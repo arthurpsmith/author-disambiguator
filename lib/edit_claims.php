@@ -621,20 +621,45 @@ class EditClaims {
 
 		$commands = array();
 		foreach ($new_authors AS $ordinal => $qid) {
-			print "Adding author $qid, ordinal $ordinal\n";
 			$new_claim = $this->create_new_item_claim('P50', $qid);
 			$new_qualifier_entry = $this->create_string_snak('P1545', $ordinal);
 			$new_claim->qualifiers = ['P1545' => [$new_qualifier_entry]];
 			$commands[] = $new_claim;
 		}
 		foreach ($new_author_names AS $ordinal => $name) {
-			print "Adding string $name, ordinal $ordinal\n";
 			$new_claim = $this->create_new_string_claim('P2093', $name);
 			$new_qualifier_entry = $this->create_string_snak('P1545', $ordinal);
 			$new_claim->qualifiers = ['P1545' => [$new_qualifier_entry]];
 			$commands[] = $new_claim;
 		}
-		print_r($commands);
+
+		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
+		if (! $res ) {
+			$this->error = $this->oauth->error;
+			return false;
+		}
+
+		return true;
+	}
+
+	function remove_name_strings ( $work_qid, $edit_summary ) {
+		$prep = $this->oauth->prepare_edit_token('remove_name_strings') ;
+		if ($prep == NULL) {
+			$this->error = $this->oauth->error ;
+			return false;
+		}
+		$ch = $prep[0] ;
+		$token = $prep[1] ;
+
+	// Fetch latest version of work:
+		$work_item = $this->oauth->fetch_item($work_qid, $ch) ;
+		$baserev = $work_item->lastrevid;
+
+		$commands = array();
+		$author_name_claims = isset($work_item->claims->P2093) ? $work_item->claims->P2093 : [] ;
+		foreach ( $author_name_claims AS $c ) {
+			$commands[] = ['id' => $c->id, 'remove' => ''] ;
+		}
 
 		$res = $this->oauth->apply_commands_to_item($work_qid, $baserev, $edit_summary, $token, $ch, $commands) ;
 		if (! $res ) {

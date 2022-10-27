@@ -237,6 +237,17 @@ while (1) {
 		} else {
 			$error = 'Bad data';
 		}
+	} else if ($action == 'remove_name_strings') {
+		if (preg_match('/^(Q\d+)$/', $data, $cmd_parts)) {
+			$work_qid = $cmd_parts[1];
+			print ("$batch_id/$pid - Removing author name strings for $work_qid\n");
+			$result = $edit_claims->remove_name_strings( $work_qid, "Author Disambiguator removing author name strings for [[$work_qid]] $eg_string" ) ;
+			if (! $result) {
+				$error = $edit_claims->error;
+			}
+		} else {
+			$error = 'Bad data';
+		}
 	}
 	$db_conn = $dbtools->openToolDB('authors');
 	$finished_cmd = "UPDATE commands SET status = 'DONE' WHERE batch_id = '$batch_id' and ordinal = '$ordinal'";

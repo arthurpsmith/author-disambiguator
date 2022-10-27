@@ -56,7 +56,7 @@ if ($oauth->isAuthOK()) {
 $wil = new WikidataItemList ;
 $dbtools = new DatabaseTools($db_passwd_file);
 
-$batch_actions = ['merge', 'renumber', 'match', 'addmissing'];
+$batch_actions = ['merge', 'renumber', 'match', 'addmissing', 'remove_name_strings'];
 
 if ($action != '' && in_array($action, $batch_actions)) {
     $db_conn = $dbtools->openToolDB('authors');
@@ -135,6 +135,15 @@ if ($action != '' && in_array($action, $batch_actions)) {
 	$auth_list = array_map('trim', explode("\n", $missing));
 
 	$data = $work_qid . ':' . implode('|', $auth_list);
+	$add_command->bind_param('is', $seq, $data);
+	$add_command->execute();
+	$add_command->close();
+    }
+
+    if ( $action == 'remove_name_strings' ) {
+	$add_command = $db_conn->prepare("INSERT INTO commands VALUES(?, '$batch_id', 'remove_name_strings', ?, 'READY', NULL, NULL)");
+
+	$data = $work_qid;
 	$add_command->bind_param('is', $seq, $data);
 	$add_command->execute();
 	$add_command->close();
