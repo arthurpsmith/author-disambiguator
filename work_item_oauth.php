@@ -219,7 +219,7 @@ if ($batch_id != '') {
 	}
 
 	print "<div>Current batch for edits: <a href='batches_oauth.php?id=$batch_id'>$batch_id</a> - ";
-	print implode($display_counts, ", ") . "</div>";
+	print implode(", ", $display_counts) . "</div>";
 
 	$batch_id_str = $db_conn->real_escape_string($batch_id);
 	$qid_str = $db_conn->real_escape_string($work_qid);
