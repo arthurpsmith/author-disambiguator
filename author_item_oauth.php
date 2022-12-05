@@ -207,8 +207,23 @@ if (count($author_alias_names) > 0) {
 	print "<div>Aliases: " . implode(", ", $author_alias_names) . "</div>";
 }
 if (count($author_stated_as) > 0) {
-	print "<div>Stated as: " . implode(", ", $author_stated_as) . "</div>";
+	$stated_as_links = [];
+        foreach ($author_stated_as AS $name) {
+		$stated_as_links[] = "<a href='?id=$author_qid&filter=" . urlencode("p:P50 [ps:P50 wd:$author_qid; pq:P1932 '$name']") . "'>$name</a>";
+        }
+	print "<div>Stated as: " . implode(", ", $stated_as_links) . "</div>";
 }
+
+$names_to_query[$author_data->label] = 1;
+foreach ($author_alias_names AS $name) {
+    $names_to_query[$name] = 1;
+}
+foreach ($author_stated_as AS $name) {
+    $names_to_query[$name] = 1;
+}
+print "Find unmatched papers using these name variants as author strings: ";
+print "<a href='names_oauth.php?name=" . urlencode($author_data->label) .
+       "&use_name_strings=1&name_strings=" . urlencode(implode("\n", array_keys($names_to_query))) . "'>Search</a>";
 print '</div>' ;
 
 print "<form method='post' class='form' target='_blank' action='?'>" ;
