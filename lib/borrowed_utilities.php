@@ -437,7 +437,6 @@ class WikidataItemList {
 		foreach ( $batches AS $batch_urls ) {
 	
 			$mh = curl_multi_init();
-			curl_multi_setopt  ( $mh , CURLPIPE_MULTIPLEX , 1 ) ;
 			$ch = [] ;
 			foreach ( $batch_urls AS $key => $value ) {
 				$ch[$key] = curl_init($value);
