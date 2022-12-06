@@ -39,7 +39,7 @@ print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <label title='search for multiple matching authors with same ordinal'><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
-<input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
+<div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Get author data' /></div>
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:$topic_prop_id wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
@@ -221,9 +221,12 @@ foreach ($author_alias_names AS $name) {
 foreach ($author_stated_as AS $name) {
     $names_to_query[$name] = 1;
 }
+print "<form action='names_oauth.php' method='post' class='form form-inline'>";
+print "<input type='hidden' name='name' value='" . $author_data->label . "'>";
+print "<input type='hidden' name='use_name_strings' value='1'>";
+print "<input type='hidden' name='name_strings' value='" . implode("\n", array_keys($names_to_query)) . "'>";
 print "Find unmatched papers using these name variants as author strings: ";
-print "<a href='names_oauth.php?name=" . urlencode($author_data->label) .
-       "&use_name_strings=1&name_strings=" . urlencode(implode("\n", array_keys($names_to_query))) . "'>Search</a>";
+print "<div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Search' /></div></form>";
 print '</div>' ;
 
 print "<form method='post' class='form' target='_blank' action='?'>" ;
