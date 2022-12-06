@@ -160,7 +160,7 @@ function author_data_rows($author_qids, $wil) {
 		$qid = $author_data->qid;
 		$label = $author_data->label;
 		$row_data = array();
-		$row_data['name'] = "<a href='author_item_oauth.php?id=$qid' target='_blank' style='color:green'>$label</a>" ;
+		$row_data['name'] = "<a href='author_item_oauth.php?id=$qid&limit=50' target='_blank' style='color:green'>$label</a>" ;
 		$row_data['count'] = $author_data->article_count ;
 		if ( $author_data->redirect != NULL ) {
 			$row_data['desc'] = "Redirected to " . $author_data->redirect ;
