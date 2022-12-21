@@ -103,7 +103,7 @@ if ( $action == 'add' ) {
 	exit ( 0 ) ;
 }
 
-print "<form method='get' class='form form-inline'>
+print "<form method='post' class='form form-inline'>
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label title='match initials, uppercase, etc.'><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>

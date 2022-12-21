@@ -134,11 +134,7 @@ if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) 
 	}
 }
 
-if ( $use_name_strings ) {
-    print "<form method='post' class='form form-inline'>";
-} else {
-    print "<form method='get' class='form form-inline'>";
-}
+print "<form method='post' class='form form-inline'>";
 print "<input type='hidden' name='precise' value='$precise' />
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
