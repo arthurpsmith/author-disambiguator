@@ -204,7 +204,11 @@ print ' | ' ;
 print "<a target='_blank' href='$sqid_prefix$author_qid'>SQID</a>" ;
 
 if (count($author_alias_names) > 0) {
-	print "<div>Aliases: " . implode(", ", $author_alias_names) . "</div>";
+	$alias_links = [];
+        foreach ($author_alias_names AS $name) {
+		$alias_links[] = "<a href='names_oauth.php?limit=50&name=" . urlencode($name) . "'>$name</a>";
+        }
+	print "<div>Aliases: " . implode(", ", $alias_links) . "</div>";
 }
 if (count($author_stated_as) > 0) {
 	$stated_as_links = [];
