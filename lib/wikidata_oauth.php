@@ -20,6 +20,14 @@ class WD_OAuth {
 	var $delay_after_edit_s = 1 ;
 	var $delay_after_upload_s = 1 ;
 	var $interactive = false ;
+	var $apiUrl = '';
+	var $gUserAgent = '';
+	var $gConsumerKey = '';
+	var $gConsumerSecret = '';
+	var $gTokenKey = '';
+	var $gTokenSecret = '';
+	var $signature = '';
+	var $error;
 	
 	function __construct ( $tool, $ini_file, $db_conn, $token_key='', $token_secret='' ) {
 		global $wikibase_api_url ;

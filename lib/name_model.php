@@ -186,7 +186,9 @@ class NameModel {
 	public function initials_no_dot() {
 		$name_parts = array();
 		$first = $this->first_name;
-		$name_parts[] = mb_ereg_replace('\.', '', $first);
+                if (! is_null($first)) {
+		    $name_parts[] =  mb_ereg_replace('\.', '', $first);
+		}
 		foreach ($this->middle_names AS $middle_name) {
 			$name_parts[] = mb_ereg_replace('\.', '', $middle_name);
 		}
@@ -197,10 +199,12 @@ class NameModel {
 	public function add_missing_dot() {
 		$name_parts = array();
 		$first = $this->first_name ;
-		if (mb_strlen($first) == 1) {
-			$first = $first . '.' ;
+                if (! is_null($first) ) {
+			if (mb_strlen($first) == 1) {
+				$first = $first . '.' ;
+			}
+			$name_parts[] = $first ;
 		}
-		$name_parts[] = $first ;
 		foreach ($this->middle_names AS $middle_name) {
 			if (mb_strlen($middle_name) == 1) {
 				$middle_name = $middle_name . '.' ;
@@ -373,6 +377,7 @@ class NameModel {
 	}
 
 	public static function is_initial($name_part) {
+                if ( is_null($name_part) ) return false;
 		if (mb_strlen($name_part) > 3) return false ;
 		if (mb_substr($name_part, mb_strlen($name_part)-1, 1) == '.') return true ; // Ends in .
 		return (mb_strlen($name_part) < 2) ; // Single letter
