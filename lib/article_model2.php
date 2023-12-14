@@ -346,6 +346,13 @@ class WikidataArticleEntry2 {
 		$stats['identified_count'] = count($auth_nums);
 		$stats['name_count'] = count($auth_name_nums);
 
+		if (($key = array_search('unordered', $auth_nums)) !== false) {
+			unset($auth_nums[$key]);
+		}
+		if (($key = array_search('unordered', $auth_name_nums)) !== false) {
+			unset($auth_name_nums[$key]);
+		}
+
 		$max_auth_num = 0;
 		if (count($auth_nums) > 0) {
 			$max_auth_num = max($auth_nums);
