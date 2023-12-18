@@ -5,6 +5,7 @@ class AuthorData {
 	public $label ;
 	public $desc ;
 	public $complete = false;
+	public $redirect = NULL;
 	public $article_count = 0;
 	public $coauthors = array() ;
 	public $coauthor_names = array() ;
@@ -168,11 +169,11 @@ class AuthorData {
 		foreach ($author_items AS $qid) {
 			$item = $wil->getItem( $qid ) ;
 			if (! isset($item) ) continue;
-     			if (property_exists($item->j, 'redirects')) {
-				continue; // Skip redirected author items!
-			}
 
 			$author_data_entry = new AuthorData($item) ;
+     			if (property_exists($item->j, 'redirects')) {
+				$author_data_entry->redirect = $item->j->redirects->to;
+			}
 			$author_data_entry->complete = $complete ;
 			$author_data[$author_data_entry->qid] = $author_data_entry ;
 			$direct_author_items[] = $author_data_entry->qid;

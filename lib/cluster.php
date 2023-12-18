@@ -5,12 +5,13 @@
 // I.e. linked together by co-authorship graph
 class Cluster {
 	public $authors = array() ;
-	public $articles = array() ;
+	public $articles = array() ; # list of qids
 	public $author_names = array() ;
 	public $journal_qids = array() ;
 	public $topic_qids = array() ;
 	public $potential_author_qids = array() ;
 	public $article_authnums = array() ;
+	public $article_list = array() ; # list of article metadata
 
 	public function __construct ( $author_list, $article_list ) {
 		$this->addAuthorList( $author_list );

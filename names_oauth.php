@@ -134,8 +134,8 @@ if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) 
 	}
 }
 
-print "<form method='get' class='form form-inline'>
-<input type='hidden' name='precise' value='$precise' />
+print "<form method='post' class='form form-inline'>";
+print "<input type='hidden' name='precise' value='$precise' />
 Author name: 
 <input name='name' value='" . escape_attribute($name) . "' type='text' placeholder='First Last' />
 <label title='match initials, uppercase, etc.'><input type='checkbox' name='fuzzy' value='1' $fuzzy_checked /> Fuzzy match</label>
@@ -360,7 +360,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 		foreach ( $article->published_in AS $qt ) {
 			$label = $qid_labels[$qt];
 			$venue_counter[$qt] = isset($venue_counter[$qt]) ? $venue_counter[$qt]+1 : 1 ;
-			$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/missing' target='_blank'>missing</a>]" ;
+			$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/curation' target='_blank'>curation</a>]" ;
 		}
 		$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -384,7 +384,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 			foreach ( $article->topics AS $qt ) {
 				$label = $qid_labels[$qt];
 				$topic_counter[$qt] = isset($topic_counter[$qt]) ? $topic_counter[$qt]+1 : 1 ;
-				$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/missing' target='_blank'>missing</a>]" ;
+				$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/curation' target='_blank'>curation</a>]" ;
 			}
 			print implode ( '; ' , $topics ) ;
 		}
@@ -437,7 +437,7 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	foreach ( $author_data->employer_qids AS $emp_qid ) {
 		$emp_item = $wil->getItem ( $emp_qid ) ;
 		if ( !isset($emp_item) ) continue ;
-		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "&nbsp;[<a href='https://scholia.toolforge.org/organization/$emp_qid/missing' target='_blank'>missing</a>]<br/>" ;
+		print wikidata_link($emp_qid, $emp_item->getLabel(), '') . "&nbsp;[<a href='https://scholia.toolforge.org/organization/$emp_qid/curation' target='_blank'>curation</a>]<br/>" ;
 	}
 	print "</td></tr>" ;
 }

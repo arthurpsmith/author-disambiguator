@@ -197,7 +197,7 @@ if ( $batch_id  == '') {
 		print "</td>";
 		print "<td><a href='?id=$id'>$id</a></td>";
 		print "<td>" . $batch->start_date . "</td>";
-		print "<td>" . implode($display_counts, ", ") . "</td>";
+		print "<td>" . implode(", ", $display_counts) . "</td>";
 
 		if ( $is_running ) {
 			print "<td>Yes</td>";
@@ -295,7 +295,7 @@ $(document).ready ( function () {
 			$label = $qid_labels[$qid];
 			$qid_links[] = wikidata_link($qid, $label, ''); 
 		}
-		$action = $action . " for " . implode($qid_links, ", ");
+		$action = $action . " for " . implode(", ", $qid_links);
 		$status = $row[2];
 		$message = $row[3];
 		$run_timestamp = $row[4];

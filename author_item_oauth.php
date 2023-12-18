@@ -39,7 +39,7 @@ print "<form method='get' class='form form-inline'>
 Author Wikidata ID: 
 <input name='id' value='" . escape_attribute($author_qid) . "' type='text' placeholder='Qxxxxx' />
 <label title='search for multiple matching authors with same ordinal'><input type='checkbox' name='merge' value='1' $merge_checked />Find duplicates to merge</label>
-<input type='submit' class='btn btn-primary' name='doit' value='Get author data' />
+<div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Get author data' /></div>
 <div style='font-size:9pt'>Additional SPARQL filters separated by semicolons (eg. for papers on Zika virus, enter wdt:$topic_prop_id wd:Q202864):
 <input style='font-size:9pt' size='40' name='filter' value='" . escape_attribute($filter) . "' type='text' placeholder='wdt:PXXX wd:QYYYYY; wdt:PXX2 wd:QYY2 '/></div>
 </form>" ;
@@ -197,18 +197,40 @@ print "</div>" ;
 print wikidata_link($author_qid, "Wikidata Item", '') ;
 print ' | ' ;
 print "<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid'>Scholia Profile</a>" ;
-print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/missing'>missing</a>]" ;
+print " [<a target='_blank' href='https://scholia.toolforge.org/author/$author_qid/curation'>curation</a>]" ;
 print ' | ' ;
 print "<a target='_blank' href='$reasonator_prefix$author_qid'>Reasonator</a>" ;
 print ' | ' ;
 print "<a target='_blank' href='$sqid_prefix$author_qid'>SQID</a>" ;
 
 if (count($author_alias_names) > 0) {
-	print "<div>Aliases: " . implode(", ", $author_alias_names) . "</div>";
+	$alias_links = [];
+        foreach ($author_alias_names AS $name) {
+		$alias_links[] = "<a href='names_oauth.php?limit=50&name=" . urlencode($name) . "'>$name</a>";
+        }
+	print "<div>Aliases: " . implode(", ", $alias_links) . "</div>";
 }
 if (count($author_stated_as) > 0) {
-	print "<div>Stated as: " . implode(", ", $author_stated_as) . "</div>";
+	$stated_as_links = [];
+        foreach ($author_stated_as AS $name) {
+		$stated_as_links[] = "<a href='?id=$author_qid&filter=" . urlencode("p:P50 [ps:P50 wd:$author_qid; pq:P1932 '$name']") . "'>$name</a>";
+        }
+	print "<div>Stated as: " . implode(", ", $stated_as_links) . "</div>";
 }
+
+$names_to_query[$author_data->label] = 1;
+foreach ($author_alias_names AS $name) {
+    $names_to_query[$name] = 1;
+}
+foreach ($author_stated_as AS $name) {
+    $names_to_query[$name] = 1;
+}
+print "<form action='names_oauth.php' method='post' class='form form-inline'>";
+print "<input type='hidden' name='name' value='" . $author_data->label . "'>";
+print "<input type='hidden' name='use_name_strings' value='1'>";
+print "<input type='hidden' name='name_strings' value='" . implode("\n", array_keys($names_to_query)) . "'>";
+print "Find unmatched papers using these name variants as author strings: ";
+print "<div style='margin:10px'><input type='submit' class='btn btn-primary' name='doit' value='Search' /></div></form>";
 print '</div>' ;
 
 print "<form method='post' class='form' target='_blank' action='?'>" ;
@@ -320,7 +342,7 @@ foreach ( $article_items AS $article ) {
 	foreach ( $article->published_in AS $qt ) {
 		$label = $qid_labels[$qt];
 		$venue_counter[$qt] = isset($venue_counter[$qt]) ? $venue_counter[$qt]+1 : 1 ;
-		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/missing' target='_blank'>missing</a>]" ;
+		$published_in[] = wikidata_link($qt, $label, 'black') . "&nbsp;[<a href='https://scholia.toolforge.org/venue/$qt/curation' target='_blank'>curation</a>]" ;
 	}
 	$published_in_list = implode ( ', ', $published_in ) ;
 	
@@ -351,7 +373,7 @@ foreach ( $article_items AS $article ) {
 		foreach ( $article->topics AS $qt ) {
 			$label = $qid_labels[$qt];
 			$topic_counter[$qt] = isset($topic_counter[$qt]) ? $topic_counter[$qt]+1 : 1 ;
-			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/missing' target='_blank'>missing</a>]" ;
+			$topics[] = wikidata_link($qt, $label, 'brown') . "&nbsp;[<a href='https://scholia.toolforge.org/topic/$qt/curation' target='_blank'>curation</a>]" ;
 		}
 		print implode ( '; ' , $topics ) ;
 	}

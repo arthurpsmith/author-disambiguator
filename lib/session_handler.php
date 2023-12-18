@@ -30,17 +30,17 @@ class MySqlSessionHandler implements SessionHandlerInterface
 		$this->dbTable = $dbTable;
 	}
 
-	public function open($savePath, $sessionName)
+	public function open($savePath, $sessionName): bool
 	{
 		return true;
 	}
 
-	public function close()
+	public function close(): bool
 	{
 		return true;
 	}
 
-	public function read($id)
+	public function read($id): string|false
 	{
 		$stmt = $this->dbConnection->prepare("SELECT data FROM $this->dbTable where id = ?");
 		$stmt->bind_param("s", $id);
@@ -53,7 +53,7 @@ class MySqlSessionHandler implements SessionHandlerInterface
 		}
 	}
 
-	public function write($id, $data)
+	public function write($id, $data): bool
 	{
 		$stmt = $this->dbConnection->prepare("REPLACE INTO $this->dbTable (id, data, timestamp) VALUES(?, ?, ?)");
 		$timestamp = time();
@@ -61,14 +61,14 @@ class MySqlSessionHandler implements SessionHandlerInterface
 		return $stmt->execute();
 	}
 
-	public function destroy($id)
+	public function destroy($id): bool
 	{
 		$stmt = $this->dbConnection->prepare("DELETE FROM $this->dbTable WHERE id = ?");
 		$stmt->bind_param("s", $id);
 		return $stmt->execute();
 	}
 
-	public function gc($maxlifetime)
+	public function gc($maxlifetime): int|false
 	{
 		$limit = time() - intval($maxlifetime);
 		$stmt = $this->dbConnection->prepare("DELETE from $this->dbTable WHERE timestamp < ?");
