@@ -290,8 +290,8 @@ foreach ( $article_items AS $article ) {
 	$id_count = $author_stats['identified_count'];
 	$max_num = $author_stats['max_num'];
 	$identified_pct = '';
-	if ($max_num > 0) {
-		$identified_pct = $id_count*100.0/$max_num;
+	if (intval($max_num) > 0) {
+		$identified_pct = $id_count*100.0/intval($max_num);
 	}
 	$author_id_pct = sprintf("%d/%d (%.2f%%) identified", $id_count, $max_num, $identified_pct);
 
