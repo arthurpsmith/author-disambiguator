@@ -384,6 +384,7 @@ class NameModel {
 	}
 
 	public static function first_letter($name_part) {
+		if ( is_null($name_part) ) return NULL;
 		return mb_substr($name_part, 0, 1) ;
 	}
 
