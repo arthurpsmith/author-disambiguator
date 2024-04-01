@@ -11,6 +11,8 @@ class NameModel {
 	public $latin1_nm = NULL;
 	public $nodash_nm = NULL;
 	public $ucfirst_nm = NULL;
+	public $language_list = [];
+	public $non_latin = false;
 
 	const PREFIX_PATTERN = '^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?|Herr|Doktor|Prof\.?|Professor)$' ;
 	const SUFFIX_PATTERN = '^([SJ]r\.?|I{1,3}V?|VI{0,3})$' ;
@@ -18,6 +20,11 @@ class NameModel {
 
 	public function __construct ( $name ) {
 		$this->name_provided = $name ;
+		$this->language_list = likelyLanguageList($name);
+		if ($this->language_list[0] != 'en') {
+			$this->non_latin = true;
+			return; # Maybe something more sophisticated could be done, but this gets v. complicated
+		}
 		$name = trim($name);
 		$name = rtrim($name, '.'); # mb_split below doesn't like trailing .
 		$utf8_name = mb_convert_encoding($name, 'UTF-8', 'UTF-8'); 
@@ -275,6 +282,9 @@ class NameModel {
 	}
 
 	public function default_search_strings() {
+		if ($this->non_latin) {
+			return [$this->name_provided];
+		}
 		$search_strings = array();
 		if (isset($this->ascii_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->default_search_strings(), 1));
@@ -304,6 +314,9 @@ class NameModel {
 	}
 
 	public function fuzzy_search_strings() {
+		if ($this->non_latin) {
+			return [$this->name_provided];
+		}
 		$search_strings = array_fill_keys($this->default_search_strings(), 1);
 		if (isset($this->ascii_nm)) {
 			$search_strings = array_merge($search_strings, array_fill_keys($this->ascii_nm->fuzzy_search_strings(), 1));

@@ -166,7 +166,7 @@ if ( $name == '' ) {
 
 $author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 
-$languages_to_search = ['en', 'de', 'fr', 'es', 'nl'] ;
+$languages_to_search = $nm->language_list;
 $names_with_langs = array();
 foreach($languages_to_search AS $lang) {
 	foreach($names AS $name_entry) {

@@ -66,6 +66,50 @@ function getSPARQLitems ( $cmd , $varname = 'q' ) {
 	return $ret ;
 }
 
+function likelyLanguageList($string) {
+    $langList = ['en', 'de', 'fr', 'es', 'nl']; # Default langs
+    if ( isCjk($string) ) {
+	$langList = ['ja', 'ko', 'zh'];
+    } else if ( isArabicPersianUrdu($string) ) {
+	$langList = ['ar', 'fa', 'ur', 'tg', 'ku'];
+    } else if ( isDevanagariBengali($string) ) {
+	$langList = ['hi', 'mr', 'ne', 'bn'];
+    } else if ( isCyrillicGreek($string) ) {
+	$langList = ['ru', 'el', 'uk', 'sr'];
+    }
+# There are many more... worth doing?
+    return $langList;
+}
+
+function isArabicPersianUrdu($string) {
+    return preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $string);
+}
+
+function isDevanagariBengali($string) {
+    return preg_match('/[\x{0900}-\x{09FF}\x{A8E0}-\x{A8FF}]/u', $string);
+}
+
+function isCyrillicGreek($string) {
+    return preg_match('/[\x{0370}-\x{03FF}\x{0400}-\x{04FF}\x{A500}-\x{A52F}]/u', $string);
+}
+
+// is chinese, japanese or korean language
+function isCjk($string) {
+    return isChinese($string) || isJapanese($string) || isKorean($string);
+}
+
+function isChinese($string) {
+    return preg_match("/\p{Han}+/u", $string);
+}
+
+function isJapanese($string) {
+    return preg_match('/[\x{4E00}-\x{9FBF}\x{3040}-\x{309F}\x{30A0}-\x{30FF}]/u', $string);
+}
+
+function isKorean($string) {
+    return preg_match('/[\x{3130}-\x{318F}\x{AC00}-\x{D7AF}]/u', $string);
+}
+
 $wikidata_preferred_langs = ['en','de','nl','fr','es','it','zh'] ;
 
 class WDI {
