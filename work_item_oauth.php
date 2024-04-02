@@ -288,10 +288,12 @@ print "<a target='_blank' href='$sqid_prefix$work_qid'>SQID</a>" ;
 print '</div><div>' ;
 print "Published: " .  $article_entry->formattedPublicationDate () . "; " ;
 if ( $article_entry->doi != '' ) {
-	print "DOI: <a target='_blank' href='https://doi.org/$article_entry->doi'>$article_entry->doi</a>; " ;
+	print "DOI: <a target='_blank' href='https://doi.org/$article_entry->doi'>$article_entry->doi</a>;" ;
+	print "&nbsp;[<a href='" . getORCIDurl ( '"digital-object-ids":"' . $article_entry->doi . '"' ) . "'>ORCID</a>] ";
 }
 if ($article_entry->pmid != '' ) {
 	print "PubMed: <a target='_blank' href='https://www.ncbi.nlm.nih.gov/pubmed/?term=$article_entry->pmid'>$article_entry->pmid</a>" ;
+	print "&nbsp;[<a href='" . getORCIDurl ( '"pmid":' . $article_entry->pmid ) . "'>ORCID</a>]" ;
 }
 print '</div><div>' ;
 

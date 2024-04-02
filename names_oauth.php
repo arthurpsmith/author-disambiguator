@@ -371,7 +371,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
                 print "<td style='font-size:9pt'>" ;
 		if ( $article->doi != '' ) {
 			print "DOI: <a target='_blank' href='https://doi.org/$article->doi'>$article->doi</a>" ;
-			print "&nbsp;[<a href='" . getORCIDurl ( "'" . $article->doi . "'" ) . "'>ORCID</a>]<br/>" ;
+			print "&nbsp;[<a href='" . getORCIDurl ( '"digital-object-ids":"' . $article->doi . '"' ) . "'>ORCID</a>]<br/>" ;
 		}
 		if ( $article->pmid != '' ) {
 			print "PubMed: <a target='_blank' href='https://www.ncbi.nlm.nih.gov/pubmed/?term=$article->pmid'>$article->pmid</a>" ;
