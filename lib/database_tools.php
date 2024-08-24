@@ -29,7 +29,7 @@ class DatabaseTools {
 		if ( isset( $config['host'] ) ) {
 			$this->mysql_host = $config['host'];
 		} else {
-			$this->mysql_host = 'tools.db.svc.eqiad.wmflabs';
+			$this->mysql_host = 'tools.db.svc.wikimedia.cloud';
 		}
 		if ( isset( $config['port'] ) ) {
 			$this->mysql_port = $config['port'];
