@@ -99,50 +99,50 @@ class AuthorData {
 		return $item_map ;
 	}
 
-	public static function articleCountsForAuthors($author_items) {
+	public static function articleCountsForAuthors($author_items, $use_scholarly_subgraph) {
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT ?q (count(?article) as ?count) WHERE {
           SELECT ?q ?article WHERE {
                     VALUES ?q { $query_list } .
             ?article wdt:P50 ?q . }
  } group by ?q" ;
-		$article_counts = getSPARQL( $sparql ) ;
+		$article_counts = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		return self::_extract_string_map( $article_counts, 'q', 'count' ) ;
 	}
 
-	public static function coauthorsForAuthors($author_items) {
+	public static function coauthorsForAuthors($author_items, $use_scholarly_subgraph) {
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT DISTINCT ?q ?q2 WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q, ?q2 . FILTER (?q != ?q2) }" ;
-		$potential_coauthors = getSPARQL( $sparql ) ;
+		$potential_coauthors = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		return self::_extract_item_map( $potential_coauthors, 'q', 'q2' ) ;
 	}
 
-	public static function coauthorNamesForAuthors($author_items) {
+	public static function coauthorNamesForAuthors($author_items, $use_scholarly_subgraph) {
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT DISTINCT ?q ?name WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:P2093 ?name . }" ;
-		$potential_coauthors = getSPARQL( $sparql ) ;
+		$potential_coauthors = getSPARQL( $sparql, $use_scholarly_subgraph ) ; 
 		return self::_extract_string_map( $potential_coauthors, 'q', 'name' ) ;
 	}
 
-	public static function journalsForAuthors($author_items) {
+	public static function journalsForAuthors($author_items, $use_scholarly_subgraph) {
 		global $published_in_prop_id ;
 
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT DISTINCT ?q ?journal WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:$published_in_prop_id ?journal . }" ;
-		$journals = getSPARQL( $sparql ) ;
+		$journals = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		return self::_extract_item_map( $journals, 'q', 'journal' ) ;
 	}
 
-	public static function topicsForAuthors($author_items) {
+	public static function topicsForAuthors($author_items, $use_scholarly_subgraph) {
 		global $topic_prop_id ;
 
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT DISTINCT ?q ?topic WHERE {VALUES ?q { $query_list } . ?article wdt:P50 ?q; wdt:$topic_prop_id ?topic . }" ;
-		$topics = getSPARQL( $sparql ) ;
+		$topics = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		return self::_extract_item_map( $topics, 'q', 'topic' ) ;
 	}
 
-	public static function authorDataFromItems( $author_items, $wil, $complete, $resorted = true) {
+	public static function authorDataFromItems( $author_items, $wil, $complete, $use_scholarly_subgraph, $resorted = true) {
 		$batch_size = 200 ;
 		$batches = [ [] ] ;
 		foreach ( $author_items AS $k => $v ) {
@@ -152,7 +152,7 @@ class AuthorData {
 
 		$author_data = array();
 		foreach ( $batches as $batch ) {
-			$new_data = self::_auth_data_for_batch($batch, $wil, $complete);
+			$new_data = self::_auth_data_for_batch($batch, $wil, $complete, $use_scholarly_subgraph);
 			$author_data = array_merge($author_data, $new_data);
 		}
 		if ($resorted) {
@@ -163,7 +163,7 @@ class AuthorData {
 		return $author_data;
 	}
 
-	private static function _auth_data_for_batch ( $author_items, $wil, $complete) {
+	private static function _auth_data_for_batch ( $author_items, $wil, $complete, $use_scholarly_subgraph) {
 		$author_data = array() ;
 		$direct_author_items = array();
 		foreach ($author_items AS $qid) {
@@ -179,25 +179,25 @@ class AuthorData {
 			$direct_author_items[] = $author_data_entry->qid;
 		}
 
-		$author_paper_counts = self::articleCountsForAuthors( $direct_author_items );
+		$author_paper_counts = self::articleCountsForAuthors( $direct_author_items, $use_scholarly_subgraph );
 		foreach ($author_paper_counts AS $qid => $count) {
 			$author_data[$qid]->article_count = intval($count[0]) ;
 		}
 		if ($complete) {
-			$coauthors = self::coauthorsForAuthors( $direct_author_items ) ;
+			$coauthors = self::coauthorsForAuthors( $direct_author_items, $use_scholarly_subgraph ) ;
 			foreach ( $coauthors AS $qid => $coauthor_qids ) {
 				$author_data[$qid]->add_coauthors($coauthor_qids) ;
 			}
-			$coauthor_names = self::coauthorNamesForAuthors( $direct_author_items ) ;
+			$coauthor_names = self::coauthorNamesForAuthors( $direct_author_items, $use_scholarly_subgraph ) ;
 			foreach ( $coauthor_names AS $qid => $names ) {
 				$author_data[$qid]->add_coauthor_names($names) ;
 			}
 		}
-		$journals = self::journalsForAuthors( $direct_author_items ) ;
+		$journals = self::journalsForAuthors( $direct_author_items, $use_scholarly_subgraph ) ;
 		foreach ( $journals AS $qid => $journal_qids) {
 			$author_data[$qid]->add_journals($journal_qids) ;
 		}
-		$topics = self::topicsForAuthors( $direct_author_items ) ;
+		$topics = self::topicsForAuthors( $direct_author_items, $use_scholarly_subgraph ) ;
 		foreach ( $topics AS $qid => $topic_qids ) {
 			$author_data[$qid]->add_topics($topic_qids) ;
 		}
@@ -237,7 +237,7 @@ class AuthorData {
   VALUES ?q { $id_uris } .
   SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en,de,es,fr,nl'. }
 }" ;
-		$query_result = getSPARQL( $sparql ) ;
+		$query_result = getSPARQL( $sparql, false ) ;
 		return self::_extract_string_map( $query_result , 'q', 'qLabel' ) ;
 	}
 }

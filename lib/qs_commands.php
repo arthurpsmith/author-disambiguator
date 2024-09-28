@@ -17,15 +17,15 @@ function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchg
 	return $commands ;
 }
 
-function get_author_statement_guid($paperq, $author_num, $names) {
+function get_author_statement_guid($paperq, $author_num, $names, $use_scholarly_subgraph) {
 	global $wikibase_endpoint;
 	$sparql = "SELECT ?author_name ?statement WHERE { wd:$paperq p:P2093 ?statement . ?statement ps:P2093 ?author_name ; pq:P1545 '$author_num' . }" ;
-	$result = getSPARQL( $sparql ) ;
+	$result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$bindings = $result->results->bindings ;
 	if (count($bindings) == 0 && count($names) > 0) {
 		$author_names_strings = '"' . implode ( '" "' , $names ) . '"' ;
 		$sparql = "SELECT ?author_name ?statement WHERE { VALUES ?author_name { $author_names_strings } . wd:$paperq p:P2093 ?statement . ?statement ps:P2093 ?author_name . }" ;
-		$result = getSPARQL( $sparql ) ;
+		$result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		$bindings = $result->results->bindings ;
 		if (count($bindings) == 0) {
 			print "WARNING: NO matching statement found for $paperq $author_num<br/>";
@@ -46,7 +46,7 @@ function get_author_statement_guid($paperq, $author_num, $names) {
 }
 
 // Quickstatements V1 commands for replacing author name strings with author items:
-function replace_authors_qs_commands ( $papers, $names, $author_q ) {
+function replace_authors_qs_commands ( $papers, $names, $author_q, $use_scholarly_subgraph ) {
 	$commands = array() ;
 	$paperq_set = array();
 	foreach ( $papers AS $author_match ) {
@@ -66,7 +66,7 @@ function replace_authors_qs_commands ( $papers, $names, $author_q ) {
 		}
 		$paper_q_set[$paperq] = $author_num ;
 
-		$statement_gid = get_author_statement_guid($paperq, $author_num, $names);
+		$statement_gid = get_author_statement_guid($paperq, $author_num, $names, $use_scholarly_subgraph);
 
 		$claim = new WDClaim($statement_gid);
 		if ( !isset($claim)) {
@@ -184,7 +184,7 @@ function move_authors_qs_commands ( $wil, $papers, $author_q, $new_author_q ) {
 }
 
 // Quickstatements V1 commands for replacing multiple matched author name strings with author items:
-function match_authors_qs_commands ( $papers ) {
+function match_authors_qs_commands ( $papers, $use_scholarly_subgraph ) {
 	$commands = array() ;
 	$paperq_set = array();
 	foreach ( $papers AS $author_match ) {
@@ -206,7 +206,7 @@ function match_authors_qs_commands ( $papers ) {
 		}
 		$paper_q_set["$paperq:$author_q"] = $author_num ;
 
-		$statement_gid = get_author_statement_guid($paperq, $author_num, []);
+		$statement_gid = get_author_statement_guid($paperq, $author_num, [], $use_scholarly_subgraph);
 
 		$claim = new WDClaim($statement_gid);
 		if ( !isset($claim)) {

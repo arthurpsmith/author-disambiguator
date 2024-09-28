@@ -15,11 +15,14 @@ class WikidataArticleEntry2 {
 	public $topics = array() ;
 	public $publication_date = '';
 	public $shifted_numbers = array();
+	public $use_scholarly_subgraph = true;
 
-	public function __construct ( $item = NULL ) {
+	public function __construct ( $use_scholarly_subgraph, $item = NULL ) {
 		global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
 			$published_date_prop_id, $published_in_prop_id,
 			$topic_prop_id ;
+
+		$this->use_scholarly_subgraph = $use_scholarly_subgraph;
 
 		if (! isset($item) ) {
 			return ;
@@ -306,7 +309,7 @@ class WikidataArticleEntry2 {
 			}
 		}
 		$unordered_auths = $this->authors['unordered'];
-		$stated_as = fetch_stated_as_for_authors($unordered_auths);
+		$stated_as = fetch_stated_as_for_authors($unordered_auths, $this->use_scholarly_subgraph);
 		$matches = $this->match_candidates( $wil, $unordered_auths, $stated_as );
 		$candidate_match_nums = [];
 		foreach ( $matches AS $num => $qid_list ) {
@@ -442,7 +445,7 @@ function evaluate_names_for_ordinal($author_names, $authors, $all_stated_as, $wi
 	return $eval;
 }
 
-function fetch_stated_as_for_authors($author_qids) {
+function fetch_stated_as_for_authors($author_qids, $use_scholarly_subgraph) {
 	$names = array();
 
 	$batch_size = 250 ;
@@ -452,20 +455,20 @@ function fetch_stated_as_for_authors($author_qids) {
 		$batches[count($batches)-1][$k] = $v ;
 	}
 	foreach ( $batches as $batch ) {
-		$new_names = fetch_stated_for_batch($batch);
+		$new_names = fetch_stated_for_batch($batch, $use_scholarly_subgraph);
 		$names = array_merge($names, $new_names);
 	}
 	return $names;
 }
 
-function fetch_stated_for_batch($author_qids) {
+function fetch_stated_for_batch($author_qids, $use_scholarly_subgraph) {
 	$author_qids_for_sparql = 'wd:' . implode ( ' wd:' , $author_qids) ;
 
 	$sparql = "SELECT DISTINCT ?author_qid ?name WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
 	?auth_statement ps:P50 ?author_qid ;
                         pq:P1932 ?name .
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$bindings = $query_result->results->bindings ;
 	$names = array();
 	foreach ( $bindings AS $binding ) {
@@ -475,7 +478,7 @@ function fetch_stated_for_batch($author_qids) {
 	return $names;
 }
 
-function generate_article_entries2($id_list) {
+function generate_article_entries2($id_list, $use_scholarly_subgraph) {
 	$id_uris = array_map(function($id) { return "wd:" . prepend_q($id); }, $id_list);
 
 	$batch_size = 20 ;
@@ -487,7 +490,7 @@ function generate_article_entries2($id_list) {
 
 	$article_entries = array();
 	foreach ( $batches as $batch ) {
-		$new_article_entries = generate_entries_for_batch2($batch);
+		$new_article_entries = generate_entries_for_batch2($batch, $use_scholarly_subgraph);
 		$article_entries = array_merge($article_entries, $new_article_entries);
 	}
 	return $article_entries;
@@ -500,7 +503,7 @@ function claim_uri_to_id($claim_uri) {
 	return substr_replace($claim_id, '$', $pos, 1);
 }
 
-function generate_entries_for_batch2( $uri_list ) {
+function generate_entries_for_batch2( $uri_list, $use_scholarly_subgraph ) {
 	global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
 		$published_date_prop_id, $published_in_prop_id,
 		$topic_prop_id ;
@@ -518,7 +521,7 @@ function generate_entries_for_batch2( $uri_list ) {
   OPTIONAL { ?q wdt:$published_date_prop_id ?pub_date }.
   SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$bindings = $query_result->results->bindings ;
 	foreach ( $bindings AS $binding ) {
 		$qid = item_id_from_uri($binding->q->value) ;
@@ -526,7 +529,7 @@ function generate_entries_for_batch2( $uri_list ) {
 		if (isset ( $keyed_article_entries[$qid] ) ) {
 			$article_entry = $keyed_article_entries[$qid] ;
 		} else {
-			$article_entry = new WikidataArticleEntry2();
+			$article_entry = new WikidataArticleEntry2($use_scholarly_subgraph);
 			$article_entry->q = $qid ;
 			$keyed_article_entries[$qid] = $article_entry ;
 		}
@@ -558,7 +561,7 @@ function generate_entries_for_batch2( $uri_list ) {
   ?name_statement ps:P2093 ?name_string .
   OPTIONAL { ?name_statement pq:P1545 ?ordinal } .
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	if (! isset($query_result->results ) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $keyed_article_entries;
@@ -593,7 +596,7 @@ function generate_entries_for_batch2( $uri_list ) {
   OPTIONAL { ?author_statement pq:P1932 ?stated_as } .
   OPTIONAL { ?author_statement pq:P1545 ?ordinal } .
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	if (! isset($query_result->results ) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $keyed_article_entries;
@@ -639,7 +642,7 @@ function generate_entries_for_batch2( $uri_list ) {
 
 function extract_coauthors_from_sparql_query($sparql) {
 	$coauthors = array();
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $this->use_scholarly_subgraph ) ;
 	if (! isset($query_result->results) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $coauthors;

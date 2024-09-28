@@ -16,6 +16,8 @@ if (limit_requests( $db_conn, 10 ) ) {
 	print_footer() ;
 	exit ( 0 ) ;
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 $action = get_request ( 'action' , '' ) ;
@@ -41,7 +43,7 @@ if ( $action == 'match' ) {
 	print "<input type='hidden' name='openpage' value='1' />" ;
 	$papers = get_request ( 'papers' , array() ) ;
 
-	$commands = match_authors_qs_commands ( $papers ) ;
+	$commands = match_authors_qs_commands ( $papers, $use_scholarly_subgraph ) ;
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
 	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
@@ -81,7 +83,7 @@ $sparql = "SELECT DISTINCT ?author_qid ?name { VALUES ?author_qid { $author_qids
 	?auth_statement ps:P50 ?author_qid ;
                         pq:P1932 ?name .
 }" ;
-$query_result = getSPARQL( $sparql ) ;
+$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 $bindings = $query_result->results->bindings ;
 foreach ( $bindings AS $binding ) {
 	$author_qid = item_id_from_uri($binding->author_qid->value) ;
@@ -144,11 +146,11 @@ foreach ($author_qids as $num => $author_qid) {
 }
 
 $sparql = "SELECT ?q WHERE { $all_names_query UNION " . implode(" UNION ", $part_names_queries) . " . } LIMIT $article_limit" ;
-$items_papers = getSPARQLitems ( $sparql ) ;
+$items_papers = getSPARQLitems ( $sparql, $use_scholarly_subgraph ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
-$article_items = generate_article_entries( $items_papers );
+$article_items = generate_article_entries( $items_papers, $use_scholarly_subgraph );
 
 # Just need labels for the following:
 $qids_to_label = array();

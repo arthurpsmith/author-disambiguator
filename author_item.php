@@ -15,6 +15,8 @@ if (limit_requests( $db_conn, 10 ) ) {
 	print_footer() ;
 	exit ( 0 ) ;
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 $action = get_request ( 'action' , '' ) ;
@@ -76,7 +78,7 @@ if ( $action == 'remove' ) {
 
 $filter_in_context = ((! isset($filter)) || ($filter == '')) ? '.' : "; $filter . ";
 $sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid $filter_in_context } LIMIT $article_limit" ;
-$items_papers = getSPARQLitems ( $sparql ) ;
+$items_papers = getSPARQLitems ( $sparql, $use_scholarly_subgraph ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 
 
@@ -85,7 +87,7 @@ $to_load = array() ;
 $to_load[] = $author_qid ;
 $wil->loadItems ( $to_load ) ;
 
-$article_items = generate_article_entries( $items_papers );
+$article_items = generate_article_entries( $items_papers, $use_scholarly_subgraph );
 
 # Just need labels for the following:
 $qids_to_label = array();

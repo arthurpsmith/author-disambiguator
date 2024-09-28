@@ -1,7 +1,8 @@
 <?PHP
 
 $tool_name = 'author-disambiguator';
-$sparql_endpoint = 'https://query.wikidata.org/sparql';
+$main_sparql_endpoint = 'https://query-main.wikidata.org/sparql';
+$scholarly_sparql_endpoint = 'https://query-scholarly.wikidata.org/sparql';
 $wikibase_endpoint = 'www.wikidata.org';
 $base_entity_url = "http://$wikibase_endpoint/";
 $wikibase_api_url = "https://$wikibase_endpoint/w/api.php";

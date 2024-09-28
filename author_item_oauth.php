@@ -21,13 +21,14 @@ if ($action == 'authorize') {
 	$db_conn->close();
 	exit(0);
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
-	print "Wikimedia user account: " . $oauth->userinfo->name ;
-	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
+        print oauth_user_header($oauth, $use_scholarly_subgraph);
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
 	print_footer() ;
@@ -138,7 +139,7 @@ if ($action == 'merge') {
 
 $filter_in_context = ((! isset($filter)) || ($filter == '')) ? '.' : "; $filter . ";
 $sparql = "SELECT ?q { ?q wdt:P50 wd:$author_qid $filter_in_context } LIMIT $article_limit" ;
-$items_papers = getSPARQLitems ( $sparql ) ;
+$items_papers = getSPARQLitems ( $sparql, $use_scholarly_subgraph ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 
 
@@ -147,7 +148,7 @@ $to_load = array() ;
 $to_load[] = $author_qid ;
 $wil->loadItems ( $to_load ) ;
 
-$article_items = generate_article_entries2( $items_papers );
+$article_items = generate_article_entries2( $items_papers, $use_scholarly_subgraph );
 
 # Just need labels for the following:
 $qids_to_label = array();
@@ -173,7 +174,7 @@ if ( !isset($author_item) )  {
 
 $author_data = new AuthorData($author_item);
 $author_alias_names = $author_item->getAliases ( 'en' );
-$stated_as_list = fetch_stated_as_for_authors( [ $author_qid ] );
+$stated_as_list = fetch_stated_as_for_authors( [ $author_qid ], $use_scholarly_subgraph );
 $author_stated_as = [];
 if ( isset( $stated_as_list[ $author_qid ] ) ) {
 	$author_stated_as = $stated_as_list[ $author_qid ];
@@ -262,7 +263,7 @@ foreach ($article_items AS $article) {
 	}
 }
 $author_qids = array_keys($author_qid_map);
-$stated_as_names = fetch_stated_as_for_authors($author_qids);
+$stated_as_names = fetch_stated_as_for_authors($author_qids, $use_scholarly_subgraph);
 if ($merge) {
 	$wil->loadItems ( $author_qids ) ;
 }

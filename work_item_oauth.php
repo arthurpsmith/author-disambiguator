@@ -27,6 +27,8 @@ if ($action == 'authorize') {
 	$db_conn->close();
 	exit(0);
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 if ($action) { # reset checkboxes after action
@@ -44,9 +46,7 @@ print disambig_header( True );
 
 $username = NULL;
 if ($oauth->isAuthOK()) {
-	$username = $oauth->userinfo->name;
-	print "Wikimedia user account: $username" ;
-	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
+        print oauth_user_header($oauth, $use_scholarly_subgraph);
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
 	print_footer() ;
@@ -204,7 +204,7 @@ print "</select>
 </form>" ;
 
 if ( $work_qid == '' ) {
-	print_work_example();
+	print_work_example($use_scholarly_subgraph);
 	print_footer() ;
 	$db_conn->close();
 	exit ( 0 ) ;
@@ -246,7 +246,7 @@ if ($author_list_id !== '') {
 
 $db_conn->close();
 
-$article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
+$article_entry = generate_article_entries2( [$work_qid], $use_scholarly_subgraph ) [ $work_qid ];
 
 // Load items
 $to_load = array() ;
@@ -272,7 +272,7 @@ if ( !isset($work_item) )  {
 }
 
 # Regenerate article entry directly from item:
-$article_entry = new WikidataArticleEntry2( $work_item );
+$article_entry = new WikidataArticleEntry2( $use_scholarly_subgraph, $work_item );
 
 $author_stats = $article_entry->author_statistics();
 
@@ -377,14 +377,14 @@ if ($match) {
 	$related_authors = array_diff($related_authors, $author_qids); # Only fetch stated-as etc. for new qids
 	$wil->loadItems ( $related_authors ) ;
 	$stated_as_names = array();
-	$stated_as_names = fetch_stated_as_for_authors($related_authors);
+	$stated_as_names = fetch_stated_as_for_authors($related_authors, $use_scholarly_subgraph);
 	$match_candidates = $article_entry->match_candidates($wil, $related_authors, $stated_as_names);
 	$repeated_match_ids = $article_entry->repeated_author_ids( $match_candidates );
 	$items_authors = $author_qids;
 	foreach ($match_candidates AS $author_qids) {
 		$items_authors = array_merge($items_authors, $author_qids);
 	}
-	$match_candidate_data = AuthorData::authorDataFromItems( $items_authors, $wil, false ) ;
+	$match_candidate_data = AuthorData::authorDataFromItems( $items_authors, $wil, false, $use_scholarly_subgraph ) ;
 	$to_load = array();
 	foreach ($match_candidate_data AS $author_data) {
 		foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
@@ -393,7 +393,7 @@ if ($match) {
 	$wil->loadItems ( $to_load ) ;
 
 } else {
-	$stated_as_names = fetch_stated_as_for_authors($author_qids);
+	$stated_as_names = fetch_stated_as_for_authors($author_qids, $use_scholarly_subgraph);
 	$merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names, $auth_num_shift);
 }
 

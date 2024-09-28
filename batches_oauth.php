@@ -91,8 +91,7 @@ if ($action == 'delete') {
 print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
-	print "Wikimedia user account: " . $oauth->userinfo->name ;
-	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
+        print oauth_user_header($oauth, $use_scholarly_subgraph);
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
 }

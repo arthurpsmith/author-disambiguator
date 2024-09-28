@@ -146,7 +146,7 @@ while (1) {
 			$to_load = array_unique( $to_load );
 			$wil->loadItems ( $to_load ) ;
 			$author_qids = array_keys($author_qid_map);
-			$stated_as_names = fetch_stated_as_for_authors($author_qids);
+			$stated_as_names = fetch_stated_as_for_authors($author_qids, true);
 			$merge_candidates = $article_item->merge_candidates($wil, $stated_as_names);
 			$author_numbers = array() ;
 			foreach ( $merge_candidates AS $num => $do_merge ) {

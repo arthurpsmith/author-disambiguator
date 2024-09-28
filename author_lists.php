@@ -35,12 +35,13 @@ if ($action == 'delete') {
 		}
 	}
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 
 print disambig_header( True );
 
 if ($oauth->isAuthOK()) {
-	print "Wikimedia user account: " . $oauth->userinfo->name ;
-	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
+        print oauth_user_header($oauth, $use_scholarly_subgraph);
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
 }
@@ -66,7 +67,7 @@ if ($action == 'update') {
 		$auth_list->label = get_request ( 'label', 'Unlabeled');
 		$author_qids = preg_split('/[\r\n]+/', get_request ( 'author_qids', ''));
 		$article_qids = preg_split('/[\r\n]+/', get_request ( 'article_qids', ''));
-		$articles = generate_article_entries2( $article_qids );
+		$articles = generate_article_entries2( $article_qids, $use_scholarly_subgraph );
 		$author_qid_map = array();
 		foreach ($auth_list->author_qids AS $qid) {
 			if (substr($qid, 0, 1) === 'Q') {
@@ -197,20 +198,20 @@ if ( $list_id == '') {
 	print "<h2>Comparison of " . $list1->label . " ($list_id) with " . $list2->label . " ($compare_id)</h2>\n";
 	$comparison = new CompareLists($list1->author_qids, $list2->author_qids);
 	print "<h3>Only in List <a href='?list_id=$list_id'>$list_id</a>:</h3>";
-	$author_data_rows = author_data_rows($comparison->only1, $wil);
+	$author_data_rows = author_data_rows($comparison->only1, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 	print "<h3>Only in List <a href='?list_id=$compare_id'>$compare_id</a>:</h3>";
-	$author_data_rows = author_data_rows($comparison->only2, $wil);
+	$author_data_rows = author_data_rows($comparison->only2, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 	print "<h3>In both:</h3>";
-	$author_data_rows = author_data_rows($comparison->both, $wil);
+	$author_data_rows = author_data_rows($comparison->both, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 } else if ($compare_work_qid != '') {
 	$wil = new WikidataItemList ;
 
 	$list1 = new AuthorList($list_id);
 	$list1->load($db_conn);
-	$work_data = generate_article_entries2( [ $compare_work_qid ] )[ $compare_work_qid ];
+	$work_data = generate_article_entries2( [ $compare_work_qid ], $use_scholarly_subgraph )[ $compare_work_qid ];
 	$author_qid_map = [];
 	foreach ( $work_data->authors AS $art_auth_list ) {
 		foreach ( $art_auth_list AS $qid ) {
@@ -221,13 +222,13 @@ if ( $list_id == '') {
 	print "<h2>Comparison of " . $list1->label . " ($list_id) with authors for '" . $work_data->title . " ($compare_work_qid)</h2>\n";
 	$comparison = new CompareLists($list1->author_qids, $work_author_qids);
 	print "<h3>Only in List <a href='?list_id=$list_id'>$list_id</a>:</h3>";
-	$author_data_rows = author_data_rows($comparison->only1, $wil);
+	$author_data_rows = author_data_rows($comparison->only1, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 	print "<h3>Only in Work $compare_work_qid:</h3>";
-	$author_data_rows = author_data_rows($comparison->only2, $wil);
+	$author_data_rows = author_data_rows($comparison->only2, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 	print "<h3>In both:</h3>";
-	$author_data_rows = author_data_rows($comparison->both, $wil);
+	$author_data_rows = author_data_rows($comparison->both, $wil, $use_scholarly_subgraph);
 	print author_data_table($author_data_rows, "");
 	print "<h3>Unmatched names in Work $compare_work_qid:</h3>";
 	print "<ul>";
@@ -262,7 +263,7 @@ if ( $list_id == '') {
 	print " or Work QID: <input name='compare_work_qid'>";
 	print "<input type='submit' class='btn btn-primary' name='doit' value='Compare' /></form>";
 
-	$author_data_rows = author_data_rows($author_list->author_qids, $wil);
+	$author_data_rows = author_data_rows($author_list->author_qids, $wil, $use_scholarly_subgraph);
 	print "<form method='post' class='form'>" ;
 	print "<input type='hidden' name='action' value='remove_from_list' />";
 	print "<input type='hidden' name='list_id' value='$list_id' />";

@@ -21,6 +21,8 @@ if (limit_requests( $db_conn, 10 ) ) {
 	print_footer() ;
 	exit ( 0 ) ;
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 $action = get_request ( 'action' , '' ) ;
@@ -58,7 +60,7 @@ if ( $use_name_strings &&  ( count($input_names) > 0 && strlen($input_names[0]) 
 		$names = $nm->fuzzy_search_strings();
 	}
 	if ( $wbsearch ) {
-		$names = $nm->names_from_wbsearch( $names );
+		$names = $nm->names_from_wbsearch( $names, $use_scholarly_subgraph );
 	}
 }
 
@@ -92,7 +94,7 @@ if ( $action == 'add' ) {
 		exit ( 0 ) ;
 	}
 
-	$commands = replace_authors_qs_commands ( $papers, $names, $author_q ) ;
+	$commands = replace_authors_qs_commands ( $papers, $names, $author_q, $use_scholarly_subgraph ) ;
 
 	print "Quickstatements V1 commands for replacing author name strings with author item:" ;
 	print "<textarea name='data' rows=20>" . implode("\n",$commands) . "</textarea>" ;
@@ -144,7 +146,7 @@ $names_strings = implode ( ' ' , $names_with_langs ) ;
 $filter_in_context = "; $filter . ";
 $sparql = "SELECT ?q WHERE { VALUES ?name { $author_names_strings } . ?q wdt:P2093 ?name $filter_in_context } LIMIT $article_limit" ;
 #print $sparql ;
-$items_papers = getSPARQLitems ( $sparql ) ;
+$items_papers = getSPARQLitems ( $sparql, $use_scholarly_subgraph ) ;
 $limit_reached = (count($items_papers) == $article_limit) ;
 $items_papers = array_unique( $items_papers );
 
@@ -153,18 +155,18 @@ $author_filter = $filter_authors ? "?article wdt:P50 ?q $filter_in_context" : ''
 $items_authors = array() ;
 $sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31 wd:$human_qid . $author_filter }" ;
 #print $sparql ;
-$items_individual_authors = getSPARQLitems ( $sparql ) ;
+$items_individual_authors = getSPARQLitems ( $sparql, false ) ;
 
 if (strlen($nm->last_name) < 4) {
 	$items_collective_authors = []; # Otherwise may time out
 } else {
 	$sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $names_strings } . ?q (rdfs:label|skos:altLabel) ?name ; wdt:P31/wdt:P279* wd:$human_group_qid . $author_filter }" ;
 #print $sparql ;
-	$items_collective_authors = getSPARQLitems ( $sparql ) ;
+	$items_collective_authors = getSPARQLitems ( $sparql, false ) ;
 }
 $sparql = "SELECT DISTINCT ?q WHERE { VALUES ?name { $author_names_strings } . ?paper p:P50 ?statement . ?statement ps:P50 ?q ; pq:P1932 ?name . $author_filter FILTER NOT EXISTS {?q owl:sameAs ?redirect} }" ;
 #print $sparql ;
-$items_stated_as_authors = getSPARQLitems ( $sparql ) ;
+$items_stated_as_authors = getSPARQLitems ( $sparql, $use_scholarly_subgraph ) ;
 
 $items_authors = array_unique( array_merge( $items_individual_authors, $items_collective_authors, $items_stated_as_authors ) ) ;
 
@@ -174,7 +176,7 @@ $to_load = array() ;
 foreach ( $items_authors AS $q ) $to_load[] = $q ;
 $wil->loadItems ( $to_load ) ;
 
-$potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil, true ) ;
+$potential_author_data = AuthorData::authorDataFromItems( $items_authors, $wil, true, $use_scholarly_subgraph ) ;
 $to_load = array() ;
 foreach ($potential_author_data AS $author_data) {
 	foreach ($author_data->employer_qids as $q) $to_load[] = $q ;
@@ -188,7 +190,7 @@ print "<form method='post' class='form' target='_blank' action='?'>
 <input type='hidden' name='wbsearch' value='$wbsearch' />
 <input type='hidden' name='name' value='" . escape_attribute($name) . "' />" ;
 
-$article_items = generate_article_entries( $items_papers );
+$article_items = generate_article_entries( $items_papers, $use_scholarly_subgraph );
 
 # Just need labels for the following:
 $qids_to_label = array();

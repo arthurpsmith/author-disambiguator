@@ -20,12 +20,12 @@ function print_footer () {
 	print "</div></div></body></html>" ;
 }
 
-function print_name_example() {
+function print_name_example($use_scholarly_subgraph) {
 	print "<hr/>Some example names with works needing to be matched:<ul>";
 
 	$offset = rand(0,20000);
 	$sparql = "SELECT ?name WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . FILTER(STRLEN(?name) > 5) } OFFSET $offset LIMIT 20" ;
-	$query_result = getSPARQL($sparql);
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$used_names = [];
 	if ( isset($query_result->results) ) {
 		$bindings = $query_result->results->bindings ;
@@ -50,12 +50,12 @@ function print_auth_example() {
 	print "</ul>";
 }
 
-function print_work_example() {
+function print_work_example($use_scholarly_subgraph) {
 	print "<hr/>Some example works needing authors matched:<ul>";
 
 	$offset = rand(0,10000);
 	$sparql = "SELECT ?work ?workLabel WHERE { { SELECT ?work WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . } LIMIT 10010 } SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\". } } OFFSET $offset LIMIT 5" ;
-	$query_result = getSPARQL($sparql);
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$used_qids = [];
 	if ( isset($query_result->results) ) {
 		$bindings = $query_result->results->bindings ;
@@ -145,9 +145,17 @@ function disambig_header ($use_oauth_menu) {
 	return $s ;
 }
 
-function author_data_rows($author_qids, $wil) {
+function oauth_user_header($oauth, $use_scholarly_subgraph) {
+	$username = $oauth->userinfo->name;
+	$subgraph_name = $use_scholarly_subgraph ? "Scholarly" : "Main";
+	print "Wikimedia user account: $username" ;
+	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
+	print " <span style='font-size:small'>Using $subgraph_name subgraph - <a href='set_preferences.php'>change</a></a>";
+}
+
+function author_data_rows($author_qids, $wil, $use_scholarly_subgraph) {
 	$wil->loadItems ( $author_qids ) ;
-	$auth_data = AuthorData::authorDataFromItems( $author_qids, $wil, false, false ) ;
+	$auth_data = AuthorData::authorDataFromItems( $author_qids, $wil, false, $use_scholarly_subgraph, false ) ;
 	$to_load = array();
 	foreach ($auth_data AS $author_data) {
 		foreach ($author_data->employer_qids as $q) $to_load[] = $q ;

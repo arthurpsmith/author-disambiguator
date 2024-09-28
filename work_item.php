@@ -15,6 +15,8 @@ if (limit_requests( $db_conn, 10 ) ) {
 	print_footer() ;
 	exit ( 0 ) ;
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 $db_conn->close();
 
 $action = get_request ( 'action' , '' ) ;
@@ -31,7 +33,7 @@ Work Wikidata ID:
 </form>" ;
 
 if ( $work_qid == '' ) {
-	print_work_example();
+	print_work_example($use_scholarly_subgraph);
 	print_footer() ;
 	exit ( 0 ) ;
 }
@@ -60,7 +62,7 @@ if ( $action == 'add' ) {
 }
 
 
-$article_entry = generate_article_entries2( [$work_qid] ) [ $work_qid ];
+$article_entry = generate_article_entries2( [$work_qid], $use_scholarly_subgraph ) [ $work_qid ];
 
 // Load items
 $to_load = array() ;
@@ -80,7 +82,7 @@ $wil->loadItems ( $to_load ) ;
 $work_item = $wil->getItem ( $work_qid ) ;
 
 # Regenerate article entry directly from item:
-$article_entry = new WikidataArticleEntry2( $work_item );
+$article_entry = new WikidataArticleEntry2( $use_scholarly_subgraph, $work_item );
 
 if ( !isset($work_item) )  {
 	print "<h2>Warning: $work_qid not found!</h2>" ;
@@ -135,7 +137,7 @@ foreach ( $article_entry->authors as $author_qid_list ) {
 	}
 }
 $author_qids = array_keys($author_qid_map);
-$stated_as_names = fetch_stated_as_for_authors($author_qids);
+$stated_as_names = fetch_stated_as_for_authors($author_qids, $use_scholarly_subgraph);
 $merge_candidates = $article_entry->merge_candidates($wil, $stated_as_names);
 
 // Author list

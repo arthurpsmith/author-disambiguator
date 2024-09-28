@@ -23,10 +23,11 @@ function get_request ( $key , $default = "" ) {
 	return $prefilled_requests[$key];;
 }
 
-# SPARQL
-function getSPARQL ( $cmd ) {
+# SPARQL - flag determines whether to use main graph (default) or scholarly subgraph
+function getSPARQL ( $cmd, $subgraph_flag = False ) {
 	global $tool_name;
-	global $sparql_endpoint;
+	global $main_sparql_endpoint;
+	global $scholarly_sparql_endpoint;
 
 	$sparql = "$cmd\n#TOOL: $tool_name" ;
 
@@ -34,13 +35,15 @@ function getSPARQL ( $cmd ) {
 		['timeout' => 1200]  //1200 seconds is 20 minutes
 	]);
 
-	$url = "$sparql_endpoint?format=json&query=" . urlencode($sparql) ;
+	$endpoint = $subgraph_flag ? $scholarly_sparql_endpoint : $main_sparql_endpoint ;
+
+	$url = "$endpoint?format=json&query=" . urlencode($sparql) ;
 	$fc = @file_get_contents ( $url , false , $ctx ) ;
 
 	// Catch "wait" response, wait 5, retry
 	if ( preg_match ( '/429/' , $http_response_header[0] ) ) {
 		sleep ( 5 ) ;
-		return getSPARQL ( $cmd ) ;
+		return getSPARQL ( $cmd, $subgraph_flag ) ;
 	}
 		
 	assert ( $fc !== false , 'SPARQL query failed: '.$sparql ) ;
@@ -53,14 +56,13 @@ function parseItemFromURL ( $url ) /*:string*/ {
 	return preg_replace ( '/^.+([A-Z]\d+)$/' , '$1' , $url ) ;
 }
 
-function getSPARQLitems ( $cmd , $varname = 'q' ) {
+function getSPARQLitems ( $cmd , $subgraph_flag = False ) {
 	$ret = [] ;
-	$j = getSPARQL ( $cmd ) ;
+	$j = getSPARQL ( $cmd, $subgraph_flag ) ;
 	if ( !isset($j) or !isset($j->head) ) return $ret ;
-	if ( $varname == '' ) $varname = $j->head->vars[0] ;
 	if ( !isset($j->results) or !isset($j->results->bindings) or count($j->results->bindings) == 0 ) return $ret ;
 	foreach ( $j->results->bindings AS $v ) {
-		$ret[] = parseItemFromURL ( $v->$varname->value ) ;
+		$ret[] = parseItemFromURL ( $v->q->value ) ;
 	}
 	$ret = array_unique ( $ret ) ;
 	return $ret ;

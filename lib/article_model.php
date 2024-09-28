@@ -112,7 +112,7 @@ function prepend_q ( $id ) {
 	return 'Q'.preg_replace('/\D/','',"$id") ;
 }
 
-function generate_article_entries($id_list) {
+function generate_article_entries($id_list, $use_scholarly_subgraph) {
 	$id_uris = array_map(function($id) { return "wd:" . prepend_q($id); }, $id_list);
 
 	$batch_size = 20 ;
@@ -124,13 +124,13 @@ function generate_article_entries($id_list) {
 
 	$article_entries = array();
 	foreach ( $batches as $batch ) {
-		$new_article_entries = generate_entries_for_batch($batch);
+		$new_article_entries = generate_entries_for_batch($batch, $use_scholarly_subgraph);
 		$article_entries = array_merge($article_entries, $new_article_entries);
 	}
 	return $article_entries;
 }
 
-function generate_entries_for_batch( $uri_list ) {
+function generate_entries_for_batch( $uri_list, $use_scholarly_subgraph ) {
 	global $doi_prop_id, $pubmed_prop_id, $title_prop_id,
 		$published_date_prop_id, $published_in_prop_id,
 		$topic_prop_id ;
@@ -148,7 +148,7 @@ function generate_entries_for_batch( $uri_list ) {
   OPTIONAL { ?q wdt:$published_date_prop_id ?pub_date }.
   SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$bindings = $query_result->results->bindings ;
 	foreach ( $bindings AS $binding ) {
 		$qid = item_id_from_uri($binding->q->value) ;
@@ -188,7 +188,7 @@ function generate_entries_for_batch( $uri_list ) {
   ?name_statement ps:P2093 ?name_string .
   OPTIONAL { ?name_statement pq:P1545 ?ordinal } .
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph );
 	if (! isset($query_result->results ) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $keyed_article_entries;
@@ -217,7 +217,7 @@ function generate_entries_for_batch( $uri_list ) {
   OPTIONAL { ?author_statement pq:P1932 ?stated_as } .
   OPTIONAL { ?author_statement pq:P1545 ?ordinal } .
 }" ;
-	$query_result = getSPARQL( $sparql ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph );
 	if (! isset($query_result->results ) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $keyed_article_entries;

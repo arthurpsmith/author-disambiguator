@@ -418,8 +418,9 @@ class NameModel {
 		return $all_init;
 	}
 
-	public function names_from_wbsearch($names) {
+	public function names_from_wbsearch($names, $use_scholarly_subgraph) {
 		global $wikibase_endpoint;
+
 		$new_names = array_fill_keys($names, 1);
 		$search_strings = '"\"' . implode( '\"" "\"', $names )  . '\""' ;
 		$sparql = "SELECT DISTINCT ?name WHERE {
@@ -436,7 +437,7 @@ class NameModel {
   ?item wdt:P2093 ?name .
   FILTER CONTAINS(LCASE(?name), ?lc_string) .
 }" ;
-		$query_result = getSPARQL( $sparql ) ;
+		$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		$bindings = $query_result->results->bindings ;
 		foreach ( $bindings AS $binding ) {
 			$new_names[$binding->name->value] = 1 ;
@@ -456,7 +457,7 @@ class NameModel {
   ?statement pq:P1932 ?name .
   FILTER CONTAINS(LCASE(?name), ?lc_string) .
 }" ;
-		$query_result = getSPARQL( $sparql ) ;
+		$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 		$bindings = $query_result->results->bindings ;
 		foreach ( $bindings AS $binding ) {
 			$new_names[$binding->name->value] = 1 ;
