@@ -46,6 +46,7 @@ print disambig_header( True );
 
 $username = NULL;
 if ($oauth->isAuthOK()) {
+	$username = $oauth->userinfo->name;
         print oauth_user_header($oauth, $use_scholarly_subgraph);
 } else {
 	print "You haven't authorized this application yet: click <a href='?action=authorize'>here</a> to do that, then reload this page.";
@@ -157,7 +158,7 @@ if ($action != '' && in_array($action, $batch_actions)) {
 
     $db_conn->close();
     if (! $batch->is_running()) {
-	print("Starting batch!\n");
+	print("<br>Starting batch!\n");
 	$batch->start($oauth);
     }
 }
@@ -372,7 +373,7 @@ if ($match) {
 	if ($author_list_id != '') {
 		$related_authors = $auth_list_for_match->author_qids;
 	} else {
-		$related_authors = fetch_related_authors($work_qid, $author_qids);
+		$related_authors = fetch_related_authors($work_qid, $author_qids, $use_scholarly_subgraph);
 	}
 	$related_authors = array_diff($related_authors, $author_qids); # Only fetch stated-as etc. for new qids
 	$wil->loadItems ( $related_authors ) ;

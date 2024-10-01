@@ -640,9 +640,9 @@ function generate_entries_for_batch2( $uri_list, $use_scholarly_subgraph ) {
 	return $keyed_article_entries;
 }
 
-function extract_coauthors_from_sparql_query($sparql) {
+function extract_coauthors_from_sparql_query($sparql, $use_scholarly_subgraph) {
 	$coauthors = array();
-	$query_result = getSPARQL( $sparql, $this->use_scholarly_subgraph ) ;
+	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	if (! isset($query_result->results) ) {
 		print "WARNING: no results from SPARQL query '$sparql'";
 		return $coauthors;
@@ -655,7 +655,7 @@ function extract_coauthors_from_sparql_query($sparql) {
 	return $coauthors;
 }
 
-function fetch_related_authors($work_qid, $author_qids) {
+function fetch_related_authors($work_qid, $author_qids, $use_scholarly_subgraph) {
 	global $cites_work_prop_id ;
 
 	$work_qid_for_sparql = 'wd:' . $work_qid ;
@@ -673,18 +673,18 @@ function fetch_related_authors($work_qid, $author_qids) {
 	?q wdt:P50 ?author_qid ;
            wdt:P50 ?coauthor_qid .
 }" ;
-		$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+		$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql, $use_scholarly_subgraph));
 	}
 	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE {
         ?q2 wdt:$cites_work_prop_id $work_qid_for_sparql ;
             wdt:P50 ?coauthor_qid .
 }" ;
-	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql, $use_scholarly_subgraph));
 	$sparql = "SELECT DISTINCT ?coauthor_qid WHERE { VALUES ?author_qid { $author_qids_for_sparql } .
 	$work_qid_for_sparql wdt:$cites_work_prop_id ?q2 .
         ?q2 wdt:P50 ?coauthor_qid .
 }" ;
-	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql));
+	$coauthors = array_merge($coauthors, extract_coauthors_from_sparql_query($sparql, $use_scholarly_subgraph));
 	return array_keys($coauthors);
 }
 

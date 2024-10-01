@@ -150,7 +150,7 @@ function oauth_user_header($oauth, $use_scholarly_subgraph) {
 	$subgraph_name = $use_scholarly_subgraph ? "Scholarly" : "Main";
 	print "Wikimedia user account: $username" ;
 	print " <span style='font-size:small'>(<a href='logout_oauth.php'>log out</a>)</a>";
-	print " <span style='font-size:small'>Using $subgraph_name subgraph - <a href='set_preferences.php'>change</a></a>";
+	print " <span style='font-size:small'>using $subgraph_name subgraph - <a href='set_preferences.php'>change</a></a>";
 }
 
 function author_data_rows($author_qids, $wil, $use_scholarly_subgraph) {

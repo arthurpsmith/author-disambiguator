@@ -20,6 +20,8 @@ if ($action == 'authorize') {
 	$db_conn->close();
 	exit(0);
 }
+$prefs = new Preferences;
+$use_scholarly_subgraph = $prefs->use_scholarly_subgraph;
 
 if ($action == 'stop') {
 	$stop_id = get_request( 'batch_id', '' ) ;

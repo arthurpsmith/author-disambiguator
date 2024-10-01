@@ -132,7 +132,7 @@ while (1) {
 			$work_qid = $cmd_parts[1];
 
 			print ("$batch_id/$pid - Merging redundant author entries for $work_qid\n");
-			$article_item = generate_article_entries2( [$work_qid]) [ $work_qid ];
+			$article_item = generate_article_entries2( [$work_qid], true) [ $work_qid ];
 			$to_load = array() ;
 			$author_qid_map = array();
 			foreach ( $article_item->authors AS $auth_list ) {
