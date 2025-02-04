@@ -47,6 +47,9 @@ class MySqlSessionHandler implements SessionHandlerInterface
 		$stmt->execute();
 		if ($results = $stmt->get_result()) {
 			$row = $results->fetch_row();
+			if (is_null($row)) {
+				return '';
+			}
 			return (string) $row[0];
 		} else {
 			return false;
