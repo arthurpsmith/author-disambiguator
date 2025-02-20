@@ -274,6 +274,7 @@ $is_first_group = true ;
 foreach ( $clusters AS $cluster_name => $cluster ) {
 	print "<div class='group'>" ;
 	print "<h3>$cluster_name</h3>" ;
+	print "<p>" . count($cluster->articles) . " publications found</p>" ;
 	$potential_authors = array_keys($potential_authors_by_cluster_label[$cluster_name]);
 	foreach ( $potential_authors AS $potential_qid ) {
 		$author_data = $potential_author_data[$potential_qid] ;
