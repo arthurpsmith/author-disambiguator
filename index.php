@@ -348,7 +348,7 @@ foreach ( $potential_author_data AS $q => $author_data ) {
 	if ( !isset($i) ) continue ;
 	print "<tr>" ;
 	print "<td><input type='radio' name='author_match' value='$q' /></td>" ;
-	print "<td><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a></td>" ;
+	print "<td><a href='author_item.php?id=" . $i->getQ() . "' target='_blank' style='color:green'>" . $i->getLabel() . "</a> [" . wikidata_link($i->getQ(), "wikidata", '') . "]</td>" ;
 	print "<td>" . $i->getDesc() . "</td>" ;
 	print "<td>$author_data->article_count</td>" ;
 	print "<td>" ;
