@@ -2,7 +2,7 @@
 
 require_once ( __DIR__ . '/lib/initialize.php' ) ;
 
-$oauth_url = preg_replace('/(\/index.php\??|\/$|\/\?)/', '/names_oauth.php?', $_SERVER['REQUEST_URI']);
+$oauth_url = preg_replace('/(\/index.php\??|\/$|\/\?)/', 'names_oauth.php?', $_SERVER['REQUEST_URI']);
 
 $request_delay = 10;
 $article_limit = get_request ( 'limit', '' ) ;
