@@ -412,7 +412,7 @@ foreach ( $clusters AS $cluster_name => $cluster ) {
 // Potential authors
 #print "<pre>" ; print_r ( $items_authors ) ; print "</pre>" ;
 print "<h2>Potential author items</h2>" ;
-print "<table class='table table-striped table-condensed'>" ;
+print "<table class='table table-striped table-condensed table-striped-highlight'>" ;
 print "<tbody>" ;
 print "<tr><th></th><th>Name</th><th>Description</th><th>Authored items</th>" ;
 print "<th>Identifiers</th><th>Employer(s)</th></tr>" ;
@@ -464,40 +464,42 @@ print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
 
 arsort ( $author_qid_counter, SORT_NUMERIC ) ;
-print "<h2>Author items in these papers</h2>" ;
+print "<div class='container'><div class='row'>" ;
+print "<div class='col'><h2>Author items in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $author_qid_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
 	print "<li><a href='author_item_oauth.php?limit=50&id=$qt' style='color:green'>$label</a> (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3AP50+wd%3A$qt'>$cnt&times;</a>)</li>";
 }
-print "</ul>" ;
+print "</ul></div>" ;
 
 arsort ( $name_counter , SORT_NUMERIC ) ;
-print "<h2>Common author name strings in these papers</h2>" ;
+print "<div class='col'><h2>Common author name strings in these papers</h2>" ;
 print "<ul>" ;
 foreach ( $name_counter AS $a => $cnt ) {
 	if ( $cnt == 1 ) break ;
 	print "<li><a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "'>$a</a> (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($a) . "&filter=wdt%3AP2093+%22" . urlencode($name) . "%22'>$cnt&times;</a>)</li>" ;
 }
-print "</ul>" ;
+print "</ul></div>" ;
 
+print "<div class='w-100'></div>" ;
 arsort ( $venue_counter , SORT_NUMERIC ) ;
-print "<h2>Publishing venues for these papers</h2>" ;
+print "<div class='col'><h2>Publishing venues for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $venue_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
 	print "<li>" . wikidata_link($qt, $label, 'black') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3A$published_in_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
-print "</ul>" ;
+print "</ul></div>" ;
 
 arsort ( $topic_counter , SORT_NUMERIC ) ;
-print "<h2>Topics for these papers</h2>" ;
+print "<div class='col'><h2>Topics for these papers</h2>" ;
 print "<ul>" ;
 foreach ( $topic_counter AS $qt => $cnt ) {
 	$label = $qid_labels[$qt];
 	print "<li>" . wikidata_link($qt, $label, 'brown') . " (<a href='?fuzzy=$fuzzy&wbsearch=$wbsearch&limit=$article_limit&name=" . urlencode($name) . "&filter=wdt%3A$topic_prop_id+wd%3A$qt'>$cnt&times;</a>)</li>" ;
 }
-print "</ul>" ;
+print "</ul></div></div></div>" ;
 
 print_footer() ;
 
