@@ -112,7 +112,7 @@ function isKorean($string) {
     return preg_match('/[\x{3130}-\x{318F}\x{AC00}-\x{D7AF}]/u', $string);
 }
 
-$wikidata_preferred_langs = ['en','de','nl','fr','es','it','zh'] ;
+$wikidata_preferred_langs = ['en','de','nl','fr','es','it','zh','mul'] ;
 
 class WDI {
 
