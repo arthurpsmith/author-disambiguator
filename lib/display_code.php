@@ -54,7 +54,7 @@ function print_work_example($use_scholarly_subgraph) {
 	print "<hr/>Some example works needing authors matched:<ul>";
 
 	$offset = rand(0,10000);
-	$sparql = "SELECT ?work ?workLabel WHERE { { SELECT ?work WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . } LIMIT 10010 } SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\". } } OFFSET $offset LIMIT 5" ;
+	$sparql = "SELECT ?work ?workLabel WHERE { { SELECT ?work WHERE { ?work p:P2093 [ps:P2093 ?name; pq:P1545 ?ord] . } LIMIT 10010 } SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en,mul\". } } OFFSET $offset LIMIT 5" ;
 	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$used_qids = [];
 	if ( isset($query_result->results) ) {

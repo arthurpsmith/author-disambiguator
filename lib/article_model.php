@@ -146,7 +146,7 @@ function generate_entries_for_batch( $uri_list, $use_scholarly_subgraph ) {
   OPTIONAL { ?q wdt:$pubmed_prop_id ?pmid }.
   OPTIONAL { ?q wdt:$topic_prop_id ?topic }.
   OPTIONAL { ?q wdt:$published_date_prop_id ?pub_date }.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en,mul'. }
 }" ;
 	$query_result = getSPARQL( $sparql, $use_scholarly_subgraph ) ;
 	$bindings = $query_result->results->bindings ;
