@@ -235,7 +235,7 @@ class AuthorData {
 		$id_uris = implode(' ', $uri_list);
 		$sparql = "SELECT ?q ?qLabel WHERE {
   VALUES ?q { $id_uris } .
-  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en,de,es,fr,nl'. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en,de,es,fr,nl,mul'. }
 }" ;
 		$query_result = getSPARQL( $sparql, false ) ;
 		return self::_extract_string_map( $query_result , 'q', 'qLabel' ) ;
