@@ -1,7 +1,7 @@
 <?PHP
 
 // Quickstatements V1 commands for creating new author item:
-function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author ) {
+function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author, $zbmath_author ) {
 	global $human_qid;
 	global $instance_prop_id;
 	global $occupation_prop_id;
@@ -14,6 +14,7 @@ function new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchg
 	if ( $orcid_author != '' ) $commands[] = "LAST\tP496\t\"$orcid_author\"" ;
 	if ( $viaf_author != '' ) $commands[] = "LAST\tP214\t\"$viaf_author\"" ;
 	if ( $researchgate_author != '' ) $commands[] = "LAST\tP2038\t\"$researchgate_author\"" ;
+	if ( $zbmath_author != '' ) $commands[] = "LAST\tP1556\t\"$zbmath_author\"" ;
 	return $commands ;
 }
 

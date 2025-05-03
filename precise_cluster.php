@@ -72,6 +72,7 @@ if ( $action == 'add' ) {
 	$orcid_author = trim ( get_request ( 'orcid_author' , '' ) ) ;
 	$viaf_author = trim ( get_request ( 'viaf_author' , '' ) ) ;
 	$researchgate_author = trim ( get_request ( 'researchgate_author' , '' ) ) ;
+	$zbmath_author = trim ( get_request ( 'zbmath_author' , '' ) ) ;
 	$author_match = trim ( get_request ( 'author_match' , '' ) ) ;
 	$author_q = $author_match ;
         if ( $author_match == 'manual' ) {
@@ -82,7 +83,7 @@ if ( $action == 'add' ) {
 
 	if ( $author_match == 'new' ) {
 		print "<br/>Quickstatements V1 commands for creating new author item:" ;
-		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author ) ;
+		$commands = new_author_qs_commands ( $name, $orcid_author, $viaf_author, $researchgate_author, $zbmath_author ) ;
 		print "<textarea name='data' rows=5>" . implode("\n",$commands) . "</textarea>" ;
 		print "<input type='submit' class='btn btn-primary' name='qs' value='Send to Quickstatements' /><br/>" ;
 		print "Run these and then use the resulting author item ID (Qxx) in further work." ;
@@ -386,6 +387,7 @@ print "<form method='post' class='form form-inline' target='_blank' action='?'>
 print "<div><a href='" . getORCIDurl($name) . "' target='_blank'>Check ORCID for $name</a> | Author has ORCID ID: <input type='text' name='orcid_author' placeholder='xxxx-xxxx-xxxx-xxxx' /></div>" ;
 print "<div><a href='https://viaf.org/en/viaf/search?field=local,personalNames&index=VIAF&searchTerms=$name' target='_blank'>Check VIAF for $name</a> | Author has VIAF ID: <input type='text' name='viaf_author' placeholder='xxxxxxxxxxxxxxxxxxxx' /></div>" ;
 print "<div><a href='https://www.researchgate.net/search/researcher?q=$name' target='_blank'>Check ResearchGate for $name</a> | Author has ResearchGate Profile ID: <input type='text' name='researchgate_author' placeholder='Xxxxxxx_Xxxxxx' /></div>" ;
+print "<div><a href='https://zbmath.org/authors/?q=ai%3A$name' target='_blank'>Check zbMATH for $name</a> | Author has zbMATH Author ID: <input type='text' name='zbmath_author' placeholder='xxxxxxxxx.xxxxx-xxxxxx' /></div>" ;
 print "<div style='margin:20px'><input type='submit' name='doit' value='Quickstatements to create author item' class='btn btn-primary' /></div>" ;
 print "</form>" ;
 print '<div>After creating the new author item, enter the Wikidata ID in the "Other Q number of this author" field above to link to their works.</div>' ;
