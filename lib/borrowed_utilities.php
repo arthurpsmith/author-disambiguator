@@ -38,17 +38,24 @@ function getSPARQL ( $cmd, $subgraph_flag = False ) {
 	$endpoint = $subgraph_flag ? $scholarly_sparql_endpoint : $main_sparql_endpoint ;
 
 	$url = "$endpoint?format=json&query=" . urlencode($sparql) ;
-	$fc = @file_get_contents ( $url , false , $ctx ) ;
+	// Retry up to 10 times:
+        for ($retry = 0; $retry < 10; $retry++) {
+		$fc = @file_get_contents ( $url , false , $ctx ) ;
 
-	// Catch "wait" response, wait 5, retry
-	if ( preg_match ( '/429/' , $http_response_header[0] ) ) {
-		sleep ( 5 ) ;
-		return getSPARQL ( $cmd, $subgraph_flag ) ;
+	// Catch "wait" response, wait 5
+		if ( preg_match ( '/(429|504)/' , $http_response_header[0] ) ) {
+			sleep ( 10 ) ;
+		} else {
+			break;
+		}
 	}
 		
 	assert ( $fc !== false , 'SPARQL query failed: '.$sparql ) ;
 
-	if ( $fc === false ) return ; // Nope
+	if ( $fc === false ) {
+		print("SPARQL query '$cmd' failed on endpoint '$endpoint' after $retry retries.<br>Last HTTP response $http_response_header[0]<br>");
+		return ; // Nope
+	}
 	return json_decode ( $fc ) ;
 }
 
