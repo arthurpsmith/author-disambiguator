@@ -31,9 +31,10 @@ function getSPARQL ( $cmd, $subgraph_flag = False ) {
 
 	$sparql = "$cmd\n#TOOL: $tool_name" ;
 
-	$ctx = stream_context_create(['http'=>
-		['timeout' => 1200]  //1200 seconds is 20 minutes
-	]);
+	$ctx = stream_context_create(['http'=> [
+		'timeout' => 1200,  //1200 seconds is 20 minutes
+		'user_agent' => ini_get('user_agent')
+	]]);
 
 	$endpoint = $subgraph_flag ? $scholarly_sparql_endpoint : $main_sparql_endpoint ;
 
