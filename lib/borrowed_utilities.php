@@ -43,14 +43,21 @@ function getSPARQL ( $cmd, $subgraph_flag = False ) {
         for ($retry = 0; $retry < 10; $retry++) {
 		$fc = @file_get_contents ( $url , false , $ctx ) ;
 
-	// Catch "wait" response, wait 5
+	// Catch "wait" response, wait until retry header or 10 seconds if none
 		if ( preg_match ( '/(429|504)/' , $http_response_header[0] ) ) {
-			sleep ( 10 ) ;
+			$sleep_time = 10;
+			foreach ($http_response_header AS $header) {
+				$matches = array();
+				if ( preg_match ( '/^\s*Retry-After\s*: (\d+)/i' , $header, $matches ) ) {
+					$sleep_time = intval($matches[1]);
+				}
+			}
+			sleep ( $sleep_time ) ;
 		} else {
 			break;
 		}
 	}
-		
+
 	assert ( $fc !== false , 'SPARQL query failed: '.$sparql ) ;
 
 	if ( $fc === false ) {
