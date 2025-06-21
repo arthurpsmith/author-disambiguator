@@ -100,6 +100,9 @@ class AuthorData {
 	}
 
 	public static function articleCountsForAuthors($author_items, $use_scholarly_subgraph) {
+		if (count($author_items) == 0) {
+			return [];
+		}
 		$query_list = self::_article_id_query_list( $author_items ) ;
 		$sparql = "SELECT ?q (count(?article) as ?count) WHERE {
           SELECT ?q ?article WHERE {
